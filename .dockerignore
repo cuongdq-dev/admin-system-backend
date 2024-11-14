@@ -1,10 +1,8 @@
-/dist
-/node_modules
-/.vscode
-.env*
-.eslintrc.js
-.gitignore
-.prettier
-node_modules
+.git
 dist
-*.log
+node_modules
+db-data
+.vuepress
+.vscode
+docs
+*.tar.gz
