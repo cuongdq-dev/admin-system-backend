@@ -1,6 +1,6 @@
-import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { DataSource } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 dotenv.config();
@@ -10,6 +10,10 @@ export const configs: PostgresConnectionOptions = {
   url: process.env.DATABASE_URL,
   entities: [path.join(__dirname, '/common/entities/**/*.entity.{ts,js}')],
   migrations: [
+    path.join(
+      __dirname,
+      '/common/modules/database/EnableUuidOsspExtension.{ts,js}',
+    ),
     path.join(__dirname, '/common/modules/database/migrations/*{.ts,.js}'),
   ],
   dropSchema: false,
