@@ -7,7 +7,7 @@ services:
         environment:
             - APP_NAME=admin
         ports:
-            - "3003:3000"
+            - "3003:3003"
         env_file:
             - .env
     user:
@@ -18,4 +18,4 @@ services:
         env_file:
             - .env
         ports:
-            - "3002:3000"
+            - "3002:3002"
