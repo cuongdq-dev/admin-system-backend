@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+    admin:
+        build:
+            context: .
+        environment:
+            - APP_NAME=admin
+        ports:
+            - "3003:3000"
+        env_file:
+            - .env
+    user:
+        build:
+            context: .
+        environment:
+            - APP_NAME=user
+        env_file:
+            - .env
+        ports:
+            - "3002:3000"
