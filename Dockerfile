@@ -14,7 +14,6 @@ RUN yarn
 COPY . .
 
 
-RUN yarn migration:generate
 # Build ứng dụng
 RUN yarn build:user
 RUN yarn build:admin
