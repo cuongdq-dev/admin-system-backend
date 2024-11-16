@@ -31,7 +31,8 @@
     "seed-admin": "ts-node -r tsconfig-paths/register common/seeding/admin.seed.ts",
     "seed-product": "ts-node -r tsconfig-paths/register common/seeding/product.seed.ts",
     "seed-sample-data": "ts-node -r tsconfig-paths/register common/seeding/sample.seed.ts",
-    "create-admin": "ts-node -r tsconfig-paths/register common/seeding/admin.seed.ts"
+    "create-admin": "ts-node -r tsconfig-paths/register common/seeding/admin.seed.ts",
+    "seed-clear-sample-data": "ts-node -r tsconfig-paths/register common/seeding/clear-sample.seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.554.0",
