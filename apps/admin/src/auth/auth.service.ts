@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { User } from 'common/entities/user.entity';
-import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { User } from 'common/entities/user.entity';
 import { MailData } from 'common/modules/mail/mail.interface';
 import { SessionService } from '../session/session.service';
 
@@ -23,16 +23,15 @@ export class AuthService {
 
     const accessToken = await this.createAccessToken(session.id);
     const refreshToken = this.jwtService.sign(
-      {
-        id: session.id,
-        type: 'REFRESH',
-      },
-      {
-        expiresIn: refreshTokenExpiresIn,
-      },
+      { id: session.id, type: 'REFRESH' },
+      { expiresIn: refreshTokenExpiresIn },
     );
 
     return {
+      avatar: user.avatar,
+      isActive: user.is_active,
+      email: user.email,
+      name: user.name,
       accessToken,
       refreshToken,
     };

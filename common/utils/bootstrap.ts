@@ -32,6 +32,12 @@ export const createApplication = (app: INestApplication) => {
   app.enableVersioning({
     type: VersioningType.URI,
   });
+
+  app.enableCors({
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
+
   app.useGlobalInterceptors(
     new SerializerInterceptor(),
     new ClassSerializerInterceptor(app.get(Reflector)),
