@@ -4,7 +4,12 @@ import { User } from 'common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { AuthService } from '../auth/auth.service';
 import { TokenService } from '../token/token.service';
-import { LoginDto, ResetPasswordDto, SendVerifyMailDto } from './email.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+  SendVerifyMailDto,
+} from './email.dto';
 
 @Injectable()
 export class EmailService {
@@ -13,6 +18,18 @@ export class EmailService {
     private tokenService: TokenService,
     @InjectRepository(User) private userRepository: Repository<User>,
   ) {}
+
+  async register(registerDto: RegisterDto) {
+    const userRegister = User.create({ ...registerDto });
+    const user = await this.userRepository.save(userRegister);
+    const token = await this.tokenService.create(user, 'REGISTER_VERIFY');
+    await this.authService.userRegisterEmail({
+      to: user.email,
+      data: {
+        hash: token.token,
+      },
+    });
+  }
 
   async login(loginDto: LoginDto) {
     const user = await this.userRepository.findOne({

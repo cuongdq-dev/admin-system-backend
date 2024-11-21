@@ -31,12 +31,7 @@ export class RegisterDto {
   @ApiProperty({ example: 'Danimai' })
   @IsString()
   @IsNotEmpty()
-  first_name: string;
-
-  @ApiProperty({ example: 'Mandal' })
-  @IsString()
-  @IsNotEmpty()
-  last_name: string;
+  name: string;
 }
 
 export class EmailVerifyDto {

@@ -81,8 +81,6 @@ export class AuthService {
       hash: string;
     }>,
   ) {
-    console.log(mailData);
-
     await this.mailerService.sendMail({
       to: mailData.to,
       subject: 'Here is your Link for Reset Password.',
