@@ -16,9 +16,15 @@ export class MailerConfigClass implements MailerOptionsFactory {
         ignoreTLS: this.configService.get('mail.ignoreTLS'),
         secure: this.configService.get('mail.secure'),
         requireTLS: this.configService.get('mail.requireTLS'),
+        service: 'gmail',
         auth: {
+          type: 'OAuth2',
           user: this.configService.get('mail.user'),
           pass: this.configService.get('mail.password'),
+          accessToken: this.configService.get('mail.accessToken'),
+          clientId: this.configService.get('mail.passwclientIdord'),
+          clientSecret: this.configService.get('mail.clientSecret'),
+          refreshToken: this.configService.get('mail.refreshToken'),
         },
       },
       defaults: {

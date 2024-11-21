@@ -1,10 +1,10 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { LoginDto, ResetPasswordDto, SendVerifyMailDto } from './email.dto';
-import { TokenService } from '../token/token.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { AuthService } from '../auth/auth.service';
+import { TokenService } from '../token/token.service';
+import { LoginDto, ResetPasswordDto, SendVerifyMailDto } from './email.dto';
 
 @Injectable()
 export class EmailService {
@@ -37,16 +37,13 @@ export class EmailService {
       where: { email: sendForgotMailDto.email.toLowerCase() },
     });
 
-    if (!user) {
+    if (!user)
       throw new UnprocessableEntityException({ email: 'User not found' });
-    }
 
     const token = await this.tokenService.create(user, 'RESET_PASSWORD');
     await this.authService.forgotPasswordEmail({
       to: user.email,
-      data: {
-        hash: token.token,
-      },
+      data: { hash: token.token },
     });
   }
 

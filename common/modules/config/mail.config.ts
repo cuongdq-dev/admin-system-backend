@@ -10,4 +10,9 @@ export default registerAs('mail', () => ({
   ignoreTLS: process.env.MAIL_IGNORE_TLS === 'true',
   secure: process.env.MAIL_SECURE === 'true',
   requireTLS: process.env.MAIL_REQUIRE_TLS === 'true',
+  //
+  accessToken: process.env.MAIL_ACCESS_TOKEN,
+  clientId: process.env.MAIL_CLIENT_ID,
+  clientSecret: process.env.MAIL_CLIENT_SECRET,
+  refreshToken: process.env.MAIL_REFRESH_TOKEN,
 }));
