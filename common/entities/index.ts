@@ -14,6 +14,8 @@ import { CartItem } from './cart_item.entity';
 import { Cart } from './cart.entity';
 import { Order } from './order.entity';
 import { Payment } from './payment.entity';
+import { Lang } from './lang.entity';
+import { LangContent } from './lang_content.entity';
 
 export const loadEntities = [
   CustomerSession,
@@ -32,4 +34,6 @@ export const loadEntities = [
   CartItem,
   Order,
   Payment,
+  Lang,
+  LangContent,
 ];

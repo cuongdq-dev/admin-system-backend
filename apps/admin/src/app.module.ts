@@ -1,16 +1,23 @@
+import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { configLoads } from '../../../common/modules/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { configLoads } from '../../../common/modules/config';
 import { TypeORMConfigFactory } from '../../../common/modules/database/typeorm.factory';
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
-import { MailerModule } from '@nestjs-modules/mailer';
 import { MailerConfigClass } from '../../../common/modules/mail/mailerConfig.service';
-import { PostModule } from './post/post.module';
 import { EmailAuthModule } from './auth-email/email.module';
+import { AuthModule } from './auth/auth.module';
+import { I18nModule } from './i18n/i18n.module';
+import { PostModule } from './post/post.module';
+import { UserModule } from './user/user.module';
 
-const modules = [AuthModule, UserModule, PostModule, EmailAuthModule];
+const modules = [
+  AuthModule,
+  UserModule,
+  PostModule,
+  EmailAuthModule,
+  I18nModule,
+];
 
 export const global_modules = [
   ConfigModule.forRoot({
