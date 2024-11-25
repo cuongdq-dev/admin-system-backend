@@ -32,6 +32,8 @@
     "seed-product": "ts-node -r tsconfig-paths/register common/seeding/product.seed.ts",
     "seed-sample-data": "ts-node -r tsconfig-paths/register common/seeding/sample.seed.ts",
     "create-admin": "ts-node -r tsconfig-paths/register common/seeding/admin.seed.ts",
+    "seed-language": "ts-node -r tsconfig-paths/register common/seeding/lang.seed.ts",
+    "seed-language-content": "ts-node -r tsconfig-paths/register common/seeding/lang-content.seed.ts",
     "seed-clear-sample-data": "ts-node -r tsconfig-paths/register common/seeding/clear-sample.seed.ts"
   },
   "dependencies": {

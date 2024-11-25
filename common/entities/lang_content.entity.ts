@@ -6,7 +6,7 @@ import { Lang } from './lang.entity';
 @Entity({ name: 'lang_content' })
 export class LangContent extends BaseEntity {
   @ApiProperty({ example: 'LANGUAGE_CODE' })
-  @Column({ type: 'varchar', length: 200, unique: true })
+  @Column({ type: 'varchar', length: 200 })
   code: string;
 
   @ApiProperty({ example: 'Localized content' })
