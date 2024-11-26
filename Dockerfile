@@ -27,7 +27,7 @@ RUN yarn cache clean
 RUN rm -rf node_modules
 
 RUN yarn --production --frozen-lockfile --no-optional
-RUN yarn autoclean --force
+# RUN yarn autoclean --force
 
 RUN npm prune --production
 
