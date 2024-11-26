@@ -1,8 +1,17 @@
-.git
-dist
-node_modules
-db-data
-.vuepress
-.vscode
-docs
-*.tar.gz
+# Ignore node_modules
+node_modules/
+# Ignore build files (if they exist outside of the Docker build process)
+dist/
+# Ignore IDE and editor specific files
+.vscode/
+.idea/
+# Ignore local environment files
+.env.local
+# Ignore log files
+*.log
+# Ignore tests and temporary files
+test/
+tests/
+*.tmp
+*.bak
+*.swp
