@@ -14,13 +14,7 @@ export class PostService {
 
   async getAll(user: User, query: PaginateQuery) {
     return paginate(
-      {
-        ...query,
-        filter: {
-          ...query.filter,
-          user_id: user.id,
-        },
-      },
+      { ...query, filter: { ...query.filter, user_id: user.id } },
       this.postRepository,
       postPaginateConfig,
     );
