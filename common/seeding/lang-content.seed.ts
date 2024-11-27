@@ -19,14 +19,12 @@ async function createLanguages() {
   const langContentRepository = dataSource.getRepository(LangContent);
 
   try {
-    // Duyệt qua từng ngôn ngữ trong languages
     for (const language of languages as any) {
       const existingLanguage = await langRepository.findOne({
         where: { code: language.code },
       });
 
       if (!existingLanguage) {
-        // Tạo mới một ngôn ngữ nếu chưa tồn tại
         const newLanguage = langRepository.create({
           code: language.code,
           name: language.name,
@@ -35,7 +33,6 @@ async function createLanguages() {
         await langRepository.save(newLanguage);
         console.log(`${language.name} language added.`);
 
-        // Thêm nội dung cho ngôn ngữ
         for (const [key, content] of Object.entries(language.content)) {
           const langContent = langContentRepository.create({
             code: key,

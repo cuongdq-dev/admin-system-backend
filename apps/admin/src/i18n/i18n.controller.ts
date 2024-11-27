@@ -22,7 +22,16 @@ import { I18nUpdateDto } from './i18n.dto';
 export class I18nController {
   constructor(private i18nService: I18nService) {}
 
+  @Get('lang.json')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'get Json i18n' })
+  getJson() {
+    return this.i18nService.getJson();
+  }
+
   @Get('')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'get code i18n' })
   getCodeI18n() {

@@ -16,6 +16,26 @@ export class I18nService {
     private langRepository: Repository<Lang>,
   ) {}
 
+  async getJson() {
+    const langs = await this.langRepository.find();
+    const contents = await this.langContentRepository.find();
+    const result: Record<string, Record<string, string>> = {};
+    langs.forEach((lang) => {
+      result[lang.code.toLowerCase()] = {};
+    });
+
+    contents.forEach((content) => {
+      const langCode = langs
+        .find((lang) => lang.id === content.lang_id)
+        ?.code.toLowerCase();
+      if (langCode) {
+        result[langCode][content.code] = content.content;
+      }
+    });
+
+    return result;
+  }
+
   async getCodeI18n() {
     return this.langRepository.find();
   }
