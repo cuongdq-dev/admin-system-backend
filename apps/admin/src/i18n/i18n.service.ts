@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Lang } from 'common/entities/lang.entity';
 import { LangContent } from 'common/entities/lang_content.entity';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
-import { i18nPaginateConfig } from './i18n.pagination';
-import { Lang } from 'common/entities/lang.entity';
 import { I18nUpdateDto } from './i18n.dto';
+import { i18nPaginateConfig } from './i18n.pagination';
+import { User } from 'common/entities/user.entity';
 
 @Injectable()
 export class I18nService {
@@ -42,8 +43,11 @@ export class I18nService {
       { ...i18nPaginateConfig, where },
     );
   }
-  async UpdateLang(id: string, body: I18nUpdateDto) {
-    await this.langContentRepository.update(id, body);
+  async UpdateLang(id: string, body: I18nUpdateDto, user: User) {
+    await this.langContentRepository.update(id, {
+      ...body,
+      updated_by: user.id,
+    });
     return this.langContentRepository.findOne({ where: { id } });
   }
 }

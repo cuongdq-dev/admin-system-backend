@@ -28,4 +28,31 @@ async function create() {
   process.stdout;
 }
 
+async function createUser() {
+  dataSource.setOptions({
+    entities: loadEntities,
+  });
+  await dataSource.initialize();
+  const queryRunner = dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  const userRepository = dataSource.getRepository(User);
+
+  try {
+    const admin = userRepository.create({
+      name: 'User',
+      is_active: true,
+      email: 'user@example.com',
+      password: process.env.ADMIN_PASSWORD,
+    });
+    await admin.save();
+    console.log('Admin created successfully.');
+  } catch (error) {
+    console.log(error.message);
+  }
+  process.stdout;
+}
+
 void create();
+void createUser();

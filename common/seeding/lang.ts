@@ -21,6 +21,7 @@ export const languages = [
       save_button: 'Save',
       delete_button: 'Delete',
       update_button: 'Update',
+      create_button: 'Create',
       need_help_button: 'Need help',
 
       new_user_button: 'New User',
@@ -50,10 +51,16 @@ export const languages = [
 
       //
       language_tab_all_label: 'All',
-      //
       language_item_content: 'Content',
       language_item_code: 'Code',
       language_item_language: 'Language',
+      //
+      server_item_name: 'Server',
+      server_item_host: 'Host',
+      server_item_port: 'Port',
+      server_item_user: 'User',
+      server_item_password: 'Password',
+      //
       //
       create_form_label: 'Quick Add',
       update_form_label: 'Quick Update',
@@ -135,6 +142,7 @@ export const languages = [
       save_button: 'Lưu',
       delete_button: 'Xóa',
       update_button: 'Cập nhật',
+      create_button: 'Tạo mới',
       need_help_button: 'Cần trợ giúp',
 
       new_user_button: 'Người dùng mới',
@@ -171,6 +179,13 @@ export const languages = [
       language_item_content: 'Nội dung',
       language_item_code: 'Mã',
       language_item_language: 'Ngôn ngữ',
+
+      //
+      server_item_name: 'Máy Chủ',
+      server_item_host: 'Host',
+      server_item_port: 'Port',
+      server_item_user: 'Người dùng',
+      server_item_password: 'Mật Khẩu',
 
       // Forms
       create_form_label: 'Thêm nhanh',

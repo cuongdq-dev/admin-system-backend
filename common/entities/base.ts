@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
 import {
   BaseEntity as _BaseEntity,
+  Column,
   CreateDateColumn,
   DeleteDateColumn,
   PrimaryGeneratedColumn,
@@ -8,18 +8,24 @@ import {
 } from 'typeorm';
 
 export abstract class BaseEntity extends _BaseEntity {
-  @ApiProperty({ format: 'uuid' })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ApiProperty()
   @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty()
   @UpdateDateColumn()
   updated_at: Date;
 
   @DeleteDateColumn()
   deleted_at: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  created_by: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  updated_by: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  deleted_by: string;
 }
