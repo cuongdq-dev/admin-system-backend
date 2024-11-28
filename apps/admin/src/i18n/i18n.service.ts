@@ -19,7 +19,8 @@ export class I18nService {
   async getJson() {
     const langs = await this.langRepository.find();
     const contents = await this.langContentRepository.find();
-    const result: Record<string, Record<string, string>> = {};
+    const result: Record<string, Record<string, any>> = {};
+
     langs.forEach((lang) => {
       result[lang.code.toLowerCase()] = {};
     });

@@ -41,6 +41,8 @@ export class I18nController {
   @Get('/list')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'get i18n' })
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
   @ApiPaginationQuery({ ...i18nPaginateConfig })
   getAll(
     @Paginate() paginateQuery: PaginateQuery,
