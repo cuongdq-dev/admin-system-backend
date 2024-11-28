@@ -16,23 +16,15 @@ export class I18nService {
     private langRepository: Repository<Lang>,
   ) {}
 
-  async getJson() {
-    const langs = await this.langRepository.find();
-    const contents = await this.langContentRepository.find();
-    const result: Record<string, Record<string, any>> = {};
-
-    langs.forEach((lang) => {
-      result[lang.code.toLowerCase()] = {};
+  async getJson(lang: string) {
+    const contents = await this.langContentRepository.find({
+      where: { lang: { code: lang } },
+      select: {},
     });
-
-    contents.forEach((content) => {
-      const langCode = langs
-        .find((lang) => lang.id === content.lang_id)
-        ?.code.toLowerCase();
-      if (langCode) {
-        result[langCode][content.code] = content.content;
-      }
-    });
+    const result = contents.reduce((acc, item) => {
+      acc[item.code] = item.content; // Gán code là key và name là value
+      return acc;
+    }, {});
 
     return result;
   }

@@ -22,11 +22,11 @@ import { I18nUpdateDto } from './i18n.dto';
 export class I18nController {
   constructor(private i18nService: I18nService) {}
 
-  @Get('lang.json')
+  @Get('/:lang/lang.json')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'get Json i18n' })
-  getJson() {
-    return this.i18nService.getJson();
+  getJson(@Param() { lang }: { lang: string }) {
+    return this.i18nService.getJson(lang);
   }
 
   @Get('')
