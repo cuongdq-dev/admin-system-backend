@@ -26,8 +26,7 @@
     "migration:run": "npm run typeorm -- -d ormconfig.ts migration:run",
     "migration:show": "npm run typeorm -- -d ormconfig.ts migration:show",
     "migration:revert": "npm run typeorm -- -d ormconfig.ts migration:revert",
-    "create-admin": "ts-node -r tsconfig-paths/register common/seeding/admin.seed.ts",
-    "seed-data": "ts-node -r tsconfig-paths/register common/seeding/clear-language.seed.ts && ts-node -r tsconfig-paths/register common/seeding/lang-content.seed.ts",
+    "create-data": "ts-node -r tsconfig-paths/register common/seeding/admin.seed.ts",
     "clear-data": "ts-node -r tsconfig-paths/register common/seeding/clear-sample.seed.ts"
   },
   "dependencies": {
