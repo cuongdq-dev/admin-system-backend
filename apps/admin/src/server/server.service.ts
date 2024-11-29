@@ -5,6 +5,7 @@ import { User } from 'common/entities/user.entity';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { serverPaginateConfig } from './server.pagination';
+import * as bcrypt from 'bcryptjs';
 import { ServerCreateDto, ServerUpdateDto } from './server.dto';
 
 @Injectable()
@@ -15,11 +16,12 @@ export class ServerService {
   ) {}
 
   async getListServer(query: PaginateQuery, user: User) {
-    return paginate(
+    const list = await paginate(
       { ...query, filter: { ...query.filter } },
       this.serverRepository,
       { ...serverPaginateConfig, where: { owner_id: user.id } },
     );
+    return list;
   }
 
   async createServer(createDto: ServerCreateDto, user: User) {

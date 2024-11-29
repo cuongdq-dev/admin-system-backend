@@ -7,8 +7,6 @@ type IsIDExistPipeType = (options: {
   entity: EntityClassOrSchema;
   filterField?: string;
   relations?: FindOptionsRelations<any>;
-  ownerField?: string;
-  currentUserField?: string;
 }) => any;
 
 // To solve mixin issue of class returned by function you refer below link
@@ -18,8 +16,6 @@ export const IsIDExistPipe: IsIDExistPipeType = ({
   entity,
   filterField = 'id',
   relations,
-  ownerField = 'created_by',
-  currentUserField = 'id',
 }) => {
   @Injectable()
   class IsIDExistMixinPipe implements PipeTransform {
@@ -38,16 +34,7 @@ export const IsIDExistPipe: IsIDExistPipeType = ({
           `${filterField} ${value.toString()} of ${(entity as any).name} does not exists.`,
         );
       }
-      // const currentUser = metatype.user; // Lấy thông tin user hiện tại
-      // if (
-      //   ownerField &&
-      //   currentUser &&
-      //   instance[ownerField] !== currentUser[currentUserField]
-      // ) {
-      //   throw new ForbiddenException(
-      //     `You do not have permission to update this resource.`,
-      //   );
-      // }
+
       return instance;
     }
   }

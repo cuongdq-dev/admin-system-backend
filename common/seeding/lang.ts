@@ -102,6 +102,7 @@ export const languages = [
       forgot_password: 'Forgot password?',
 
       //
+      notify_changed_language: 'Language has been changed!', // Thông báo khi một cuộc gọi API thành công chung chung.
       notify_success_api_call: 'API call was successful!', // Thông báo khi một cuộc gọi API thành công chung chung.
       notify_success_get_data: 'Data retrieved successfully!', // Thông báo khi dữ liệu được lấy thành công từ API.
       notify_success_post_data: 'Request completed successfully!', // Thông báo khi gửi dữ liệu thành công tới API (ví dụ: POST request).
@@ -235,6 +236,7 @@ export const languages = [
       forgot_password: 'Quên mật khẩu?',
 
       // API notifications
+      notify_changed_language: 'Ngôn ngữ đã được thay đổi!',
       notify_success_api_call: 'Gọi API thành công!',
       notify_success_get_data: 'Lấy dữ liệu thành công!',
       notify_success_post_data: 'Yêu cầu hoàn tất thành công!',
