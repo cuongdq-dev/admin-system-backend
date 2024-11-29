@@ -46,7 +46,7 @@ export class Server extends BaseEntity {
 
   @ApiProperty({ example: 'Password@123' })
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255 })
   password: string;
 
   @ManyToOne('users', 'servers')
