@@ -4,10 +4,8 @@ import { Server } from 'common/entities/server.entity';
 import { User } from 'common/entities/user.entity';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
-import { serverPaginateConfig } from './server.pagination';
-import * as bcrypt from 'bcryptjs';
 import { ServerCreateDto, ServerUpdateDto } from './server.dto';
-
+import { serverPaginateConfig } from './server.pagination';
 @Injectable()
 export class ServerService {
   constructor(
@@ -24,6 +22,10 @@ export class ServerService {
     return list;
   }
 
+  async getServerById(server: Server, user: User) {
+    return server;
+  }
+
   async createServer(createDto: ServerCreateDto, user: User) {
     const server = await Server.create({
       ...createDto,
@@ -34,11 +36,12 @@ export class ServerService {
   }
 
   async updateServer(server: Server, updateDto: ServerUpdateDto, user: User) {
-    const result = await this.serverRepository.update(
+    await this.serverRepository.update(
       { id: server.id },
       { ...updateDto, updated_by: user.id },
     );
-    return result;
+
+    return await this.serverRepository.findOne({ where: { id: server.id } });
   }
 
   async deleteServer(server: Server, user: User) {

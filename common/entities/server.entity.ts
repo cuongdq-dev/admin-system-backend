@@ -1,17 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import * as bcrypt from 'bcryptjs';
-import { Exclude } from 'class-transformer';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { ValidationGroup } from 'common/crud/validation-group';
-import {
-  BeforeInsert,
-  BeforeUpdate,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  Relation,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
 import { BaseEntity } from './base';
 import { User } from './user.entity';
 
@@ -48,6 +38,14 @@ export class Server extends BaseEntity {
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   @Column({ type: 'varchar', length: 255 })
   password: string;
+
+  // @ApiHideProperty()
+  @Column({ type: 'boolean', default: false })
+  is_active: boolean;
+
+  // @ApiHideProperty()
+  @Column({ type: 'boolean', default: false })
+  is_connected: boolean;
 
   @ManyToOne('users', 'servers')
   @JoinColumn({ name: 'owner_id' })

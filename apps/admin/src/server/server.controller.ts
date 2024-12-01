@@ -34,8 +34,8 @@ import { serverPaginateConfig } from './server.pagination';
 import { ServerService } from './server.service';
 
 @ApiBearerAuth()
-@ApiTags('server')
 @UseGuards(AuthGuard('jwt'))
+@ApiTags('server')
 @Controller({ path: 'server', version: '1' })
 export class ServerController {
   constructor(private serverService: ServerService) {}
@@ -48,6 +48,18 @@ export class ServerController {
     @UserParam() user: User,
   ) {
     return this.serverService.getListServer(paginateQuery, user);
+  }
+
+  @Get('/detail/:id')
+  @SetMetadata('entity', ServerEntity)
+  @UseGuards(OwnershipGuard)
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  partialGetDetail(
+    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: ServerEntity }))
+    server: ServerEntity,
+    @UserParam() user: User,
+  ) {
+    return this.serverService.getServerById(server, user);
   }
 
   @Post('/create')
@@ -70,6 +82,7 @@ export class ServerController {
   partialUpdate(
     @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: ServerEntity }))
     server: ServerEntity,
+
     @Body(
       new ValidationPipe({
         ...validationOptions,
@@ -77,6 +90,7 @@ export class ServerController {
       }),
     )
     updateDto: ServerEntity,
+
     @UserParam() user: User,
   ) {
     return this.serverService.updateServer(server, updateDto, user);

@@ -15,6 +15,7 @@ export const languages = [
       login_button: 'Log in',
       signup_button: 'Sign up',
       register_button: 'Register',
+      connect_server_button: 'Connect',
       logout_button: 'Logout',
       submit_button: 'Submit',
       cancel_button: 'Cancel',
@@ -22,6 +23,8 @@ export const languages = [
       delete_button: 'Delete',
       update_button: 'Update',
       create_button: 'Create',
+      detail_button: 'Detail',
+      save_changes_button: 'Save Changes',
       need_help_button: 'Need help',
 
       new_user_button: 'New User',
@@ -29,7 +32,20 @@ export const languages = [
       new_server_button: 'New Server',
       new_product_button: 'New Product',
       new_blog_button: 'New BLog',
+      //
+      dashboard_page: 'Dashboard',
+      server_list_page: 'Server',
+      user_list_page: 'User',
+      site_list_page: 'Site',
+      language_list_page: 'Language',
+      product_list_page: 'Product',
+      blog_list_page: 'Blog',
 
+      server_detail_page: 'Server Detail',
+      user_detail_page: 'User Detail',
+      site_detail_page: 'Site Detail',
+      product_detail_page: 'Product Detail',
+      blog_detail_page: 'Blog Detail',
       //
       home_menu: 'Home',
       profile_menu: 'Profile',
@@ -51,6 +67,10 @@ export const languages = [
 
       //
       language_tab_all_label: 'All',
+      general_server_tab: 'General',
+      status_server_tab: 'Status',
+      setup_server_tab: 'Config Container',
+
       language_item_content: 'Content',
       language_item_code: 'Code',
       language_item_language: 'Language',
@@ -60,6 +80,9 @@ export const languages = [
       server_item_port: 'Port',
       server_item_user: 'User',
       server_item_password: 'Password',
+
+      server_inactive_status: 'Inactive',
+      server_active_status: 'Active',
       //
       //
       create_form_label: 'Quick Add',
@@ -100,7 +123,12 @@ export const languages = [
       privacy_policy: 'Privacy Policy',
       allready_account: 'Already have an account?',
       forgot_password: 'Forgot password?',
+      setting_title: 'Settings',
 
+      //
+      dark_mode_title: 'Dark Mode',
+      light_mode_title: 'Light Mode',
+      system_mode_title: 'System Mode',
       //
       notify_changed_language: 'Language has been changed!', // Thông báo khi một cuộc gọi API thành công chung chung.
       notify_success_api_call: 'API call was successful!', // Thông báo khi một cuộc gọi API thành công chung chung.
@@ -137,6 +165,7 @@ export const languages = [
       login_button: 'Đăng nhập',
       signup_button: 'Đăng ký',
       register_button: 'Đăng ký',
+      connect_server_button: 'Kết nối',
       logout_button: 'Đăng xuất',
       submit_button: 'Gửi',
       cancel_button: 'Hủy',
@@ -144,6 +173,8 @@ export const languages = [
       delete_button: 'Xóa',
       update_button: 'Cập nhật',
       create_button: 'Tạo mới',
+      detail_button: 'Chi tiết',
+      save_changes_button: 'Lưu thay đổi',
       need_help_button: 'Cần trợ giúp',
 
       new_user_button: 'Người dùng mới',
@@ -151,7 +182,20 @@ export const languages = [
       new_server_button: 'Máy chủ mới',
       new_product_button: 'Sản phẩm mới',
       new_blog_button: 'Blog mới',
+      //
+      dashboard_page: 'Trang Chủ',
+      server_list_page: 'Máy Chủ',
+      user_list_page: 'Người Dùng',
+      site_list_page: 'Website',
+      language_list_page: 'Ngôn Ngữ',
+      product_list_page: 'Sản Phẩm',
+      blog_list_page: 'Blog',
 
+      server_detail_page: 'Server Detail',
+      user_detail_page: 'User Detail',
+      site_detail_page: 'Site Detail',
+      product_detail_page: 'Product Detail',
+      blog_detail_page: 'Blog Detail',
       // Menu
       home_menu: 'Trang chủ',
       profile_menu: 'Hồ sơ',
@@ -175,6 +219,9 @@ export const languages = [
 
       // Tabs
       language_tab_all_label: 'Tất cả',
+      general_server_tab: 'General',
+      status_server_tab: 'Status',
+      setup_server_tab: 'Config Container',
 
       // Items
       language_item_content: 'Nội dung',
@@ -187,6 +234,9 @@ export const languages = [
       server_item_port: 'Port',
       server_item_user: 'Người dùng',
       server_item_password: 'Mật Khẩu',
+
+      server_inactive_status: 'Đóng',
+      server_active_status: 'Mở',
 
       // Forms
       create_form_label: 'Thêm nhanh',
@@ -234,7 +284,13 @@ export const languages = [
       privacy_policy: 'Chính sách bảo mật',
       allready_account: 'Đã có tài khoản?',
       forgot_password: 'Quên mật khẩu?',
+      setting_title: 'Cài đặt',
 
+      //
+      dark_mode_title: 'Dark Mode',
+      light_mode_title: 'Light Mode',
+      system_mode_title: 'System Mode',
+      //
       // API notifications
       notify_changed_language: 'Ngôn ngữ đã được thay đổi!',
       notify_success_api_call: 'Gọi API thành công!',
