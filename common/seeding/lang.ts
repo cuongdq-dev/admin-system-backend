@@ -83,6 +83,8 @@ export const languages = [
 
       server_inactive_status: 'Inactive',
       server_active_status: 'Active',
+      server_used: 'Used',
+      server_available: 'Availble',
       //
       //
       create_form_label: 'Quick Add',
@@ -237,6 +239,9 @@ export const languages = [
 
       server_inactive_status: 'Đóng',
       server_active_status: 'Mở',
+
+      server_used: 'Used',
+      server_available: 'Availble',
 
       // Forms
       create_form_label: 'Thêm nhanh',
