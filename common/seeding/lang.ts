@@ -85,6 +85,10 @@ export const languages = [
       server_active_status: 'Active',
       server_used: 'Used',
       server_available: 'Availble',
+      server_ram: 'Ram',
+      server_room: 'Room',
+      server_network: 'Network',
+      server_disk: 'Disk',
       //
       //
       create_form_label: 'Quick Add',
@@ -242,6 +246,10 @@ export const languages = [
 
       server_used: 'Used',
       server_available: 'Availble',
+      server_ram: 'Ram',
+      server_room: 'Room',
+      server_network: 'Network',
+      server_disk: 'Disk',
 
       // Forms
       create_form_label: 'Thêm nhanh',
