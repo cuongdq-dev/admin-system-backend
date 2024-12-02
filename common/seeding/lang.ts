@@ -5,17 +5,71 @@ export const languages = [
     description: 'English language',
     content: {
       dashboard_nav: 'Dashboard',
+      dashboard_page: 'Dashboard',
+
       user_nav: 'User',
+      user_list_page: 'User List',
+      user_new_button: 'New User',
+      user_detail_page: 'User Detail',
+      user_table_title: 'Users',
+      user_detail_title: 'User Detail',
+
       server_nav: 'Server',
+      server_new_button: 'New Server',
+      connect_server_button: 'Connect Server',
+      server_list_page: 'Server List',
+      server_detail_page: 'Server Detail',
+      server_detail_title: 'Server Detail',
+      server_table_title: 'Servers',
+      server_general_tab: 'General',
+      server_status_tab: 'Status',
+      server_setup_tab: 'Config Container',
+      server_item_name: 'Server',
+      server_item_host: 'Host',
+      server_item_port: 'Port',
+      server_item_user: 'User',
+      server_item_password: 'Password',
+      server_inactive_status: 'Inactive',
+      server_active_status: 'Active',
+      server_used: 'Used',
+      server_available: 'Available',
+      server_ram: 'Ram',
+      server_room: 'Room',
+      server_network: 'Network',
+      server_disk: 'Disk',
+
       site_nav: 'Site',
+      site_list_page: 'Site List',
+      site_detail_page: 'Site Detail',
+      site_table_title: 'Sites',
+      site_detail_title: 'Site Detail',
+
       product_nav: 'Product',
+      product_list_page: 'Product List',
+      product_detail_page: 'Product Detail',
+      product_new_button: 'New Product',
+      product_table_title: 'Products',
+      product_detail_title: 'Product Detail',
+
       blog_nav: 'Blog',
+      blog_list_page: 'Blog List',
+      blog_detail_page: 'Blog Detail',
+      blog_new_button: 'New Blog',
+      blog_table_title: 'Blogs',
+      blog_detail_title: 'Blog Detail',
+
       language_nav: 'Language',
-      //
+      language_list_page: 'Language List',
+      language_table_title: 'Languages',
+      language_detail_title: 'Language Detail',
+      language_tab_all_label: 'All',
+      language_item_content: 'Content',
+      language_item_code: 'Code',
+      language_item_language: 'Language',
+
       login_button: 'Log in',
       signup_button: 'Sign up',
       register_button: 'Register',
-      connect_server_button: 'Connect',
       logout_button: 'Logout',
       submit_button: 'Submit',
       cancel_button: 'Cancel',
@@ -27,130 +81,67 @@ export const languages = [
       save_changes_button: 'Save Changes',
       need_help_button: 'Need help',
 
-      new_user_button: 'New User',
-      new_site_button: 'New Site',
-      new_server_button: 'New Server',
-      new_product_button: 'New Product',
-      new_blog_button: 'New BLog',
-      //
-      dashboard_page: 'Dashboard',
-      server_list_page: 'Server',
-      user_list_page: 'User',
-      site_list_page: 'Site',
-      language_list_page: 'Language',
-      product_list_page: 'Product',
-      blog_list_page: 'Blog',
-
-      server_detail_page: 'Server Detail',
-      user_detail_page: 'User Detail',
-      site_detail_page: 'Site Detail',
-      product_detail_page: 'Product Detail',
-      blog_detail_page: 'Blog Detail',
-      //
       home_menu: 'Home',
       profile_menu: 'Profile',
       settings_menu: 'Settings',
-      //
-      language_table_title: 'Languages',
-      user_table_title: 'Users',
-      site_table_title: 'Sites',
-      server_table_title: 'Servers',
-      product_table_title: 'Products',
-      blog_table_title: 'Blogs',
 
-      language_detail_title: 'Language',
-      user_detail_title: 'User',
-      site_detail_title: 'Site',
-      server_detail_title: 'Server',
-      product_detail_title: 'Product',
-      blog_detail_title: 'Blog',
-
-      //
-      language_tab_all_label: 'All',
-      general_server_tab: 'General',
-      status_server_tab: 'Status',
-      setup_server_tab: 'Config Container',
-
-      language_item_content: 'Content',
-      language_item_code: 'Code',
-      language_item_language: 'Language',
-      //
-      server_item_name: 'Server',
-      server_item_host: 'Host',
-      server_item_port: 'Port',
-      server_item_user: 'User',
-      server_item_password: 'Password',
-
-      server_inactive_status: 'Inactive',
-      server_active_status: 'Active',
-      server_used: 'Used',
-      server_available: 'Availble',
-      server_ram: 'Ram',
-      server_room: 'Room',
-      server_network: 'Network',
-      server_disk: 'Disk',
-      //
-      //
       create_form_label: 'Quick Add',
       update_form_label: 'Quick Update',
       delete_form_label: 'Quick Delete',
-      delete_form_title: 'Are you sure want to delete?',
-      //
+      delete_form_title: 'Are you sure you want to delete?',
+      search_item: 'Search',
+
       signin_title: 'Sign in',
       signin_item_email: 'Email address',
       signin_item_password: 'Password',
-      //
-      search_item: 'Search',
-      filter_list_title: 'Filter list',
-      //
+      get_started: 'Get started',
+      no_account: 'Don’t have an account?',
+      remember_me: 'Remember me',
+      allready_account: 'Already have an account?',
+      forgot_password: 'Forgot password?',
+
       signup_title: 'Get started absolutely free.',
       signup_description: 'Free forever. No credit card needed.',
       signup_item_user_name: 'User name',
       signup_item_email: 'Email address',
       signup_item_password: 'Password',
-      //
+      agree_to: 'By registering, I agree to Minimal',
+      terms_of_service: 'Terms of Service',
+      privacy_policy: 'Privacy Policy',
+
+      filter_list_title: 'Filter list',
+      pagination_per_page: 'Rows per page',
+
       notification_title: 'Notifications',
       notification_view_all: 'View All',
       notification_new: 'New',
       notification_read_all: 'Mark all as read',
       notification_before_that: 'Before That',
       notification_count: 'You have {count} unread messages',
-      //
-      pagination_per_page: 'Rows per page',
-      //
-      get_started: 'Get started',
-      no_account: 'Don’t have an account?',
+
+      notify_changed_language: 'Language has been changed!',
+      notify_success_api_call: 'API call was successful!',
+      notify_success_get_data: 'Data retrieved successfully!',
+      notify_success_post_data: 'Request completed successfully!',
+      notify_success_update: 'Successfully updated the data!',
+      notify_success_delete: 'Data deleted successfully!',
+      notify_error_generic: 'An error occurred while fetching data.',
+      notify_error_network: 'Network error. Please check your connection.',
+      notify_error_server:
+        'Unable to reach the server. Please try again later.',
+      notify_error_no_results: 'No results found for your request.',
+      notify_error_invalid_data: 'Invalid data received from the server.',
+      notify_error_missing_data:
+        'The response is missing necessary information.',
+      notify_error_empty_response: 'Empty response. Please try again.',
+
       or: 'OR',
       of: 'OF',
       and: 'AND',
-      remember_me: 'Remember me',
-      agree_to: 'By registering, I agree to Minimal',
-      terms_of_service: 'Terms of Service',
-      privacy_policy: 'Privacy Policy',
-      allready_account: 'Already have an account?',
-      forgot_password: 'Forgot password?',
       setting_title: 'Settings',
-
-      //
       dark_mode_title: 'Dark Mode',
       light_mode_title: 'Light Mode',
       system_mode_title: 'System Mode',
-      //
-      notify_changed_language: 'Language has been changed!', // Thông báo khi một cuộc gọi API thành công chung chung.
-      notify_success_api_call: 'API call was successful!', // Thông báo khi một cuộc gọi API thành công chung chung.
-      notify_success_get_data: 'Data retrieved successfully!', // Thông báo khi dữ liệu được lấy thành công từ API.
-      notify_success_post_data: 'Request completed successfully!', // Thông báo khi gửi dữ liệu thành công tới API (ví dụ: POST request).
-      notify_success_update: 'Successfully updated the data!', // Thông báo khi cập nhật dữ liệu thành công (ví dụ: PUT request).
-      notify_success_delete: 'Data deleted successfully!', // Thông báo khi xóa dữ liệu thành công (ví dụ: DELETE request).
-      notify_error_generic: 'An error occurred while fetching data.', // Thông báo lỗi chung khi có sự cố trong quá trình lấy dữ liệu từ API.
-      notify_error_network: 'Network error. Please check your connection.', // Thông báo khi gặp lỗi mạng (ví dụ: không kết nối được tới server).
-      notify_error_server:
-        'Unable to reach the server. Please try again later.', // Thông báo khi không thể kết nối tới server (ví dụ: server không phản hồi).
-      notify_error_no_results: 'No results found for your request.', // Thông báo khi không tìm thấy kết quả theo yêu cầu của người dùng (ví dụ: tìm kiếm không có dữ liệu).
-      notify_error_invalid_data: 'Invalid data received from the server.', // Thông báo khi dữ liệu từ server không hợp lệ (ví dụ: dữ liệu bị thiếu hoặc sai định dạng).
-      notify_error_missing_data:
-        'The response is missing necessary information.', // Thông báo khi phản hồi từ API thiếu thông tin cần thiết.
-      notify_error_empty_response: 'Empty response. Please try again.', // Thông báo khi API trả về một phản hồi rỗng (ví dụ: không có dữ liệu trả về).
     },
   },
   {
@@ -158,168 +149,143 @@ export const languages = [
     name: 'Vietnamese',
     description: 'Vietnamese language',
     content: {
-      // Navigation
       dashboard_nav: 'Bảng điều khiển',
-      user_nav: 'Người dùng',
-      server_nav: 'Máy chủ',
-      site_nav: 'Trang web',
-      product_nav: 'Sản phẩm',
-      blog_nav: 'Blog',
-      language_nav: 'Ngôn ngữ',
+      dashboard_page: 'Bảng điều khiển',
 
-      // Buttons
+      user_nav: 'Người dùng',
+      user_list_page: 'Danh sách người dùng',
+      user_new_button: 'Thêm người dùng mới',
+      user_detail_page: 'Chi tiết người dùng',
+      user_table_title: 'Người dùng',
+      user_detail_title: 'Chi tiết người dùng',
+
+      server_nav: 'Máy chủ',
+      server_new_button: 'Thêm máy chủ mới',
+      connect_server_button: 'Kết nối máy chủ',
+      server_list_page: 'Danh sách máy chủ',
+      server_detail_page: 'Chi tiết máy chủ',
+      server_detail_title: 'Chi tiết máy chủ',
+      server_table_title: 'Các máy chủ',
+      server_general_tab: 'Chung',
+      server_status_tab: 'Trạng thái',
+      server_setup_tab: 'Cấu hình container',
+      server_item_name: 'Máy chủ',
+      server_item_host: 'Host',
+      server_item_port: 'Cổng',
+      server_item_user: 'Người dùng',
+      server_item_password: 'Mật khẩu',
+      server_inactive_status: 'Không hoạt động',
+      server_active_status: 'Hoạt động',
+      server_used: 'Đã sử dụng',
+      server_available: 'Có sẵn',
+      server_ram: 'RAM',
+      server_room: 'Phòng',
+      server_network: 'Mạng',
+      server_disk: 'Ổ đĩa',
+
+      site_nav: 'Trang web',
+      site_list_page: 'Danh sách trang web',
+      site_detail_page: 'Chi tiết trang web',
+      site_table_title: 'Các trang web',
+      site_detail_title: 'Chi tiết trang web',
+
+      product_nav: 'Sản phẩm',
+      product_list_page: 'Danh sách sản phẩm',
+      product_detail_page: 'Chi tiết sản phẩm',
+      product_new_button: 'Thêm sản phẩm mới',
+      product_table_title: 'Sản phẩm',
+      product_detail_title: 'Chi tiết sản phẩm',
+
+      blog_nav: 'Blog',
+      blog_list_page: 'Danh sách bài viết',
+      blog_detail_page: 'Chi tiết bài viết',
+      blog_new_button: 'Thêm bài viết mới',
+      blog_table_title: 'Các bài viết',
+      blog_detail_title: 'Chi tiết bài viết',
+
+      language_nav: 'Ngôn ngữ',
+      language_list_page: 'Danh sách ngôn ngữ',
+      language_table_title: 'Các ngôn ngữ',
+      language_detail_title: 'Chi tiết ngôn ngữ',
+      language_tab_all_label: 'Tất cả',
+      language_item_content: 'Nội dung',
+      language_item_code: 'Mã',
+      language_item_language: 'Ngôn ngữ',
+
       login_button: 'Đăng nhập',
       signup_button: 'Đăng ký',
       register_button: 'Đăng ký',
-      connect_server_button: 'Kết nối',
       logout_button: 'Đăng xuất',
       submit_button: 'Gửi',
       cancel_button: 'Hủy',
       save_button: 'Lưu',
       delete_button: 'Xóa',
       update_button: 'Cập nhật',
-      create_button: 'Tạo mới',
+      create_button: 'Tạo',
       detail_button: 'Chi tiết',
       save_changes_button: 'Lưu thay đổi',
-      need_help_button: 'Cần trợ giúp',
+      need_help_button: 'Cần giúp đỡ',
 
-      new_user_button: 'Người dùng mới',
-      new_site_button: 'Trang mới',
-      new_server_button: 'Máy chủ mới',
-      new_product_button: 'Sản phẩm mới',
-      new_blog_button: 'Blog mới',
-      //
-      dashboard_page: 'Trang Chủ',
-      server_list_page: 'Máy Chủ',
-      user_list_page: 'Người Dùng',
-      site_list_page: 'Website',
-      language_list_page: 'Ngôn Ngữ',
-      product_list_page: 'Sản Phẩm',
-      blog_list_page: 'Blog',
-
-      server_detail_page: 'Server Detail',
-      user_detail_page: 'User Detail',
-      site_detail_page: 'Site Detail',
-      product_detail_page: 'Product Detail',
-      blog_detail_page: 'Blog Detail',
-      // Menu
       home_menu: 'Trang chủ',
       profile_menu: 'Hồ sơ',
       settings_menu: 'Cài đặt',
 
-      // Table titles
-      language_table_title: 'Ngôn ngữ',
-      user_table_title: 'Người dùng',
-      site_table_title: 'Trang web',
-      server_table_title: 'Máy chủ',
-      product_table_title: 'Sản phẩm',
-      blog_table_title: 'Blog',
-
-      // Detail titles
-      language_detail_title: 'Ngôn ngữ',
-      user_detail_title: 'Người dùng',
-      site_detail_title: 'Trang web',
-      server_detail_title: 'Máy chủ',
-      product_detail_title: 'Sản phẩm',
-      blog_detail_title: 'Blog',
-
-      // Tabs
-      language_tab_all_label: 'Tất cả',
-      general_server_tab: 'General',
-      status_server_tab: 'Status',
-      setup_server_tab: 'Config Container',
-
-      // Items
-      language_item_content: 'Nội dung',
-      language_item_code: 'Mã',
-      language_item_language: 'Ngôn ngữ',
-
-      //
-      server_item_name: 'Máy Chủ',
-      server_item_host: 'Host',
-      server_item_port: 'Port',
-      server_item_user: 'Người dùng',
-      server_item_password: 'Mật Khẩu',
-
-      server_inactive_status: 'Đóng',
-      server_active_status: 'Mở',
-
-      server_used: 'Used',
-      server_available: 'Availble',
-      server_ram: 'Ram',
-      server_room: 'Room',
-      server_network: 'Network',
-      server_disk: 'Disk',
-
-      // Forms
       create_form_label: 'Thêm nhanh',
       update_form_label: 'Cập nhật nhanh',
       delete_form_label: 'Xóa nhanh',
-      delete_form_title: 'Bạn có chắc chắn muốn xóa không?',
+      delete_form_title: 'Bạn có chắc muốn xóa?',
+      search_item: 'Tìm kiếm',
 
-      // Sign-in
       signin_title: 'Đăng nhập',
       signin_item_email: 'Địa chỉ email',
       signin_item_password: 'Mật khẩu',
+      get_started: 'Bắt đầu',
+      no_account: 'Chưa có tài khoản?',
+      remember_me: 'Ghi nhớ',
+      allready_account: 'Đã có tài khoản?',
+      forgot_password: 'Quên mật khẩu?',
 
-      // Search and filter
-      search_item: 'Tìm kiếm',
-      filter_list_title: 'Lọc danh sách',
-
-      // Sign-up
-      signup_title: 'Đăng kí hoàn toàn miễn phí.',
+      signup_title: 'Bắt đầu hoàn toàn miễn phí.',
       signup_description: 'Miễn phí mãi mãi. Không cần thẻ tín dụng.',
-
       signup_item_user_name: 'Tên người dùng',
       signup_item_email: 'Địa chỉ email',
       signup_item_password: 'Mật khẩu',
+      agree_to: 'Bằng việc đăng ký, tôi đồng ý với Minimal',
+      terms_of_service: 'Điều khoản dịch vụ',
+      privacy_policy: 'Chính sách bảo mật',
 
-      // Notifications
+      filter_list_title: 'Lọc danh sách',
+      pagination_per_page: 'Dòng mỗi trang',
+
       notification_title: 'Thông báo',
       notification_view_all: 'Xem tất cả',
       notification_new: 'Mới',
-      notification_read_all: 'Đánh dấu đã đọc tất cả',
+      notification_read_all: 'Đánh dấu tất cả đã đọc',
       notification_before_that: 'Trước đó',
       notification_count: 'Bạn có {count} tin nhắn chưa đọc',
 
-      // Pagination
-      pagination_per_page: 'Số hàng mỗi trang',
-
-      // Common texts
-      get_started: 'Bắt đầu',
-      no_account: 'Chưa có tài khoản?',
-      or: 'HOẶC',
-      of: 'CỦA',
-      and: 'VÀ',
-      remember_me: 'Ghi nhớ đăng nhập',
-      agree_to: 'Khi đăng ký, tôi đồng ý với Minimal',
-      terms_of_service: 'Điều khoản dịch vụ',
-      privacy_policy: 'Chính sách bảo mật',
-      allready_account: 'Đã có tài khoản?',
-      forgot_password: 'Quên mật khẩu?',
-      setting_title: 'Cài đặt',
-
-      //
-      dark_mode_title: 'Dark Mode',
-      light_mode_title: 'Light Mode',
-      system_mode_title: 'System Mode',
-      //
-      // API notifications
       notify_changed_language: 'Ngôn ngữ đã được thay đổi!',
-      notify_success_api_call: 'Gọi API thành công!',
+      notify_success_api_call: 'Cuộc gọi API thành công!',
       notify_success_get_data: 'Lấy dữ liệu thành công!',
       notify_success_post_data: 'Yêu cầu hoàn tất thành công!',
       notify_success_update: 'Cập nhật dữ liệu thành công!',
-      notify_success_delete: 'Xóa dữ liệu thành công!',
-      notify_error_generic: 'Đã xảy ra lỗi khi lấy dữ liệu.',
+      notify_success_delete: 'Dữ liệu đã được xóa!',
+      notify_error_generic: 'Có lỗi xảy ra khi lấy dữ liệu.',
       notify_error_network: 'Lỗi mạng. Vui lòng kiểm tra kết nối của bạn.',
       notify_error_server:
-        'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.',
-      notify_error_no_results:
-        'Không tìm thấy kết quả nào theo yêu cầu của bạn.',
-      notify_error_invalid_data: 'Dữ liệu không hợp lệ từ máy chủ.',
+        'Không thể kết nối tới máy chủ. Vui lòng thử lại sau.',
+      notify_error_no_results: 'Không tìm thấy kết quả cho yêu cầu của bạn.',
+      notify_error_invalid_data: 'Dữ liệu không hợp lệ nhận được từ máy chủ.',
       notify_error_missing_data: 'Phản hồi thiếu thông tin cần thiết.',
-      notify_error_empty_response: 'Phản hồi trống. Vui lòng thử lại.',
+      notify_error_empty_response: 'Phản hồi rỗng. Vui lòng thử lại.',
+
+      or: 'HOẶC',
+      of: 'CỦA',
+      and: 'VÀ',
+      setting_title: 'Cài đặt',
+      dark_mode_title: 'Chế độ tối',
+      light_mode_title: 'Chế độ sáng',
+      system_mode_title: 'Chế độ hệ thống',
     },
   },
 ];
