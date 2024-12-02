@@ -37,6 +37,7 @@ export const languages = [
       server_room: 'Room',
       server_network: 'Network',
       server_disk: 'Disk',
+      information_title: 'Information',
 
       site_nav: 'Site',
       site_list_page: 'Site List',
@@ -111,6 +112,7 @@ export const languages = [
 
       filter_list_title: 'Filter list',
       pagination_per_page: 'Rows per page',
+      table_number_selected: '{count} selected',
 
       notification_title: 'Notifications',
       notification_view_all: 'View All',
@@ -182,6 +184,7 @@ export const languages = [
       server_room: 'Phòng',
       server_network: 'Mạng',
       server_disk: 'Ổ đĩa',
+      information_title: 'Thông Tin',
 
       site_nav: 'Trang web',
       site_list_page: 'Danh sách trang web',
@@ -256,6 +259,7 @@ export const languages = [
 
       filter_list_title: 'Lọc danh sách',
       pagination_per_page: 'Dòng mỗi trang',
+      table_number_selected: 'Đã chọn {count}',
 
       notification_title: 'Thông báo',
       notification_view_all: 'Xem tất cả',
