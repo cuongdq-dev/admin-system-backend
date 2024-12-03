@@ -39,6 +39,7 @@ export const languages = [
       server_network: 'Network',
       server_disk: 'Disk',
       information_title: 'Information',
+      all_service: 'All Services',
 
       site_nav: 'Site',
       site_list_page: 'Site List',
@@ -187,6 +188,7 @@ export const languages = [
       server_network: 'Mạng',
       server_disk: 'Ổ đĩa',
       information_title: 'Thông Tin',
+      all_service: 'All Services',
 
       site_nav: 'Trang web',
       site_list_page: 'Danh sách trang web',
