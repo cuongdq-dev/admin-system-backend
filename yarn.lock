@@ -7158,6 +7158,11 @@ nestjs-paginate@^8.6.2:
   dependencies:
     lodash "^4.17.21"
 
+nestjs-request-context@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/nestjs-request-context/-/nestjs-request-context-3.0.0.tgz#a6a709a2c9d2847ac3d5fd21ca00a7551a56fd69"
+  integrity sha512-S7MvH/ouOnaVEzHQxplGnPXNcOsp0FfMQSm6wFzsrMF4P5Ca3Okz0dgZpg4Gul7D4w2NhC8fFPsr/1i/3gFkfQ==
+
 nice-try@^1.0.4:
   version "1.0.5"
   resolved "https://registry.npmjs.org/nice-try/-/nice-try-1.0.5.tgz"

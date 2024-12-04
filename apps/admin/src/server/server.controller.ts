@@ -63,6 +63,7 @@ export class ServerController {
   }
 
   @Post('/create')
+  @SetMetadata('entity', ServerEntity)
   @ApiBody({
     type: PickType(ServerEntity, ['name', 'host', 'port', 'user', 'password']),
   })
@@ -106,5 +107,15 @@ export class ServerController {
     @UserParam() user: User,
   ) {
     return this.serverService.deleteServer(server, user);
+  }
+
+  @Get('/service/:serviceId/:connectionId')
+  partialGetService(
+    @Param() params: { serviceId: string; connectionId: string },
+  ) {
+    return this.serverService.getServiceInfo(
+      params.serviceId,
+      params.connectionId,
+    );
   }
 }

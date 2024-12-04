@@ -1,8 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { ValidationGroup } from 'common/crud/validation-group';
-import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  Relation,
+} from 'typeorm';
 import { BaseEntity } from './base';
+import { ServerService } from './service_service.entity';
 import { User } from './user.entity';
 
 @Entity({ name: 'servers' })
@@ -39,11 +47,9 @@ export class Server extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   password: string;
 
-  // @ApiHideProperty()
   @Column({ type: 'boolean', default: false })
   is_active: boolean;
 
-  // @ApiHideProperty()
   @Column({ type: 'boolean', default: false })
   is_connected: boolean;
 
@@ -54,4 +60,9 @@ export class Server extends BaseEntity {
   @ApiProperty()
   @Column({ type: 'uuid' })
   owner_id: string;
+
+  @OneToMany(() => ServerService, (serverService) => serverService.server, {
+    cascade: true,
+  })
+  server_services: ServerService[];
 }

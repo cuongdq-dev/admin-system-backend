@@ -13,7 +13,6 @@ export const languages = [
       user_detail_page: 'User Detail',
       user_table_title: 'Users',
       user_detail_title: 'User Detail',
-
       server_nav: 'Server',
       server_new_button: 'New Server',
       connect_server_button: 'Connect Server',
