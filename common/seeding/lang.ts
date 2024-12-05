@@ -39,6 +39,8 @@ export const languages = [
       server_disk: 'Disk',
       information_title: 'Information',
       all_service: 'All Services',
+      docker_containers: 'Containers Docker',
+      docker_images: 'Images Docker',
 
       site_nav: 'Site',
       site_list_page: 'Site List',
@@ -145,6 +147,20 @@ export const languages = [
       dark_mode_title: 'Dark Mode',
       light_mode_title: 'Light Mode',
       system_mode_title: 'System Mode',
+
+      docker_container_id_item: 'Id',
+      docker_container_name_item: 'Name',
+      docker_container_status_item: 'Status',
+      docker_container_images_item: 'Image',
+
+      docker_image_id_item: 'Id',
+      docker_image_name_item: 'Name',
+      docker_image_status_item: 'Status',
+      docker_image_tag_item: 'Tag',
+      docker_image_created_item: 'Created',
+      docker_image_size_item: 'Size',
+      docker_image_run: 'Run',
+      docker_image_stop: 'Stop',
     },
   },
   {
@@ -188,6 +204,8 @@ export const languages = [
       server_disk: 'Ổ đĩa',
       information_title: 'Thông Tin',
       all_service: 'All Services',
+      docker_containers: 'Containers Docker',
+      docker_images: 'Images Docker',
 
       site_nav: 'Trang web',
       site_list_page: 'Danh sách trang web',
@@ -293,6 +311,20 @@ export const languages = [
       dark_mode_title: 'Chế độ tối',
       light_mode_title: 'Chế độ sáng',
       system_mode_title: 'Chế độ hệ thống',
+
+      docker_container_id_item: 'Id',
+      docker_container_name_item: 'Name',
+      docker_container_status_item: 'Status',
+      docker_container_images_item: 'Image',
+
+      docker_image_id_item: 'Id',
+      docker_image_name_item: 'Name',
+      docker_image_status_item: 'Status',
+      docker_image_tag_item: 'Tag',
+      docker_image_created_item: 'Created',
+      docker_image_size_item: 'Size',
+      docker_image_run: 'Run',
+      docker_image_Stop: 'Stop',
     },
   },
 ];

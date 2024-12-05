@@ -4,6 +4,7 @@ import { Server } from 'common/entities/server.entity';
 import { Service } from 'common/entities/service.entity';
 import { ServerService as ServerServiceEntity } from 'common/entities/service_service.entity';
 import { User } from 'common/entities/user.entity';
+import { callApi } from 'common/utils/call-api';
 import { ServiceStatusEnum } from 'common/utils/enum';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
@@ -111,26 +112,59 @@ export class ServerService {
     const result = await this.serverRepository.softDelete({ id: server.id });
     return result;
   }
+
+  //
   async getServiceInfo(id: string, connectionId: string) {
     const service = await this.serverServiceRepository.findOne({
       where: { id: id },
       relations: ['service'],
     });
-    return await fetch(
+    return await callApi(
       process.env.SERVER_API + '/server/service/' + connectionId,
+      'POST',
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          service: service.service.name.toLocaleLowerCase(),
-        }),
+        service: service.service.name.toLocaleLowerCase(),
       },
-    )
-      .then((res) => res.text())
-      .then((result) => {
-        console.log(result);
-        return result;
-      })
-      .catch((error) => console.error(error));
+    );
+  }
+
+  async getDockerContainers(connectionId: string) {
+    const container = await callApi(
+      process.env.SERVER_API + '/docker/containers/' + connectionId,
+      'GET',
+    );
+
+    return { data: container, meta: undefined };
+  }
+
+  async getDockerImages(connectionId: string) {
+    const container = await callApi(
+      process.env.SERVER_API + '/docker/images/' + connectionId,
+      'GET',
+    );
+
+    return { data: container, meta: undefined };
+  }
+
+  async runDockerImage(
+    connectionId: string,
+    imageName: string,
+    containerName?: string,
+  ) {
+    const url =
+      process.env.SERVER_API + '/docker/image/' + connectionId + '/run';
+    const body = { imageName, containerName };
+    return await callApi(url, 'POST', body);
+  }
+
+  async deleteDockerImage(connectionId: string, imageName: string) {
+    const url =
+      process.env.SERVER_API +
+      '/docker/image/' +
+      connectionId +
+      '/' +
+      imageName;
+
+    return await callApi(url, 'DELETE');
   }
 }

@@ -118,4 +118,35 @@ export class ServerController {
       params.connectionId,
     );
   }
+
+  @Get('/docker/:connectionId/containers/list')
+  getDockerContainers(@Param() params: { connectionId: string }) {
+    return this.serverService.getDockerContainers(params.connectionId);
+  }
+
+  @Get('/docker/:connectionId/images/list')
+  getDockerImages(@Param() params: { connectionId: string }) {
+    return this.serverService.getDockerImages(params.connectionId);
+  }
+
+  @Post('/docker/image/:connectionId/run')
+  runDockerImages(
+    @Param('connectionId') connectionId: string,
+    @Body('imageName') imageName: string,
+    @Body('containerName') containerName?: string,
+  ) {
+    return this.serverService.runDockerImage(
+      connectionId,
+      imageName,
+      containerName,
+    );
+  }
+
+  @Delete('/docker/image/:connectionId/:imageName')
+  deleteDockerImage(
+    @Param('connectionId') connectionId: string,
+    @Param('imageName') imageName: string,
+  ) {
+    return this.serverService.deleteDockerImage(connectionId, imageName);
+  }
 }
