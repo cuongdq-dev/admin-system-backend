@@ -18,7 +18,9 @@ export class OwnershipGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user.user;
     const entityId = request.params.id;
+
     const entity = this.reflector.get('entity', context.getHandler());
+    const owner_key = this.reflector.get('owner_key', context.getHandler());
     const repository = this.dataSource.getRepository(entity);
 
     return repository
@@ -30,8 +32,7 @@ export class OwnershipGuard implements CanActivate {
           );
         }
 
-        // Kiểm tra quyền sở hữu
-        if (entityInstance['owner_id'] !== user.id) {
+        if (entityInstance[owner_key || 'owner_id'] !== user.id) {
           throw new ForbiddenException(
             'You do not have permission to update this resource.',
           );

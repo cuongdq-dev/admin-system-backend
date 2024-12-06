@@ -10,6 +10,7 @@ import {
   Relation,
 } from 'typeorm';
 import { BaseEntity } from './base';
+import { Repository } from './repository.entity';
 import { ServerService } from './service_service.entity';
 import { User } from './user.entity';
 
@@ -65,4 +66,9 @@ export class Server extends BaseEntity {
     cascade: true,
   })
   server_services: ServerService[];
+
+  @OneToMany(() => Repository, (repository) => repository.server, {
+    cascade: true,
+  })
+  repositories: Repository[];
 }

@@ -13,6 +13,7 @@ import { Post } from './post.entity';
 import { Product } from './product.entity';
 import { ProductVariant } from './product_variant.entity';
 import { ProductVariantMedia } from './product_variant_media.entity';
+import { Repository } from './repository.entity';
 import { Server } from './server.entity';
 import { Service } from './service.entity';
 import { ServerService } from './service_service.entity';
@@ -40,6 +41,7 @@ export const loadEntities = [
   Lang,
   Server,
   Service,
+  Repository,
   ServerService,
   LangContent,
 ];

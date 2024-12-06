@@ -17,6 +17,7 @@ import { Exclude } from 'class-transformer';
 import type { Media } from './media.entity';
 import type { Session } from './user_session.entity';
 import type { Post } from './post.entity';
+import { Server } from './server.entity';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -61,6 +62,9 @@ export class User extends BaseEntity {
   @ApiHideProperty()
   @OneToMany('Post', 'user')
   posts: Relation<Post[]>;
+
+  @OneToMany('Server', 'user')
+  servers: Relation<Server[]>;
 
   @AfterLoad()
   storePasswordInCache() {
