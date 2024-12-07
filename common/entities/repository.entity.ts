@@ -1,17 +1,8 @@
+import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
-import { ValidationGroup } from 'common/crud/validation-group';
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  Relation,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
 import { BaseEntity } from './base';
-import { ServerService } from './service_service.entity';
-import { User } from './user.entity';
 import { Server } from './server.entity';
 
 @Entity({ name: 'repositories' })

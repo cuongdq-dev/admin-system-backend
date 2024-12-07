@@ -5,11 +5,11 @@ import {
   VersioningType,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Reflector } from '@nestjs/core';
-import validationOptions from './validation-options';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as morgan from 'morgan';
 import { SerializerInterceptor } from './serializer.interceptor';
+import validationOptions from './validation-options';
 
 export const documentationBuilder = (
   app: INestApplication,

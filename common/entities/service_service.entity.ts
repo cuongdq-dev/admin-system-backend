@@ -1,16 +1,9 @@
+import { ServiceStatusEnum as StatusEnum } from '@app/utils';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  JoinColumn,
-  Relation,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
+import { BaseEntity } from './base';
 import { Server } from './server.entity';
 import { Service } from './service.entity';
-import { ServiceStatusEnum as StatusEnum } from 'common/utils/enum';
-import { BaseEntity } from './base';
 
 @Entity({ name: 'server_services' })
 export class ServerService extends BaseEntity {

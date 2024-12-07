@@ -1,9 +1,9 @@
+import { User } from '@app/entities';
+import { MailData } from '@app/modules';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { User } from 'common/entities/user.entity';
-import { MailData } from 'common/modules/mail/mail.interface';
 import { SessionService } from '../session/session.service';
 
 @Injectable()

@@ -1,8 +1,7 @@
+import { Session, User } from '@app/entities';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Session } from 'common/entities/user_session.entity';
-import { User } from 'common/entities/user.entity';
 
 @Injectable()
 export class SessionService {

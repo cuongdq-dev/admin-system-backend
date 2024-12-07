@@ -1,4 +1,4 @@
-import { LangContent } from 'common/entities/lang_content.entity';
+import { LangContent } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const i18nPaginateConfig: PaginateConfig<LangContent> = {

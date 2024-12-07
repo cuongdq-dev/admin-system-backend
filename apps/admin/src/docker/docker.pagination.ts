@@ -1,4 +1,4 @@
-import { Server } from 'common/entities/server.entity';
+import { Server } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const dockerPaginateConfig: PaginateConfig<Server> = {

@@ -1,8 +1,6 @@
+import { Repository as RepositoryEntity, Server, User } from '@app/entities';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository as RepositoryEntity } from 'common/entities/repository.entity';
-import { Server } from 'common/entities/server.entity';
-import { User } from 'common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateRepositoryDto, UpdateRepositoryDto } from './repository.dto';
 @Injectable()

@@ -1,11 +1,11 @@
-import { Media, StorageType } from 'common/entities/media.entity';
-import { MediaServiceContract, S3File } from './media.interface';
-import { Repository } from 'typeorm';
-import { Logger } from '@nestjs/common';
+import { Media, StorageType } from '@app/entities';
 import { S3 } from '@aws-sdk/client-s3';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { Readable } from 'stream';
+import { Repository } from 'typeorm';
+import { MediaServiceContract, S3File } from './media.interface';
 
 export class S3Service implements MediaServiceContract {
   storageType = StorageType.S3;

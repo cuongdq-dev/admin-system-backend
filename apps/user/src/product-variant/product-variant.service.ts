@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { productVariantPaginateConfig } from './product-variant.pagination';
-import { ProductVariant } from 'common/entities/product_variant.entity';
+import { ProductVariant } from '@app/entities';
 
 @Injectable()
 export class ProductVariantService {

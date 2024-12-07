@@ -1,3 +1,5 @@
+import { SessionParam } from '@app/decorators';
+import { CustomerSession } from '@app/entities';
 import {
   Controller,
   HttpCode,
@@ -5,12 +7,10 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthService } from './auth.service';
-import { CustomerSession } from 'common/entities/customer_session.entity';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SessionService } from '../session/session.service';
-import { SessionParam } from 'common/decorators/session.decorator';
+import { AuthService } from './auth.service';
 
 @ApiTags('Auth')
 @ApiBearerAuth()

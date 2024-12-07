@@ -1,10 +1,10 @@
 import { Controller, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Address } from 'common/entities/address.entity';
 import { AddressService } from './address.service';
 import { AuthGuard } from '@nestjs/passport';
-import { ControllerFactory } from 'common/crud/crud.controller';
 import { addressPaginateConfig } from './address.pagination';
+import { Address } from '@app/entities';
+import { ControllerFactory } from '@app/crud/crud.controller';
 
 @ApiTags('Address')
 @Controller({

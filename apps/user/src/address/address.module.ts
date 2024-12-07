@@ -1,8 +1,8 @@
+import { Address } from '@app/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AddressService } from './address.service';
 import { AddressController } from './address.controller';
-import { Address } from 'common/entities/address.entity';
+import { AddressService } from './address.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Address])],

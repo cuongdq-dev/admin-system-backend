@@ -1,3 +1,9 @@
+import { ValidationGroup } from '@app/crud/validation-group';
+import { UserParam } from '@app/decorators';
+import { Repository, Server as ServerEntity, User } from '@app/entities';
+import { OwnershipGuard } from '@app/guard';
+import { IsIDExistPipe } from '@app/pipes';
+import validationOptions from '@app/utils/validation-options';
 import {
   Body,
   Controller,
@@ -21,14 +27,6 @@ import {
   ApiTags,
   PickType,
 } from '@nestjs/swagger';
-import { ValidationGroup } from 'common/crud/validation-group';
-import { UserParam } from 'common/decorators/user.decorator';
-import { Repository } from 'common/entities/repository.entity';
-import { Server as ServerEntity } from 'common/entities/server.entity';
-import { User } from 'common/entities/user.entity';
-import { OwnershipGuard } from 'common/guard/ownership.guard';
-import { IsIDExistPipe } from 'common/pipes/IsIDExist.pipe';
-import validationOptions from 'common/utils/validation-options';
 import { CreateRepositoryDto } from './repository.dto';
 import { RepositoryService } from './repository.service';
 

@@ -1,14 +1,14 @@
+import { StorageType } from '@app/entities';
+import { S3Client } from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
+import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { ConfigService } from '@nestjs/config';
 import {
   MulterModuleOptions,
   MulterOptionsFactory,
 } from '@nestjs/platform-express';
-import { S3Client } from '@aws-sdk/client-s3';
 import * as multerS3 from 'multer-s3';
-import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import * as path from 'path';
-import { StorageType } from 'common/entities/media.entity';
 
 @Injectable()
 export class MulterConfigService implements MulterOptionsFactory {

@@ -1,7 +1,6 @@
+import { Post, User } from '@app/entities';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Post } from 'common/entities/post.entity';
-import { User } from 'common/entities/user.entity';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { postPaginateConfig } from './post.pagination';

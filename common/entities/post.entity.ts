@@ -1,9 +1,9 @@
-import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
+import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
 import { BaseEntity } from './base';
 import type { User } from './user.entity';
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
-import { ValidationGroup } from 'common/crud/validation-group';
 
 @Entity({ name: 'posts' })
 export class Post extends BaseEntity {

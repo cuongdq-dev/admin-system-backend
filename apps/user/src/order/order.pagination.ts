@@ -1,4 +1,4 @@
-import { Order } from 'common/entities/order.entity';
+import { Order } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const orderPaginateConfig: PaginateConfig<Order> = {

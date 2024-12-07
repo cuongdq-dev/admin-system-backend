@@ -1,7 +1,6 @@
+import { Repository, Server } from '@app/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Repository } from 'common/entities/repository.entity';
-import { Server } from 'common/entities/server.entity';
 import { RepositoryController } from './repository.controller';
 import { RepositoryService } from './repository.service';
 

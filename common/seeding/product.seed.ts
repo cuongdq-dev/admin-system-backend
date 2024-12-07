@@ -1,7 +1,6 @@
+import { Product, ProductVariant } from '@app/entities';
 import { faker } from '@faker-js/faker';
-import { loadEntities } from 'common/entities';
-import { Product } from 'common/entities/product.entity';
-import { ProductVariant } from 'common/entities/product_variant.entity';
+import { loadEntities } from '@app/entities';
 import dataSource from 'ormconfig';
 
 async function create() {

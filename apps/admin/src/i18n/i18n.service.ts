@@ -1,12 +1,10 @@
+import { Lang, LangContent, User } from '@app/entities';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Lang } from 'common/entities/lang.entity';
-import { LangContent } from 'common/entities/lang_content.entity';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { I18nUpdateDto } from './i18n.dto';
 import { i18nPaginateConfig } from './i18n.pagination';
-import { User } from 'common/entities/user.entity';
 
 @Injectable()
 export class I18nService {

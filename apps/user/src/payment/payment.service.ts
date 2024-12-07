@@ -1,17 +1,16 @@
+import { Address, Customer, Payment } from '@app/entities';
+import { PaymentStatus } from '@app/entities/payment.entity';
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Payment, PaymentStatus } from 'common/entities/payment.entity';
+import { plainToClass } from 'class-transformer';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
-import { paymentPaginateConfig } from './payment.pagination';
+import { AddressService } from '../address/address.service';
 import { CartService } from '../cart/cart.service';
 import { OrderService } from '../order/order.service';
-import { CreatePaymentDto } from './dto/create-payment.dto';
-import { Customer } from 'common/entities/customer.entity';
-import { AddressService } from '../address/address.service';
-import { Address } from 'common/entities/address.entity';
-import { plainToClass } from 'class-transformer';
 import { StripeService } from '../stripe/stripe.service';
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { paymentPaginateConfig } from './payment.pagination';
 
 @Injectable()
 export class PaymentService {

@@ -1,15 +1,15 @@
+import { Customer } from '@app/entities';
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { TokenModule } from '../token/token.module';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { SessionModule } from '../session/session.module';
-import { RefreshJwtStrategy } from './strategies/refresh.strategy';
-import { AuthController } from './auth.controller';
-import { Customer } from 'common/entities/customer.entity';
+import { JwtModule } from '@nestjs/jwt';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomerModule } from '../customer/customer.module';
+import { SessionModule } from '../session/session.module';
+import { TokenModule } from '../token/token.module';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { RefreshJwtStrategy } from './strategies/refresh.strategy';
 
 @Module({
   imports: [

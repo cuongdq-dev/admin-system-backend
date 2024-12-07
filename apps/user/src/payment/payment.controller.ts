@@ -1,12 +1,12 @@
+import { UserParam } from '@app/decorators';
+import { Customer } from '@app/entities';
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
-import { PaymentService } from './payment.service';
-import { paymentPaginateConfig } from './payment.pagination';
-import { AuthGuard } from '@nestjs/passport';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-import { UserParam } from 'common/decorators/user.decorator';
-import { Customer } from 'common/entities/customer.entity';
+import { paymentPaginateConfig } from './payment.pagination';
+import { PaymentService } from './payment.service';
 
 @ApiTags('Payment')
 @Controller({

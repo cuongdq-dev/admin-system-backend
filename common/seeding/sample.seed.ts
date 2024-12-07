@@ -1,9 +1,4 @@
-import { loadEntities } from 'common/entities';
-import { Lang } from 'common/entities/lang.entity';
-import { LangContent } from 'common/entities/lang_content.entity';
-import { Server } from 'common/entities/server.entity';
-import { Service } from 'common/entities/service.entity';
-import { User } from 'common/entities/user.entity';
+import { Lang, LangContent, loadEntities, Service, User } from '@app/entities';
 import dataSource from 'ormconfig';
 import { languages } from './lang';
 

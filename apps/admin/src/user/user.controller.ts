@@ -1,3 +1,4 @@
+import { User } from '@app/entities';
 import {
   Body,
   Controller,
@@ -8,6 +9,8 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiConsumes,
@@ -15,12 +18,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { UserService } from './user.service';
-import { AuthGuard } from '@nestjs/passport';
-import { UserParam } from '../../../../common/decorators/user.decorator';
-import { User } from 'common/entities/user.entity';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { UserParam } from '../../../../common/decorators/src/user.decorator';
 import { UserUpdateDto } from './user.dto';
+import { UserService } from './user.service';
 
 @ApiTags('User')
 @ApiBearerAuth()

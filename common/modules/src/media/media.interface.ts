@@ -1,5 +1,5 @@
+import { Media } from '@app/entities';
 import { Response } from 'express';
-import { Media } from 'common/entities/media.entity';
 
 export interface MediaServiceContract {
   get: (media: Media, res: Response, range?: string) => Promise<void>;

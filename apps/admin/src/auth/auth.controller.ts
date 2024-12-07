@@ -8,9 +8,9 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { Session } from 'common/entities/user_session.entity';
 import { SessionService } from '../session/session.service';
-import { SessionParam } from 'common/decorators/session.decorator';
+import { SessionParam } from '@app/decorators';
+import { Session } from '@app/entities';
 
 @ApiTags('Auth')
 @ApiBearerAuth()

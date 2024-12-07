@@ -18,12 +18,34 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@app/util": [
-        "libs/util/src"
-      ],
-      "@app/util/*": [
-        "libs/util/src/*"
-      ]
+      "@app/config": ["common/config/src"],
+      "@app/config/*": ["common/config/src/*"],
+
+      "@app/crud": ["common/crud/src"],
+      "@app/crud/*": ["common/crud/src/*"],
+
+      "@app/decorators": ["common/decorators/src"],
+      "@app/decorators/*": ["common/decorators/src/*"],
+
+      "@app/entities": ["common/entities"],
+      "@app/entities/*": ["common/entities/*"],
+
+      "@app/guard": ["common/guard"],
+      "@app/guard/*": ["common/guard/*"],
+
+      "@app/modules": ["common/modules/src"],
+      "@app/modules/*": ["common/modules/src/*"],
+
+      "@app/pagination": ["common/pagination/src"],
+      "@app/pagination/*": ["common/pagination/src/*"],
+
+      "@app/pipes": ["common/pipes/src"],
+      "@app/pipes/*": ["common/pipes/src/*"],
+
+      "@app/utils": ["common/utils/src"],
+      "@app/utils/*": ["common/utils/src/*"]
     }
-  }
+  },
+  "include": ["apps/**/*", "common/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }

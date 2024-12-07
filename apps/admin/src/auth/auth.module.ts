@@ -4,7 +4,6 @@ import { EmailService } from '../auth-email/email.service';
 import { AuthService } from './auth.service';
 import { UserModule } from '../user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'common/entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { TokenModule } from '../token/token.module';
@@ -12,6 +11,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { SessionModule } from '../session/session.module';
 import { RefreshJwtStrategy } from './strategies/refresh.strategy';
 import { AuthController } from './auth.controller';
+import { User } from '@app/entities';
 
 @Module({
   imports: [

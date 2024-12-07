@@ -1,7 +1,6 @@
+import { Token, UserTokenType, User } from '@app/entities';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'common/entities/user.entity';
-import { Token, TokenType } from 'common/entities/user_token.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -13,22 +12,22 @@ export class TokenService {
 
   async create(
     user: User,
-    type: keyof typeof TokenType = 'REGISTER_VERIFY',
+    type: keyof typeof UserTokenType = 'REGISTER_VERIFY',
     expires_at: Date = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
   ) {
     const token = Token.create({
       user_id: user.id,
-      type: TokenType[type],
+      type: UserTokenType[type],
       expires_at,
     });
     return this.tokenRepository.save(token);
   }
 
-  async verify(token: string, type: keyof typeof TokenType) {
+  async verify(token: string, type: keyof typeof UserTokenType) {
     const tokenEntity = await this.tokenRepository.findOne({
       relations: ['user'],
       loadEagerRelations: true,
-      where: { token, type: TokenType[type], is_used: false },
+      where: { token, type: UserTokenType[type], is_used: false },
     });
     if (!tokenEntity) {
       throw new Error('Token not found');

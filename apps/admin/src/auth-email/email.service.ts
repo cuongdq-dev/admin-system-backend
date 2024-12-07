@@ -1,6 +1,5 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { AuthService } from '../auth/auth.service';
 import { TokenService } from '../token/token.service';
@@ -10,6 +9,7 @@ import {
   ResetPasswordDto,
   SendVerifyMailDto,
 } from './email.dto';
+import { User } from '@app/entities';
 
 @Injectable()
 export class EmailService {

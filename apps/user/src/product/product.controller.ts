@@ -3,8 +3,8 @@ import { ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
 import { productPaginateConfig } from './product.pagination';
 import { ProductService } from './product.service';
-import { IsIDExistPipe } from 'common/pipes/IsIDExist.pipe';
-import { Product } from 'common/entities/product.entity';
+import { IsIDExistPipe } from '@app/pipes';
+import { Product } from '@app/entities';
 
 @ApiTags('Product')
 @Controller({

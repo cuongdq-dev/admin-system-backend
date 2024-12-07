@@ -1,10 +1,10 @@
+import { Customer } from '@app/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GoogleController } from './google.controller';
-import { GoogleService } from './google.service';
 import { AuthModule } from '../auth/auth.module';
 import { CustomerModule } from '../customer/customer.module';
-import { Customer } from 'common/entities/customer.entity';
+import { GoogleController } from './google.controller';
+import { GoogleService } from './google.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Customer]), CustomerModule, AuthModule],

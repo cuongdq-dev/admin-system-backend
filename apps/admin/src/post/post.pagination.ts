@@ -1,4 +1,4 @@
-import { Post } from 'common/entities/post.entity';
+import { Post } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const postPaginateConfig: PaginateConfig<Post> = {

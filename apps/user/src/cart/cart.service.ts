@@ -1,3 +1,4 @@
+import { Cart, CartItem, Customer } from '@app/entities';
 import {
   Injectable,
   NotFoundException,
@@ -5,9 +6,6 @@ import {
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { Cart } from 'common/entities/cart.entity';
-import { Customer } from 'common/entities/customer.entity';
-import { CartItem } from 'common/entities/cart_item.entity';
 import { ProductVariantService } from '../product-variant/product-variant.service';
 
 @Injectable()

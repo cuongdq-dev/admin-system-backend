@@ -1,9 +1,9 @@
-import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
+import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
 import { BaseEntity } from './base';
 import type { Customer } from './customer.entity';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
-import { ValidationGroup } from 'common/crud/validation-group';
 
 @Entity({ name: 'addresses' })
 export class Address extends BaseEntity {

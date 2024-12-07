@@ -1,11 +1,12 @@
+import {
+  Server,
+  ServerService as ServerServiceEntity,
+  Service,
+  User,
+} from '@app/entities';
+import { callApi, ServiceStatusEnum } from '@app/utils';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Server } from 'common/entities/server.entity';
-import { Service } from 'common/entities/service.entity';
-import { ServerService as ServerServiceEntity } from 'common/entities/service_service.entity';
-import { User } from 'common/entities/user.entity';
-import { callApi } from 'common/utils/call-api';
-import { ServiceStatusEnum } from 'common/utils/enum';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { ServerCreateDto, ServerUpdateDto } from './server.dto';
@@ -23,6 +24,7 @@ export class ServerService {
 
   // API SERVER
   async getListServer(query: PaginateQuery, user: User) {
+    console.log(query);
     const list = await paginate(
       { ...query, filter: { ...query.filter } },
       this.serverRepository,
@@ -164,6 +166,12 @@ export class ServerService {
   }
 
   // CALL TO API SERVER CONTROL
+
+  async getServerStatus(connectionId: string) {
+    const url = process.env.SERVER_API + '/server/service/' + connectionId;
+    return await callApi(url, 'POST');
+  }
+
   async getServiceInfo(id: string, connectionId: string) {
     const service = await this.serverServiceRepository.findOne({
       where: { id: id },

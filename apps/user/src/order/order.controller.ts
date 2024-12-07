@@ -1,3 +1,6 @@
+import { UserParam } from '@app/decorators';
+import { Customer, Order } from '@app/entities';
+import { IsIDExistPipe } from '@app/pipes';
 import {
   Controller,
   Get,
@@ -5,15 +8,11 @@ import {
   ParseUUIDPipe,
   UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
-import { IsIDExistPipe } from 'common/pipes/IsIDExist.pipe';
-import { OrderService } from './order.service';
 import { orderPaginateConfig } from './order.pagination';
-import { Order } from 'common/entities/order.entity';
-import { AuthGuard } from '@nestjs/passport';
-import { UserParam } from 'common/decorators/user.decorator';
-import { Customer } from 'common/entities/customer.entity';
+import { OrderService } from './order.service';
 
 @ApiTags('Order')
 @Controller({
@@ -41,13 +40,7 @@ export class OrderController {
     name: 'id',
   })
   async getOne(
-    @Param(
-      'id',
-      ParseUUIDPipe,
-      IsIDExistPipe({
-        entity: Order,
-      }),
-    )
+    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: Order }))
     order: Order,
   ) {
     return order;

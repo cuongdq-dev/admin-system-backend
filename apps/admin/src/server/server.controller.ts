@@ -1,3 +1,8 @@
+import { ValidationGroup } from '@app/crud/validation-group';
+import { UserParam } from '@app/decorators';
+import { Server as ServerEntity, User } from '@app/entities';
+import { OwnershipGuard } from '@app/guard';
+import { IsIDExistPipe } from '@app/pipes';
 import {
   Body,
   Controller,
@@ -21,18 +26,11 @@ import {
   ApiTags,
   PickType,
 } from '@nestjs/swagger';
-import { ValidationGroup } from 'common/crud/validation-group';
-import { UserParam } from 'common/decorators/user.decorator';
-import { Repository } from 'common/entities/repository.entity';
-import { Server as ServerEntity } from 'common/entities/server.entity';
-import { User } from 'common/entities/user.entity';
-import { OwnershipGuard } from 'common/guard/ownership.guard';
-import { IsIDExistPipe } from 'common/pipes/IsIDExist.pipe';
-import validationOptions from 'common/utils/validation-options';
 import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
-import { ServerCreateDto, CreateRepositoryDto } from './server.dto';
+import { ServerCreateDto } from './server.dto';
 import { serverPaginateConfig } from './server.pagination';
 import { ServerService } from './server.service';
+import validationOptions from '@app/utils/validation-options';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
@@ -56,6 +54,7 @@ export class ServerController {
 
   @Get('/list')
   @ApiOperation({ summary: 'get list server' })
+  @SetMetadata('entity', ServerEntity)
   @UseGuards(OwnershipGuard)
   @ApiPaginationQuery({ ...serverPaginateConfig })
   getListServer(
@@ -133,5 +132,12 @@ export class ServerController {
       params.serviceId,
       params.connectionId,
     );
+  }
+
+  @Get('/status/:connectionId')
+  getServerStatus(
+    @Param() params: { serviceId: string; connectionId: string },
+  ) {
+    return this.serverService.getServerStatus(params.connectionId);
   }
 }

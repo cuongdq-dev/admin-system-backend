@@ -1,10 +1,10 @@
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { AdminModule } from './app.module';
 import {
   createApplication,
   documentationBuilder,
-} from '../../../common/utils/bootstrap';
-import { ConfigService } from '@nestjs/config';
+} from '../../../common/utils/src/bootstrap';
+import { AdminModule } from './app.module';
 
 async function bootstrap() {
   // Admin Module Setup

@@ -1,8 +1,15 @@
+import { Customer } from '@app/entities';
+import { AuthProvider } from '@app/entities/customer.entity';
 import {
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AuthService } from '../auth/auth.service';
+import { CustomerService } from '../customer/customer.service';
+import { TokenService } from '../token/token.service';
 import {
   EmailVerifyDto,
   LoginDto,
@@ -10,12 +17,6 @@ import {
   ResetPasswordDto,
   SendVerifyMailDto,
 } from './email.dto';
-import { CustomerService } from '../customer/customer.service';
-import { TokenService } from '../token/token.service';
-import { InjectRepository } from '@nestjs/typeorm';
-import { AuthProvider, Customer } from 'common/entities/customer.entity';
-import { Repository } from 'typeorm';
-import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class EmailService {

@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/user/src",
+  "sourceRoot": "apps/admin-system/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
     "tsConfigPath": "apps/user/tsconfig.app.json"
   },
   "monorepo": true,
-  "root": "apps/user",
+  "root": "apps/admin-system",
   "projects": {
     "user": {
       "type": "application",
@@ -28,13 +28,97 @@
         "tsConfigPath": "apps/admin/tsconfig.app.json"
       }
     },
-    "util": {
-      "type": "library",
-      "root": "libs/util",
-      "entryFile": "index",
-      "sourceRoot": "libs/util/src",
+
+    "socket": {
+      "type": "application",
+      "root": "apps/socket",
+      "entryFile": "main",
+      "sourceRoot": "apps/socket/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/util/tsconfig.lib.json"
+        "tsConfigPath": "apps/socket/tsconfig.app.json"
+      }
+    },
+    "config": {
+      "type": "library",
+      "root": "common/config",
+      "entryFile": "index",
+      "sourceRoot": "common/config/src",
+      "compilerOptions": {
+        "tsConfigPath": "common/config/tsconfig.common.json"
+      }
+    },
+    "crud": {
+      "type": "library",
+      "root": "common/crud",
+      "entryFile": "index",
+      "sourceRoot": "common/crud/src",
+      "compilerOptions": {
+        "tsConfigPath": "common/curd/tsconfig.common.json"
+      }
+    },
+    "decorators": {
+      "type": "library",
+      "root": "common/decorators",
+      "entryFile": "index",
+      "sourceRoot": "common/decorators/src",
+      "compilerOptions": {
+        "tsConfigPath": "common/decorators/tsconfig.common.json"
+      }
+    },
+    "entities": {
+      "type": "library",
+      "root": "common/entities",
+      "entryFile": "index",
+      "sourceRoot": "common/entities",
+      "compilerOptions": {
+        "tsConfigPath": "common/entities/tsconfig.common.json"
+      }
+    },
+
+    "guard": {
+      "type": "library",
+      "root": "common/guard",
+      "entryFile": "index",
+      "sourceRoot": "common/guard",
+      "compilerOptions": {
+        "tsConfigPath": "common/guard/tsconfig.common.json"
+      }
+    },
+    "modules": {
+      "type": "library",
+      "root": "common/modules",
+      "entryFile": "index",
+      "sourceRoot": "common/modules/src",
+      "compilerOptions": {
+        "tsConfigPath": "common/modules/tsconfig.common.json"
+      }
+    },
+    "pagination": {
+      "type": "library",
+      "root": "common/pagination",
+      "entryFile": "index",
+      "sourceRoot": "common/pagination/src",
+      "compilerOptions": {
+        "tsConfigPath": "common/pagination/tsconfig.common.json"
+      }
+    },
+    "pipes": {
+      "type": "library",
+      "root": "common/pipes",
+      "entryFile": "index",
+      "sourceRoot": "common/pipes/src",
+      "compilerOptions": {
+        "tsConfigPath": "common/pipes/tsconfig.common.json"
+      }
+    },
+
+    "utils": {
+      "type": "library",
+      "root": "common/utils",
+      "entryFile": "index",
+      "sourceRoot": "common/util/src",
+      "compilerOptions": {
+        "tsConfigPath": "common/util/tsconfig.common.json"
       }
     }
   }

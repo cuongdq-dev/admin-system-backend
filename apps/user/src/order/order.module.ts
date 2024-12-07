@@ -1,10 +1,10 @@
+import { Order } from '@app/entities';
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Order } from 'common/entities/order.entity';
+import { CartModule } from '../cart/cart.module';
+import { PaymentModule } from '../payment/payment.module';
 import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
-import { PaymentModule } from '../payment/payment.module';
-import { CartModule } from '../cart/cart.module';
 
 @Module({
   imports: [

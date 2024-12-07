@@ -1,3 +1,5 @@
+import { UserParam } from '@app/decorators';
+import { Customer } from '@app/entities';
 import {
   Body,
   Controller,
@@ -8,6 +10,8 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiConsumes,
@@ -15,12 +19,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { CustomerService } from './customer.service';
-import { AuthGuard } from '@nestjs/passport';
-import { UserParam } from '../../../../common/decorators/user.decorator';
-import { Customer } from 'common/entities/customer.entity';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { CustomerUpdateDto } from './customer.dto';
+import { CustomerService } from './customer.service';
 
 @ApiTags('Customer')
 @ApiBearerAuth()

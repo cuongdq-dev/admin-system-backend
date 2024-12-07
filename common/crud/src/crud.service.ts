@@ -1,4 +1,4 @@
-import { Customer } from 'common/entities/customer.entity';
+import { Customer } from '@app/entities';
 import { paginate, PaginateConfig, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 

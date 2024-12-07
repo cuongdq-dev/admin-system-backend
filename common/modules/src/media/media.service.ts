@@ -1,12 +1,12 @@
+import { Media } from '@app/entities';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Response } from 'express';
 import { Repository } from 'typeorm';
-import { Media } from 'common/entities/media.entity';
+import { LocalService } from './local.service';
 import { MediaServiceContract } from './media.interface';
 import { S3Service } from './s3.service';
-import { LocalService } from './local.service';
-import { Response } from 'express';
 
 @Injectable()
 export class MediaService {

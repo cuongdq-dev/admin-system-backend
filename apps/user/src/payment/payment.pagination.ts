@@ -1,4 +1,4 @@
-import { Payment } from 'common/entities/payment.entity';
+import { Payment } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const paymentPaginateConfig: PaginateConfig<Payment> = {

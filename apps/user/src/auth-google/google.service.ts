@@ -1,11 +1,12 @@
+import { Customer } from '@app/entities';
+import { AuthProvider } from '@app/entities/customer.entity';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { google, Auth } from 'googleapis';
-import { CustomerService } from '../customer/customer.service';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AuthProvider, Customer } from 'common/entities/customer.entity';
+import { Auth, google } from 'googleapis';
+import { Repository } from 'typeorm';
 import { AuthService } from '../auth/auth.service';
+import { CustomerService } from '../customer/customer.service';
 
 @Injectable()
 export class GoogleService {

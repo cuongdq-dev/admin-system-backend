@@ -1,3 +1,6 @@
+import { UserParam } from '@app/decorators';
+import { Customer } from '@app/entities';
+import { AbstractValidationPipe, IsIDExistPipe } from '@app/pipes';
 import {
   Body,
   Delete,
@@ -9,17 +12,13 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, PickType } from '@nestjs/swagger';
-import { AbstractValidationPipe } from 'common/pipes/abstract.pipe';
-import { UserParam } from 'common/decorators/user.decorator';
-import { Customer } from 'common/entities/customer.entity';
 import {
   ApiPaginationQuery,
   Paginate,
-  PaginateQuery,
   PaginateConfig,
+  PaginateQuery,
 } from 'nestjs-paginate';
 import { ValidationGroup } from './validation-group';
-import { IsIDExistPipe } from 'common/pipes/IsIDExist.pipe';
 
 export interface ControllerFactoryOptions<
   Entity extends abstract new (...args: any) => any,

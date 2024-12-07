@@ -31,6 +31,8 @@ export const languages = [
       server_item_password: 'Password',
       server_inactive_status: 'Inactive',
       server_active_status: 'Active',
+      server_connected: 'Connected',
+      server_disconnected: 'Disconnected',
       server_used: 'Used',
       server_available: 'Available',
       server_ram: 'Ram',

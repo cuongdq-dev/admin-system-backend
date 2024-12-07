@@ -1,11 +1,10 @@
+import { Customer } from '@app/entities';
+import { MediaModule, MulterConfigService } from '@app/modules';
 import { Module } from '@nestjs/common';
-import { CustomerService } from './customer.service';
-import { Customer } from 'common/entities/customer.entity';
+import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomerController } from './customer.controller';
-import { MediaModule } from 'common/modules/media/media.module';
-import { MulterModule } from '@nestjs/platform-express';
-import { MulterConfigService } from 'common/modules/media/multer_config.service';
+import { CustomerService } from './customer.service';
 
 @Module({
   imports: [

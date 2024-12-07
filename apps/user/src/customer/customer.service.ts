@@ -1,11 +1,11 @@
+import { Customer } from '@app/entities';
+import { MediaService } from '@app/modules';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
-import { Customer } from 'common/entities/customer.entity';
 import { RegisterDto } from '../auth-email/email.dto';
 import { CustomerUpdateDto } from './customer.dto';
-import { MediaService } from '../../../../common/modules/media/media.service';
-import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class CustomerService {

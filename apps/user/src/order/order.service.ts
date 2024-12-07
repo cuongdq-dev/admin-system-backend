@@ -1,14 +1,11 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Order, OrderStatus } from 'common/entities/order.entity';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { orderPaginateConfig } from './order.pagination';
 import { CartService } from '../cart/cart.service';
-import { Customer } from 'common/entities/customer.entity';
-import { Address } from 'common/entities/address.entity';
-import { Payment } from 'common/entities/payment.entity';
-import { Cart } from 'common/entities/cart.entity';
+import { Address, Cart, Customer, Order, Payment } from '@app/entities';
+import { OrderStatus } from '@app/entities/order.entity';
 
 @Injectable()
 export class OrderService {

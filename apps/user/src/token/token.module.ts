@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TokenService } from './token.service';
-import { CustomerToken } from 'common/entities/customer_token.entity';
+import { CustomerToken } from '@app/entities';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({

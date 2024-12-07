@@ -1,7 +1,7 @@
+import { ServiceFactory } from '@app/crud/crud.service';
+import { Address } from '@app/entities';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ServiceFactory } from 'common/crud/crud.service';
-import { Address } from 'common/entities/address.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()

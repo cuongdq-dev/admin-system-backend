@@ -1,10 +1,10 @@
-import { Media, StorageType } from 'common/entities/media.entity';
-import { MediaServiceContract } from './media.interface';
-import { Repository } from 'typeorm';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import { Media, StorageType } from '@app/entities';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { Response } from 'express';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { Repository } from 'typeorm';
+import { MediaServiceContract } from './media.interface';
 
 export class LocalService implements MediaServiceContract {
   storageType = StorageType.LOCAL;

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository as RepositoryEntity } from 'common/entities/repository.entity';
-import { callApi } from 'common/utils/call-api';
+import { Repository as RepositoryEntity } from '@app/entities';
+import { callApi } from '@app/utils';
 import { Repository } from 'typeorm';
 @Injectable()
 export class DockerService {

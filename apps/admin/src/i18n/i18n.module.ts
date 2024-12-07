@@ -1,9 +1,8 @@
+import { Lang, LangContent } from '@app/entities';
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { I18nController } from './i18n.controller';
 import { I18nService } from './i18n.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Lang } from 'common/entities/lang.entity';
-import { LangContent } from 'common/entities/lang_content.entity';
 
 @Module({
   imports: [

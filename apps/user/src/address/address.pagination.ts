@@ -1,4 +1,4 @@
-import { Address } from 'common/entities/address.entity';
+import { Address } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const addressPaginateConfig: PaginateConfig<Address> = {
