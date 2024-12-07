@@ -70,6 +70,14 @@ export class ServerService {
       ...serverDB,
       is_connected: !!connectionId,
       connectionId: connectionId,
+      server_services: serverDB.server_services.map((s) => {
+        return {
+          ...s,
+          icon: s.service.icon,
+          name: s.service.name,
+          description: s.service.description,
+        };
+      }),
     };
   }
 
