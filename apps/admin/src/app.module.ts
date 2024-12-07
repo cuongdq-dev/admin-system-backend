@@ -7,8 +7,10 @@ import { TypeORMConfigFactory } from '../../../common/modules/database/typeorm.f
 import { MailerConfigClass } from '../../../common/modules/mail/mailerConfig.service';
 import { EmailAuthModule } from './auth-email/email.module';
 import { AuthModule } from './auth/auth.module';
+import { DockerModule } from './docker/docker.module';
 import { I18nModule } from './i18n/i18n.module';
 import { PostModule } from './post/post.module';
+import { RepositoryModule } from './repository/repository.module';
 import { ServerModule } from './server/server.module';
 import { UserModule } from './user/user.module';
 
@@ -19,6 +21,8 @@ const modules = [
   EmailAuthModule,
   I18nModule,
   ServerModule,
+  DockerModule,
+  RepositoryModule,
 ];
 
 export const global_modules = [

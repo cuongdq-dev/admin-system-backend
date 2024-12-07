@@ -149,18 +149,21 @@ export const languages = [
       system_mode_title: 'System Mode',
 
       docker_container_id_item: 'Id',
-      docker_container_name_item: 'Name',
+      docker_container_name_item: 'Container',
       docker_container_status_item: 'Status',
       docker_container_images_item: 'Image',
 
       docker_image_id_item: 'Id',
-      docker_image_name_item: 'Name',
+      docker_image_name_item: 'Image',
       docker_image_status_item: 'Status',
       docker_image_tag_item: 'Tag',
       docker_image_created_item: 'Created',
       docker_image_size_item: 'Size',
       docker_image_run: 'Run',
       docker_image_stop: 'Stop',
+
+      docker_container_state_item: 'State',
+      docker_container_ports_item: 'Ports',
 
       repository_id_item: 'Id',
       repository_name_item: 'Name',
@@ -324,18 +327,21 @@ export const languages = [
       system_mode_title: 'Chế độ hệ thống',
 
       docker_container_id_item: 'Id',
-      docker_container_name_item: 'Name',
+      docker_container_name_item: 'Container',
       docker_container_status_item: 'Status',
       docker_container_images_item: 'Image',
 
       docker_image_id_item: 'Id',
-      docker_image_name_item: 'Name',
+      docker_image_name_item: 'Image',
       docker_image_status_item: 'Status',
       docker_image_tag_item: 'Tag',
       docker_image_created_item: 'Created',
       docker_image_size_item: 'Size',
       docker_image_run: 'Run',
       docker_image_stop: 'Stop',
+
+      docker_container_state_item: 'State',
+      docker_container_ports_item: 'Ports',
 
       repository_id_item: 'Id',
       repository_name_item: 'Name',
