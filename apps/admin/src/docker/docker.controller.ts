@@ -83,16 +83,28 @@ export class DockerController {
   runDockerImages(
     @Param('connectionId') connectionId: string,
     @Body('imageName') imageName: string,
-    @Body('containerName') containerName?: string,
+    @Body('imageId') imageId: string,
+    @Body('imageTag') imageTag: string,
+    @Body('hostPort') hostPort: string,
+    @Body('containerPort') containerPort: string,
+    @Body('containerName') containerName: string,
+    @Body('volumes') volumes?: { hostPath: string; containerPath: string }[],
+    @Body('envVariables') envVariables?: { key: string; value: string }[],
   ) {
-    return this.serverService.runDockerImage(
-      connectionId,
+    const body = {
       imageName,
+      imageId,
       containerName,
-    );
+      volumes,
+      imageTag,
+      envVariables,
+      hostPort,
+      containerPort,
+    };
+    return this.serverService.runDockerImage(connectionId, body);
   }
 
-  @Delete('/docker/image/:connectionId/:imageName')
+  @Delete('/image/:connectionId/:imageName')
   deleteDockerImage(
     @Param('connectionId') connectionId: string,
     @Param('imageName') imageName: string,
@@ -100,7 +112,7 @@ export class DockerController {
     return this.serverService.deleteDockerImage(connectionId, imageName);
   }
 
-  @Post('/docker/image/:connectionId/build')
+  @Post('/image/:connectionId/build')
   buildRepository(
     @Param('connectionId') connectionId: string,
     @Body('repositoryId') repositoryId: string,

@@ -168,8 +168,8 @@ export class ServerService {
   // CALL TO API SERVER CONTROL
 
   async getServerStatus(connectionId: string) {
-    const url = process.env.SERVER_API + '/server/service/' + connectionId;
-    return await callApi(url, 'POST');
+    const url = process.env.SERVER_API + '/server/status/' + connectionId;
+    return await callApi(url, 'GET');
   }
 
   async getServiceInfo(id: string, connectionId: string) {

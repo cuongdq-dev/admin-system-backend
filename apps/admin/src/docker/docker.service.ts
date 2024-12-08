@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository as RepositoryEntity } from '@app/entities';
 import { callApi } from '@app/utils';
 import { Repository } from 'typeorm';
+import { RunDockerDto } from './docker.dto';
 @Injectable()
 export class DockerService {
   constructor(
@@ -57,14 +58,8 @@ export class DockerService {
   }
 
   //ACTION IMAGE
-  async runDockerImage(
-    connectionId: string,
-    imageName: string,
-    containerName?: string,
-  ) {
-    const url =
-      process.env.SERVER_API + '/docker/image/' + connectionId + '/run';
-    const body = { imageName, containerName };
+  async runDockerImage(connectionId: string, body: RunDockerDto) {
+    const url = process.env.SERVER_API + '/docker/image/run/' + connectionId;
     return await callApi(url, 'POST', body);
   }
 
@@ -83,8 +78,7 @@ export class DockerService {
       where: { id: repositoryId },
     });
 
-    const url =
-      process.env.SERVER_API + '/docker/image/' + connectionId + '/build';
+    const url = process.env.SERVER_API + '/docker/image/build/' + connectionId;
 
     const body = {
       repository_name: repository.name,
