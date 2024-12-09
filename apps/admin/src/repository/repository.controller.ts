@@ -61,6 +61,7 @@ export class RepositoryController {
       'email',
       'username',
       'fine_grained_token',
+      'services',
     ]),
   })
   addRepository(
@@ -72,7 +73,7 @@ export class RepositoryController {
     return this.repositoryService.createReposiroty(server, createDto, user);
   }
 
-  @Patch('/update/:id')
+  @Patch('/:serverId/update/:id')
   @ApiCreatedResponse({ type: Repository })
   @SetMetadata('entity', Repository)
   @SetMetadata('owner_key', 'created_by')
@@ -103,7 +104,7 @@ export class RepositoryController {
     return this.repositoryService.updateReposiroty(repository, updateDto, user);
   }
 
-  @Delete('/delete/:id')
+  @Delete('/:serverId/delete/:id')
   @SetMetadata('entity', Repository)
   @SetMetadata('owner_key', 'created_by')
   @UseGuards(OwnershipGuard)

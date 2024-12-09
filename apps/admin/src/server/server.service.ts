@@ -24,7 +24,6 @@ export class ServerService {
 
   // API SERVER
   async getListServer(query: PaginateQuery, user: User) {
-    console.log(query);
     const list = await paginate(
       { ...query, filter: { ...query.filter } },
       this.serverRepository,

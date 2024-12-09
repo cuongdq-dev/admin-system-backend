@@ -47,4 +47,15 @@ export class Repository extends BaseEntity {
   @ApiProperty()
   @Column({ type: 'uuid' })
   server_id: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @Column({ type: 'json', nullable: true })
+  services?: {
+    serviceName?: string;
+    buildContext?: string;
+    envFile?: string;
+    environment?: Array<{ variable?: string; value?: string }>;
+    volumes?: Array<{ hostPath?: string; containerPath?: string }>;
+  }[];
 }

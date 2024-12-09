@@ -55,7 +55,6 @@ export class ServerController {
   @Get('/list')
   @ApiOperation({ summary: 'get list server' })
   @SetMetadata('entity', ServerEntity)
-  @UseGuards(OwnershipGuard)
   @ApiPaginationQuery({ ...serverPaginateConfig })
   getListServer(
     @Paginate() paginateQuery: PaginateQuery,
@@ -78,7 +77,6 @@ export class ServerController {
 
   @Post('/create')
   @SetMetadata('entity', ServerEntity)
-  @UseGuards(OwnershipGuard)
   @ApiBody({
     type: PickType(ServerEntity, ['name', 'host', 'port', 'user', 'password']),
   })

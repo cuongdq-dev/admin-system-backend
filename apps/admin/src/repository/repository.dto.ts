@@ -1,5 +1,63 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+
+class EnvironmentVariable {
+  @ApiProperty({ example: 'APP_NAME' })
+  @IsString()
+  @IsNotEmpty()
+  variable: string;
+
+  @ApiProperty({ example: 'admin' })
+  @IsString()
+  @IsNotEmpty()
+  value: string;
+}
+
+// Define the structure of the `volumes` array inside a service
+class Volume {
+  @ApiProperty({ example: '' })
+  @IsString()
+  hostPath: string;
+
+  @ApiProperty({ example: '' })
+  @IsString()
+  containerPath: string;
+}
+
+// Define the structure of each service object
+class Service {
+  @ApiProperty({ example: 'test' })
+  @IsString()
+  serviceName: string;
+
+  @ApiProperty({ example: '.' })
+  @IsString()
+  buildContext: string;
+
+  @ApiProperty({ example: '.env' })
+  @IsString()
+  envFile: string;
+
+  @ApiProperty({ type: [EnvironmentVariable] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => EnvironmentVariable) // Use `Type` to transform plain objects to class instances
+  environment: EnvironmentVariable[];
+
+  @ApiProperty({ type: [Volume] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Volume) // Use `Type` to transform plain objects to class instances
+  volumes: Volume[];
+}
 
 export class CreateRepositoryDto {
   @ApiProperty({ example: 'contabo' })
@@ -8,26 +66,28 @@ export class CreateRepositoryDto {
   name: string;
 
   @ApiProperty({ example: 'example' })
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   username: string;
 
   @ApiProperty({ example: 'example@email.com' })
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   email: string;
 
   @ApiProperty({ example: 'xxx' })
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   fine_grained_token: string;
 
   @ApiProperty({ example: '' })
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   github_url: string;
-}
 
+  @IsArray()
+  services: Service[];
+}
 export class UpdateRepositoryDto {
   @ApiProperty({ example: 'contabo' })
   @IsString()

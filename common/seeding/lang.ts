@@ -10,6 +10,8 @@ export const languages = [
       user_nav: 'User',
       user_list_page: 'User List',
       user_new_button: 'New User',
+      clone_button: 'Clone',
+      pull_button: 'Pull',
       user_detail_page: 'User Detail',
       user_table_title: 'Users',
       user_detail_title: 'User Detail',
@@ -177,6 +179,12 @@ export const languages = [
       repository_new_button: 'Add Repository',
       repository_build_button: 'Build',
       repository_list_title: 'Repositories',
+      repository_create_title: 'Clone Repository',
+      repository_create_description:
+        'Clone and create docker-compose.xml (if not exist)',
+      repository_update_title: 'Pull Repository',
+      repository_update_description:
+        'Pull and create docker-compose.xml (if not exist)',
     },
   },
   {
@@ -190,6 +198,8 @@ export const languages = [
       user_nav: 'Người dùng',
       user_list_page: 'Danh sách người dùng',
       user_new_button: 'Thêm người dùng mới',
+      clone_button: 'Clone',
+      pull_button: 'Pull',
       user_detail_page: 'Chi tiết người dùng',
       user_table_title: 'Người dùng',
       user_detail_title: 'Chi tiết người dùng',
@@ -355,6 +365,12 @@ export const languages = [
       repository_new_button: 'Add Repository',
       repository_build_button: 'Build',
       repository_list_title: 'Repositories',
+      repository_create_title: 'Clone Repository',
+      repository_create_description:
+        'Clone and create docker-compose.xml (if not exist)',
+      repository_update_title: 'Pull Repository',
+      repository_update_description:
+        'Pull and create docker-compose.xml (if not exist)',
     },
   },
 ];
