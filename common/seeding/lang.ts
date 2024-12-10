@@ -185,6 +185,15 @@ export const languages = [
       repository_update_title: 'Pull Repository',
       repository_update_description:
         'Pull and create docker-compose.xml (if not exist)',
+
+      repository_optional_setting: 'Optional Settings',
+      repository_env_file: 'Env file',
+      repository_env_file_guide: 'system auto create file .env',
+      repository_services_title: 'Services',
+      repository_environment_title: 'Environment',
+      repository_volumes_title: 'Volumes',
+      repository_build_env: 'Build with new .env',
+      repository_build_docker_compose: 'Build with new docker-compose.yml',
     },
   },
   {
@@ -222,6 +231,8 @@ export const languages = [
       server_item_password: 'Mật khẩu',
       server_inactive_status: 'Không hoạt động',
       server_active_status: 'Hoạt động',
+      server_connected: 'Connected',
+      server_disconnected: 'Disconnected',
       server_used: 'Đã sử dụng',
       server_available: 'Có sẵn',
       server_ram: 'RAM',
@@ -371,6 +382,15 @@ export const languages = [
       repository_update_title: 'Pull Repository',
       repository_update_description:
         'Pull and create docker-compose.xml (if not exist)',
+
+      repository_env_file: 'Env file',
+      repository_env_file_guide: 'system auto create file .env',
+      repository_services_title: 'Services',
+      repository_environment_title: 'Environment',
+      repository_volumes_title: 'Volumes',
+      repository_build_env: 'Build with new .env',
+      repository_build_docker_compose: 'Build with new docker-compose.yml',
+      repository_optional_setting: 'Optional Settings',
     },
   },
 ];

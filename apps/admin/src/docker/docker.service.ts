@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository as RepositoryEntity } from '@app/entities';
 import { callApi } from '@app/utils';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RunDockerDto } from './docker.dto';
 @Injectable()
@@ -73,7 +73,11 @@ export class DockerService {
 
     return await callApi(url, 'DELETE');
   }
-  async buildDockerImage(connectionId: string, repositoryId: string) {
+  async buildDockerImage(
+    connectionId: string,
+    repositoryId: string,
+    info: Record<string, any>,
+  ) {
     const repository = await this.repositoryRepository.findOne({
       where: { id: repositoryId },
     });
@@ -85,6 +89,7 @@ export class DockerService {
       github_url: repository.github_url,
       fine_grained_token: repository.fine_grained_token,
       username: repository.username,
+      ...info,
     };
     return await callApi(url, 'POST', body);
   }

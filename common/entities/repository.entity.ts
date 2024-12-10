@@ -26,6 +26,12 @@ export class Repository extends BaseEntity {
   @Column({ type: 'text' })
   fine_grained_token: string;
 
+  @ApiProperty({ example: '' })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  @IsString({ always: true })
+  @Column({ type: 'text', nullable: true })
+  repo_env: string;
+
   @ApiProperty({ example: 'github123' })
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   @IsString({ always: true })
@@ -39,6 +45,33 @@ export class Repository extends BaseEntity {
   @MaxLength(255, { always: true })
   @Column({ type: 'varchar', length: 255 })
   email: string;
+
+  @ApiProperty({ example: '/project/xxx-project' })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  @IsString({ always: true })
+  @Column({ type: 'text', nullable: true })
+  server_path: string;
+
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  @IsString({ always: true })
+  @Column({ type: 'text' })
+  @Column({ name: 'image_id', nullable: true })
+  image_id: string;
+
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  @IsString({ always: true })
+  @Column({ name: 'image_name', nullable: true })
+  image_name: string;
+
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  @IsString({ always: true })
+  @Column({ name: 'container_id', nullable: true })
+  container_id: string;
+
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  @IsString({ always: true })
+  @Column({ name: 'container_name', nullable: true })
+  container_name: string;
 
   @ManyToOne('Server', 'repositories')
   @JoinColumn({ name: 'server_id' })
@@ -55,6 +88,7 @@ export class Repository extends BaseEntity {
     serviceName?: string;
     buildContext?: string;
     envFile?: string;
+    ports?: string;
     environment?: Array<{ variable?: string; value?: string }>;
     volumes?: Array<{ hostPath?: string; containerPath?: string }>;
   }[];

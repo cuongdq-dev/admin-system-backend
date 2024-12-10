@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  ArrayNotEmpty,
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -87,25 +87,59 @@ export class CreateRepositoryDto {
 
   @IsArray()
   services: Service[];
+
+  @ApiProperty({ example: 'xxx' })
+  @IsBoolean()
+  with_env: string;
+
+  @ApiProperty({ example: 'xxx' })
+  @IsBoolean()
+  with_docker_compose: string;
+
+  @ApiProperty({ example: 'xxx' })
+  @IsString()
+  repo_env: string;
 }
 export class UpdateRepositoryDto {
   @ApiProperty({ example: 'contabo' })
   @IsString()
+  @IsOptional()
   name: string;
 
   @ApiProperty({ example: 'example' })
   @IsString()
+  @IsOptional()
   username: string;
 
   @ApiProperty({ example: 'example@email.com' })
   @IsString()
+  @IsOptional()
   email: string;
 
   @ApiProperty({ example: 'xxx' })
   @IsString()
+  @IsOptional()
   fine_grained_token: string;
 
   @ApiProperty({ example: '' })
   @IsString()
+  @IsOptional()
   github_url: string;
+
+  @IsArray()
+  @IsOptional()
+  services: Service[];
+
+  @ApiProperty({ example: 'xxx' })
+  @IsString()
+  @IsOptional()
+  repo_env: string;
+
+  @ApiProperty({ example: 'xxx' })
+  @IsBoolean()
+  with_env: string;
+
+  @ApiProperty({ example: 'xxx' })
+  @IsBoolean()
+  with_docker_compose: string;
 }
