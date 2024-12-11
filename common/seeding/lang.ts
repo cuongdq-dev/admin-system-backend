@@ -182,9 +182,10 @@ export const languages = [
       repository_create_title: 'Clone Repository',
       repository_create_description:
         'Clone and create docker-compose.xml (if not exist)',
-      repository_update_title: 'Pull Repository',
+      repository_update_title: 'Update Basic Information',
       repository_update_description:
         'Pull and create docker-compose.xml (if not exist)',
+      repository_server_path_item: 'Path',
 
       repository_optional_setting: 'Optional Settings',
       repository_env_file: 'Env file',
@@ -194,6 +195,14 @@ export const languages = [
       repository_volumes_title: 'Volumes',
       repository_build_env: 'Build with new .env',
       repository_build_docker_compose: 'Build with new docker-compose.yml',
+
+      repository_clone_title: 'Clone Repository',
+      repository_clone_description:
+        'Clone and create docker-compose.xml, .env (if not exists)',
+      repository_build_title: 'Build a new image',
+      repository_build_description: '',
+      repository_run_title: 'Run a new container',
+      repository_run_description: '',
     },
   },
   {
@@ -367,6 +376,7 @@ export const languages = [
       docker_container_ports_item: 'Ports',
 
       repository_id_item: 'Id',
+      repository_server_path_item: 'Path',
       repository_name_item: 'Name',
       repository_github_item: 'Github',
       repository_username_item: 'Username',
@@ -380,8 +390,7 @@ export const languages = [
       repository_create_description:
         'Clone and create docker-compose.xml (if not exist)',
       repository_update_title: 'Pull Repository',
-      repository_update_description:
-        'Pull and create docker-compose.xml (if not exist)',
+      repository_update_description: '',
 
       repository_env_file: 'Env file',
       repository_env_file_guide: 'system auto create file .env',
@@ -391,6 +400,14 @@ export const languages = [
       repository_build_env: 'Build with new .env',
       repository_build_docker_compose: 'Build with new docker-compose.yml',
       repository_optional_setting: 'Optional Settings',
+
+      repository_clone_title: 'Clone Repository',
+      repository_clone_description:
+        'Clone and create docker-compose.xml, .env (if not exists)',
+      repository_build_title: 'Build a new image',
+      repository_build_description: '',
+      repository_run_title: 'Run a new container',
+      repository_run_description: '',
     },
   },
 ];

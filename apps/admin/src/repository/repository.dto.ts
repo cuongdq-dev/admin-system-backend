@@ -86,18 +86,22 @@ export class CreateRepositoryDto {
   github_url: string;
 
   @IsArray()
+  @IsOptional()
   services: Service[];
 
   @ApiProperty({ example: 'xxx' })
   @IsBoolean()
+  @IsOptional()
   with_env: string;
 
   @ApiProperty({ example: 'xxx' })
   @IsBoolean()
+  @IsOptional()
   with_docker_compose: string;
 
   @ApiProperty({ example: 'xxx' })
   @IsString()
+  @IsOptional()
   repo_env: string;
 }
 export class UpdateRepositoryDto {
@@ -136,10 +140,22 @@ export class UpdateRepositoryDto {
   repo_env: string;
 
   @ApiProperty({ example: 'xxx' })
+  @IsOptional()
   @IsBoolean()
   with_env: string;
 
   @ApiProperty({ example: 'xxx' })
+  @IsOptional()
   @IsBoolean()
   with_docker_compose: string;
+}
+
+export class ItemRepositoryDto {
+  name: string;
+  username: string;
+  email: string;
+  fine_grained_token: string;
+  github_url: string;
+  services: Service[];
+  repo_env: string;
 }

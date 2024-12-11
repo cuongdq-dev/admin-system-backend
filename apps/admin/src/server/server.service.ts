@@ -83,23 +83,6 @@ export class ServerService {
   }
 
   async connectServer(server: Server, user: User) {
-    const serverDB = await this.serverRepository.findOne({
-      where: { id: server.id },
-      select: {
-        name: true,
-        id: true,
-        host: true,
-        port: true,
-        password: true,
-        is_active: true,
-        is_connected: true,
-        server_services: true,
-        owner_id: true,
-        repositories: true,
-      },
-      relations: ['server_services', 'server_services.service'],
-    });
-
     const connectionId = await callApi(
       process.env.SERVER_API + '/server/connect',
       'POST',
@@ -107,7 +90,7 @@ export class ServerService {
         host: server.host,
         username: server.user,
         password: server.password,
-        owner_id: serverDB.owner_id,
+        owner_id: server.owner_id,
       },
     )
       .then((res) => {
@@ -117,19 +100,7 @@ export class ServerService {
         throw new BadRequestException();
       });
 
-    return {
-      ...serverDB,
-      is_connected: !!connectionId,
-      connectionId: connectionId,
-      server_services: serverDB.server_services.map((s) => {
-        return {
-          ...s,
-          icon: s.service.icon,
-          name: s.service.name,
-          description: s.service.description,
-        };
-      }),
-    };
+    return { is_connected: !!connectionId, connectionId: connectionId };
   }
 
   async createServer(createDto: ServerCreateDto, user: User) {

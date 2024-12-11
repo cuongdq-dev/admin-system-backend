@@ -115,8 +115,14 @@ export class DockerController {
   @Post('/image/:connectionId/build')
   buildRepository(
     @Param('connectionId') connectionId: string,
-    @Body('repositoryId') repositoryId: string,
+    @Body() body: Record<string, any>,
   ) {
-    return this.serverService.buildDockerImage(connectionId, repositoryId);
+    console.log(body);
+    return true;
+    // return this.serverService.buildDockerImage(
+    //   connectionId,
+    //   repositoryId,
+    //   info,
+    // );
   }
 }

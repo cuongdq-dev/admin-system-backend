@@ -11,7 +11,7 @@ export class Repository extends BaseEntity {
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   @IsString({ always: true })
   @MaxLength(255, { always: true })
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, unique: true })
   name: string;
 
   @ApiProperty({ example: 'https://github.com....' })

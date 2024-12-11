@@ -50,7 +50,6 @@ export class RepositoryController {
 
   @Post('/:connectionId/:serverId/create')
   @SetMetadata('entity', ServerEntity)
-  @ApiCreatedResponse({ type: Repository })
   @UseGuards(OwnershipGuard)
   @ApiBody({
     type: PickType(CreateRepositoryDto, [
@@ -79,7 +78,33 @@ export class RepositoryController {
     );
   }
 
-  @Patch('/:connectionId/:serverId/update/:id')
+  @Patch('/update/:id')
+  @SetMetadata('entity', Repository)
+  @SetMetadata('owner_key', 'created_by')
+  @UseGuards(OwnershipGuard)
+  @ApiBody({
+    type: PickType(UpdateRepositoryDto, [
+      'name',
+      'email',
+      'username',
+      'fine_grained_token',
+      'services',
+      'repo_env',
+    ]),
+  })
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  updateRepository(
+    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: Repository }))
+    repository: Repository,
+    @Body()
+    updateDto: UpdateRepositoryDto,
+
+    @UserParam() user: User,
+  ) {
+    return this.repositoryService.updateReposiroty(repository, updateDto, user);
+  }
+
+  @Patch('/:connectionId/build/:id')
   @ApiCreatedResponse({ type: Repository })
   @SetMetadata('entity', Repository)
   @SetMetadata('owner_key', 'created_by')
@@ -97,7 +122,7 @@ export class RepositoryController {
     ]),
   })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
-  updateRepository(
+  buildRepository(
     @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: Repository }))
     repository: Repository,
     @Param('connectionId') connectionId: string,
@@ -106,7 +131,7 @@ export class RepositoryController {
 
     @UserParam() user: User,
   ) {
-    return this.repositoryService.updateReposiroty(
+    return this.repositoryService.buildReposiroty(
       connectionId,
       repository,
       updateDto,
@@ -114,7 +139,7 @@ export class RepositoryController {
     );
   }
 
-  @Delete('/:serverId/delete/:id')
+  @Delete(':connectionId/delete/:id')
   @SetMetadata('entity', Repository)
   @SetMetadata('owner_key', 'created_by')
   @UseGuards(OwnershipGuard)
@@ -122,8 +147,13 @@ export class RepositoryController {
   deleteRepository(
     @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: Repository }))
     repository: Repository,
+    @Param('connectionId') connectionId: string,
     @UserParam() user: User,
   ) {
-    return this.repositoryService.deleteReposiroty(repository, user);
+    return this.repositoryService.deleteReposiroty(
+      connectionId,
+      repository,
+      user,
+    );
   }
 }
