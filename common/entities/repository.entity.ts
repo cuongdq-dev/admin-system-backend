@@ -86,6 +86,7 @@ export class Repository extends BaseEntity {
   @Column({ type: 'json', nullable: true })
   services?: {
     serviceName?: string;
+    image?: string;
     buildContext?: string;
     envFile?: string;
     ports?: string;

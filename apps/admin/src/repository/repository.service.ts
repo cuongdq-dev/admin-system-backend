@@ -1,13 +1,9 @@
 import { Repository as RepositoryEntity, Server, User } from '@app/entities';
 import { callApi } from '@app/utils';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  CreateRepositoryDto,
-  ItemRepositoryDto,
-  UpdateRepositoryDto,
-} from './repository.dto';
+import { CreateRepositoryDto, UpdateRepositoryDto } from './repository.dto';
 @Injectable()
 export class RepositoryService {
   constructor(
@@ -19,7 +15,12 @@ export class RepositoryService {
     const list = await this.repositoryRepository.find({
       where: { server_id: server.id, deleted_by: null, deleted_at: null },
     });
-    return { data: list, meta: undefined };
+    return {
+      data: list?.map((item) => {
+        return this.convertResponse(item);
+      }),
+      meta: undefined,
+    };
   }
 
   async createReposiroty(
@@ -46,12 +47,16 @@ export class RepositoryService {
       services: with_docker_compose ? repository.services : undefined,
     });
 
-    await this.repositoryRepository.save({
-      ...repository,
-      server_path: serverAction.server_path,
-    });
+    await this.repositoryRepository.update(
+      { id: serverAction.id },
+      {
+        server_path: serverAction.server_path,
+        services: serverAction.services,
+        repo_env: serverAction.repo_env,
+      },
+    );
 
-    return { ...repository, ...serverAction };
+    return this.convertResponse({ ...repository, ...serverAction });
   }
 
   async updateReposiroty(
@@ -66,9 +71,32 @@ export class RepositoryService {
       { ...values, updated_by: user.id },
     );
 
-    return await this.repositoryRepository.findOne({
+    const result = await this.repositoryRepository.findOne({
       where: { id: repository.id },
     });
+    return this.convertResponse(result);
+  }
+
+  async cloneRepository(
+    connectionId: string,
+    repository: RepositoryEntity,
+    updateDto: UpdateRepositoryDto,
+    user: User,
+  ) {
+    const { with_docker_compose, with_env, ...values } = updateDto;
+
+    const url = `${process.env.SERVER_API}/docker/repository/clone/${connectionId}`;
+    const serverAction = await callApi(url, 'POST', values);
+    await this.repositoryRepository.update(
+      { id: repository.id },
+      {
+        updated_by: user.id,
+        server_path: serverAction.server_path,
+        services: serverAction.services,
+        repo_env: serverAction.repo_env,
+      },
+    );
+    return this.convertResponse({ ...repository, ...serverAction });
   }
 
   async buildReposiroty(
@@ -79,8 +107,6 @@ export class RepositoryService {
   ) {
     const { with_docker_compose, with_env, ...values } = updateDto;
 
-    console.log(updateDto);
-
     const url = `${process.env.SERVER_API}/docker/image/build/${connectionId}`;
     const serverAction = await callApi(url, 'POST', {
       ...values,
@@ -90,10 +116,15 @@ export class RepositoryService {
 
     await this.repositoryRepository.update(
       { id: serverAction.id },
-      { server_path: serverAction.server_path, updated_by: user.id },
+      {
+        server_path: serverAction.server_path,
+        updated_by: user.id,
+        services: serverAction.services,
+        repo_env: serverAction.repo_env,
+      },
     );
 
-    return { ...repository, ...serverAction };
+    return this.convertResponse({ ...repository, ...serverAction });
   }
 
   async deleteReposiroty(
@@ -115,5 +146,16 @@ export class RepositoryService {
     return await this.repositoryRepository.softDelete({
       id: repository.id,
     });
+  }
+
+  //hepler
+  convertResponse(data: RepositoryEntity) {
+    return {
+      ...data,
+      images: data.services.reduce(
+        (acc, item) => (item.image ? [...acc, item.image] : acc),
+        [],
+      ),
+    };
   }
 }

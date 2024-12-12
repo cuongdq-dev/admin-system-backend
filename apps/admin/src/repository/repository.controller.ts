@@ -104,6 +104,41 @@ export class RepositoryController {
     return this.repositoryService.updateReposiroty(repository, updateDto, user);
   }
 
+  @Patch('/:connectionId/clone/:id')
+  @ApiCreatedResponse({ type: Repository })
+  @SetMetadata('entity', Repository)
+  @SetMetadata('owner_key', 'created_by')
+  @UseGuards(OwnershipGuard)
+  @ApiBody({
+    type: PickType(UpdateRepositoryDto, [
+      'name',
+      'email',
+      'username',
+      'fine_grained_token',
+      'services',
+      'repo_env',
+      'with_docker_compose',
+      'with_env',
+    ]),
+  })
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  cloneRepository(
+    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: Repository }))
+    repository: Repository,
+    @Param('connectionId') connectionId: string,
+    @Body()
+    updateDto: UpdateRepositoryDto,
+
+    @UserParam() user: User,
+  ) {
+    return this.repositoryService.cloneRepository(
+      connectionId,
+      repository,
+      updateDto,
+      user,
+    );
+  }
+
   @Patch('/:connectionId/build/:id')
   @ApiCreatedResponse({ type: Repository })
   @SetMetadata('entity', Repository)

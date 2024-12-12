@@ -171,6 +171,7 @@ export const languages = [
 
       repository_id_item: 'Id',
       repository_name_item: 'Name',
+      repository_images_item: 'Images',
       repository_github_item: 'Github',
       repository_username_item: 'Username',
       repository_email_item: 'Email',
@@ -188,6 +189,7 @@ export const languages = [
       repository_server_path_item: 'Path',
 
       repository_optional_setting: 'Optional Settings',
+      repository_basic_information: 'Basic Information',
       repository_env_file: 'Env file',
       repository_env_file_guide: 'system auto create file .env',
       repository_services_title: 'Services',
@@ -199,8 +201,15 @@ export const languages = [
       repository_clone_title: 'Clone Repository',
       repository_clone_description:
         'Clone and create docker-compose.xml, .env (if not exists)',
+
+      repository_pull_title: 'Pull Repository',
+      repository_pull_description:
+        'Pull new code and replace .env and service in your data.',
+
       repository_build_title: 'Build a new image',
-      repository_build_description: '',
+      repository_build_description:
+        'Will replace .env, docker-compose.yml in source (if exist options)',
+
       repository_run_title: 'Run a new container',
       repository_run_description: '',
     },
@@ -378,6 +387,7 @@ export const languages = [
       repository_id_item: 'Id',
       repository_server_path_item: 'Path',
       repository_name_item: 'Name',
+      repository_images_item: 'Images',
       repository_github_item: 'Github',
       repository_username_item: 'Username',
       repository_email_item: 'Email',
@@ -400,12 +410,20 @@ export const languages = [
       repository_build_env: 'Build with new .env',
       repository_build_docker_compose: 'Build with new docker-compose.yml',
       repository_optional_setting: 'Optional Settings',
+      repository_basic_information: 'Basic Information',
 
       repository_clone_title: 'Clone Repository',
       repository_clone_description:
         'Clone and create docker-compose.xml, .env (if not exists)',
+
+      repository_pull_title: 'Pull Repository',
+      repository_pull_description:
+        'Pull new code and replace .env and service in your data.',
+
       repository_build_title: 'Build a new image',
-      repository_build_description: '',
+      repository_build_description:
+        'Will replace .env, docker-compose.yml in source (if exist options)',
+
       repository_run_title: 'Run a new container',
       repository_run_description: '',
     },
