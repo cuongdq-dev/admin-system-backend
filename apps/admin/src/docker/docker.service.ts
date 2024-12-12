@@ -1,4 +1,4 @@
-import { Repository as RepositoryEntity } from '@app/entities';
+import { Repository as RepositoryEntity, User } from '@app/entities';
 import { callApi } from '@app/utils';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,10 +20,29 @@ export class DockerService {
     return { data: container, meta: undefined };
   }
 
-  async getListImages(connectionId: string) {
+  async getListImages(connectionId: string, user: User) {
     const url = process.env.SERVER_API + '/docker/images/' + connectionId;
-    const container = await callApi(url, 'GET');
-    return { data: container, meta: undefined };
+    const repoDb = await this.repositoryRepository.find({
+      where: { created_by: user.id },
+    });
+
+    const images = await callApi(url, 'GET');
+
+    return {
+      data: images.map((image) => {
+        const repo = repoDb?.find((repo) => {
+          return repo?.services?.find(
+            (service) => service?.image?.split(':')[0] == image?.name,
+          );
+        });
+
+        return {
+          ...image,
+          server_path: repo?.server_path || '',
+        };
+      }),
+      meta: undefined,
+    };
   }
 
   // ACTION CONTAINER

@@ -10,6 +10,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DockerService } from './docker.service';
+import { UserParam } from '@app/decorators';
+import { User } from '@app/entities';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
@@ -25,8 +27,11 @@ export class DockerController {
   }
 
   @Get('/images/:connectionId/list')
-  getListImages(@Param() params: { connectionId: string }) {
-    return this.serverService.getListImages(params.connectionId);
+  getListImages(
+    @Param() params: { connectionId: string },
+    @UserParam() user: User,
+  ) {
+    return this.serverService.getListImages(params.connectionId, user);
   }
 
   // CONTAINER ACTION
