@@ -107,8 +107,6 @@ export class UpdateRepositoryDto {
 export class RunDockerDto {
   imageName: string;
   imageId: string;
-  imageTag: string;
-  containerName: string;
-  volumes: { hostPath: string; containerPath: string }[];
-  envVariables: { key: string; value: string }[];
+  serverPath: string;
+  serviceName: string;
 }

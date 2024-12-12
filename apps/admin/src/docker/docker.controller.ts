@@ -84,29 +84,38 @@ export class DockerController {
   }
 
   // IMAGE ACTION
-  @Post('/image/:connectionId/run')
-  runDockerImages(
+  @Post('/image/:connectionId/up')
+  upDockerImages(
     @Param('connectionId') connectionId: string,
     @Body('imageName') imageName: string,
     @Body('imageId') imageId: string,
-    @Body('imageTag') imageTag: string,
-    @Body('hostPort') hostPort: string,
-    @Body('containerPort') containerPort: string,
-    @Body('containerName') containerName: string,
-    @Body('volumes') volumes?: { hostPath: string; containerPath: string }[],
-    @Body('envVariables') envVariables?: { key: string; value: string }[],
+    @Body('serverPath') serverPath: string,
+    @Body('serviceName') serviceName: string,
   ) {
     const body = {
       imageName,
       imageId,
-      containerName,
-      volumes,
-      imageTag,
-      envVariables,
-      hostPort,
-      containerPort,
+      serverPath,
+      serviceName,
     };
-    return this.serverService.runDockerImage(connectionId, body);
+    return this.serverService.upDockerImage(connectionId, body);
+  }
+
+  @Post('/image/:connectionId/down')
+  downDockerImages(
+    @Param('connectionId') connectionId: string,
+    @Body('imageName') imageName: string,
+    @Body('imageId') imageId: string,
+    @Body('serverPath') serverPath: string,
+    @Body('serviceName') serviceName: string,
+  ) {
+    const body = {
+      imageName,
+      imageId,
+      serverPath,
+      serviceName,
+    };
+    return this.serverService.downDockerImage(connectionId, body);
   }
 
   @Delete('/image/:connectionId/:imageName')
@@ -124,10 +133,5 @@ export class DockerController {
   ) {
     console.log(body);
     return true;
-    // return this.serverService.buildDockerImage(
-    //   connectionId,
-    //   repositoryId,
-    //   info,
-    // );
   }
 }

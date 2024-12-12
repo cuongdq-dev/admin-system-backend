@@ -212,6 +212,12 @@ export const languages = [
 
       repository_run_title: 'Run a new container',
       repository_run_description: '',
+
+      repository_up_title: 'Up',
+      repository_up_description: '',
+
+      repository_down_title: 'Down',
+      repository_down_description: '',
     },
   },
   {
@@ -426,6 +432,12 @@ export const languages = [
 
       repository_run_title: 'Run a new container',
       repository_run_description: '',
+
+      repository_up_title: 'Up',
+      repository_up_description: '',
+
+      repository_down_title: 'Down',
+      repository_down_description: '',
     },
   },
 ];

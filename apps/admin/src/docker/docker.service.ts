@@ -30,16 +30,8 @@ export class DockerService {
 
     return {
       data: images.map((image) => {
-        const repo = repoDb?.find((repo) => {
-          return repo?.services?.find(
-            (service) => service?.image?.split(':')[0] == image?.name,
-          );
-        });
-
-        return {
-          ...image,
-          server_path: repo?.server_path || '',
-        };
+        const mergeData = this.convertImageData(repoDb, image?.name);
+        return { ...image, ...mergeData };
       }),
       meta: undefined,
     };
@@ -77,9 +69,18 @@ export class DockerService {
   }
 
   //ACTION IMAGE
-  async runDockerImage(connectionId: string, body: RunDockerDto) {
-    const url = process.env.SERVER_API + '/docker/image/run/' + connectionId;
-    return await callApi(url, 'POST', body);
+  async upDockerImage(connectionId: string, body: RunDockerDto) {
+    const url = process.env.SERVER_API + '/docker/image/up/' + connectionId;
+    const result = await callApi(url, 'POST', body);
+
+    return result;
+  }
+
+  async downDockerImage(connectionId: string, body: RunDockerDto) {
+    const url = process.env.SERVER_API + '/docker/image/down/' + connectionId;
+    const result = await callApi(url, 'POST', body);
+
+    return result;
   }
 
   async deleteDockerImage(connectionId: string, imageName: string) {
@@ -112,4 +113,24 @@ export class DockerService {
     };
     return await callApi(url, 'POST', body);
   }
+
+  //hepler
+  convertImageData = (repoDb: RepositoryEntity[], imageName: string) => {
+    const repo = repoDb?.find((repo, index) => {
+      const service = repo.services.find(
+        (service) => service.image.split(':')[0] == imageName,
+      );
+      if (service) return true;
+    });
+
+    const service = repo?.services?.find(
+      (service) => service?.image?.split(':')[0] == imageName,
+    );
+
+    return {
+      server_path: repo?.server_path || '',
+      repository: repo,
+      service: service,
+    };
+  };
 }
