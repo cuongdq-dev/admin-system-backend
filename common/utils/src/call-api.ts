@@ -25,7 +25,6 @@ export async function callApi(
       throw new BadRequestException(errorData.message || 'API request failed');
     }
   } catch (error) {
-    console.error('API Error:', error);
-    throw new BadRequestException(error);
+    throw new BadRequestException('API request failed');
   }
 }

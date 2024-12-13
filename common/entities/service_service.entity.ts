@@ -19,6 +19,10 @@ export class ServerService extends BaseEntity {
   @Column({ type: 'enum', enum: StatusEnum, default: StatusEnum.UN_INSTALLED })
   installed: StatusEnum;
 
+  @ApiProperty({ example: 'script' })
+  @Column({ type: 'text' })
+  script: string;
+
   @ManyToOne(() => Server, (server) => server.server_services)
   @JoinColumn({ name: 'server_id' })
   server: Relation<Server>;
