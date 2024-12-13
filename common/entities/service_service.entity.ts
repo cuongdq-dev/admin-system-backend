@@ -1,5 +1,7 @@
+import { ValidationGroup } from '@app/crud/validation-group';
 import { ServiceStatusEnum as StatusEnum } from '@app/utils';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
 import { BaseEntity } from './base';
 import { Server } from './server.entity';
@@ -18,10 +20,6 @@ export class ServerService extends BaseEntity {
   @ApiProperty({ example: 'uninstalled', enum: StatusEnum })
   @Column({ type: 'enum', enum: StatusEnum, default: StatusEnum.UN_INSTALLED })
   installed: StatusEnum;
-
-  @ApiProperty({ example: 'script' })
-  @Column({ type: 'text', nullable: true })
-  script: string;
 
   @ManyToOne(() => Server, (server) => server.server_services)
   @JoinColumn({ name: 'server_id' })
