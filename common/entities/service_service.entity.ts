@@ -20,7 +20,7 @@ export class ServerService extends BaseEntity {
   installed: StatusEnum;
 
   @ApiProperty({ example: 'script' })
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   script: string;
 
   @ManyToOne(() => Server, (server) => server.server_services)
