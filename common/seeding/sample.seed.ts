@@ -1,4 +1,11 @@
-import { Lang, LangContent, loadEntities, Service, User } from '@app/entities';
+import {
+  Lang,
+  LangContent,
+  loadEntities,
+  Server,
+  Service,
+  User,
+} from '@app/entities';
 import dataSource from 'ormconfig';
 import { languages } from './lang';
 
@@ -124,12 +131,12 @@ async function createService() {
   const serviceRepository = dataSource.getRepository(Service);
   try {
     const serviceArr = [
-      { name: 'Docker', icon: 'skill-icons:docker', description: '30mb' },
-      { name: 'Nginx', icon: 'devicon:nginx', description: '30mb' },
       {
-        name: 'Postgresql',
-        icon: 'skill-icons:postgresql-dark',
+        name: 'Docker',
+        icon: 'skill-icons:docker',
         description: '30mb',
+        script:
+          'curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh',
       },
     ];
 
@@ -139,6 +146,39 @@ async function createService() {
   } catch (error) {
     await queryRunner.rollbackTransaction();
     console.error('Error seeding Service:', error.message);
+  } finally {
+    await queryRunner.release();
+  }
+}
+
+async function createServer() {
+  dataSource.setOptions({
+    entities: loadEntities,
+  });
+  await dataSource.initialize();
+
+  const queryRunner = dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  const serverRepository = dataSource.getRepository(Server);
+  try {
+    const serverArr = [
+      {
+        name: 'Contabo Singapore',
+        host: '194.238.31.149',
+        port: '22',
+        user: 'root',
+        password: '!g6hXE,./gL4~',
+      },
+    ];
+
+    const serverCreate = serverRepository.create(serverArr);
+    await serverRepository.save(serverCreate);
+    console.log('Server created successfully.');
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    console.error('Error seeding server:', error.message);
   } finally {
     await queryRunner.release();
   }

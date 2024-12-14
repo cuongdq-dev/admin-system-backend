@@ -156,6 +156,19 @@ export class ServerService {
     );
   }
 
+  async setupService(id: string, connectionId: string) {
+    console.log(id, connectionId);
+    const service = await this.serverServiceRepository.findOne({
+      where: { id: id },
+      relations: ['service'],
+    });
+    return await callApi(
+      process.env.SERVER_API + '/server/setup/service/' + connectionId,
+      'POST',
+      { script: service?.service?.script },
+    );
+  }
+
   async getDockerContainers(connectionId: string) {
     const container = await callApi(
       process.env.SERVER_API + '/docker/containers/' + connectionId,

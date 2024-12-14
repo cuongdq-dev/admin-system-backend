@@ -3,6 +3,7 @@ import { UserParam } from '@app/decorators';
 import { Server as ServerEntity, User } from '@app/entities';
 import { OwnershipGuard } from '@app/guard';
 import { IsIDExistPipe } from '@app/pipes';
+import validationOptions from '@app/utils/validation-options';
 import {
   Body,
   Controller,
@@ -30,7 +31,6 @@ import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
 import { ServerCreateDto } from './server.dto';
 import { serverPaginateConfig } from './server.pagination';
 import { ServerService } from './server.service';
-import validationOptions from '@app/utils/validation-options';
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
@@ -127,6 +127,16 @@ export class ServerController {
     @Param() params: { serviceId: string; connectionId: string },
   ) {
     return this.serverService.getServiceInfo(
+      params.serviceId,
+      params.connectionId,
+    );
+  }
+
+  @Post('/setup/service/:serviceId/:connectionId')
+  // @SetMetadata('entity', ServerService)
+  // @UseGuards(OwnershipGuard)
+  setupService(@Param() params: { serviceId: string; connectionId: string }) {
+    return this.serverService.setupService(
       params.serviceId,
       params.connectionId,
     );
