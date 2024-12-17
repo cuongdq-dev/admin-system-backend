@@ -133,12 +133,22 @@ export class ServerController {
   }
 
   @Post('/setup/service/:serviceId/:connectionId')
-  // @SetMetadata('entity', ServerService)
-  // @UseGuards(OwnershipGuard)
   setupService(@Param() params: { serviceId: string; connectionId: string }) {
     return this.serverService.setupService(
       params.serviceId,
       params.connectionId,
+    );
+  }
+
+  @Post('/update/docker-compose/:connectionId')
+  updateDockerCompose(
+    @Param() params: { connectionId: string },
+    @Body() body: { values?: Record<string, any>; serviceName: string },
+  ) {
+    return this.serverService.updateDockerCompose(
+      params.connectionId,
+      body.serviceName,
+      body.values,
     );
   }
 

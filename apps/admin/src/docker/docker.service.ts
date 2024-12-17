@@ -16,7 +16,6 @@ export class DockerService {
       process.env.SERVER_API + '/docker/containers/' + connectionId,
       'GET',
     );
-
     return { data: container, meta: undefined };
   }
 
@@ -27,7 +26,6 @@ export class DockerService {
     });
 
     const images = await callApi(url, 'GET');
-
     return {
       data: images.map((image) => {
         const mergeData = this.convertImageData(repoDb, image?.name);
@@ -40,46 +38,51 @@ export class DockerService {
   // ACTION CONTAINER
   async startContainer(connectionId: string, containerId: string) {
     const url = `${process.env.SERVER_API}/docker/container/start/${connectionId}/${containerId}`;
-    return await callApi(url, 'POST');
+    const result = await callApi(url, 'POST');
+    return result;
   }
 
   async pauseContainer(connectionId: string, containerId: string) {
     const url = `${process.env.SERVER_API}/docker/container/pause/${connectionId}/${containerId}`;
-    return await callApi(url, 'POST');
+    const result = await callApi(url, 'POST');
+    return result;
   }
 
   async stopContainer(connectionId: string, containerId: string) {
     const url = `${process.env.SERVER_API}/docker/container/stop/${connectionId}/${containerId}`;
-    return await callApi(url, 'POST');
+    const result = await callApi(url, 'POST');
+    return result;
   }
 
   async restartContainer(connectionId: string, containerId: string) {
     const url = `${process.env.SERVER_API}/docker/container/restart/${connectionId}/${containerId}`;
-    return await callApi(url, 'POST');
+    const result = await callApi(url, 'POST');
+
+    return result;
   }
 
   async removeContainer(connectionId: string, containerId: string) {
     const url = `${process.env.SERVER_API}/docker/container/remove/${connectionId}/${containerId}`;
-    return await callApi(url, 'POST');
+    const result = await callApi(url, 'POST');
+    return result;
   }
 
   async resumeContainer(connectionId: string, containerId: string) {
     const url = `${process.env.SERVER_API}/docker/container/resume/${connectionId}/${containerId}`;
-    return await callApi(url, 'POST');
+    const result = await callApi(url, 'POST');
+    return result;
   }
 
   //ACTION IMAGE
   async upDockerImage(connectionId: string, body: RunDockerDto) {
     const url = process.env.SERVER_API + '/docker/image/up/' + connectionId;
     const result = await callApi(url, 'POST', body);
-
     return result;
   }
 
   async downDockerImage(connectionId: string, body: RunDockerDto) {
     const url = process.env.SERVER_API + '/docker/image/down/' + connectionId;
     const result = await callApi(url, 'POST', body);
-
     return result;
   }
 

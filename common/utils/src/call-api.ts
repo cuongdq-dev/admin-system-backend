@@ -14,11 +14,12 @@ export async function callApi(
 
     if (response.ok) {
       const textResponse = await response.text();
+
       if (!textResponse) {
         throw new BadRequestException('Empty response from API');
       }
-
-      const data = JSON.parse(textResponse);
+      const { status, data, error } = JSON.parse(textResponse);
+      if (status != 0) throw new BadRequestException(error);
       return data;
     } else {
       const errorData = await response.json();

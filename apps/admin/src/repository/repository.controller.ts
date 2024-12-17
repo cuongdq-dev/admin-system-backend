@@ -115,10 +115,6 @@ export class RepositoryController {
       'email',
       'username',
       'fine_grained_token',
-      'services',
-      'repo_env',
-      'with_docker_compose',
-      'with_env',
     ]),
   })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
@@ -145,31 +141,18 @@ export class RepositoryController {
   @SetMetadata('owner_key', 'created_by')
   @UseGuards(OwnershipGuard)
   @ApiBody({
-    type: PickType(UpdateRepositoryDto, [
-      'name',
-      'email',
-      'username',
-      'fine_grained_token',
-      'services',
-      'repo_env',
-      'with_docker_compose',
-      'with_env',
-    ]),
+    type: PickType(UpdateRepositoryDto, ['services', 'repo_env']),
   })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   buildRepository(
     @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: Repository }))
     repository: Repository,
     @Param('connectionId') connectionId: string,
-    @Body()
-    updateDto: UpdateRepositoryDto,
-
     @UserParam() user: User,
   ) {
     return this.repositoryService.buildReposiroty(
       connectionId,
       repository,
-      updateDto,
       user,
     );
   }

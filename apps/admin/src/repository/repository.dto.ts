@@ -138,16 +138,6 @@ export class UpdateRepositoryDto {
   @IsString()
   @IsOptional()
   repo_env: string;
-
-  @ApiProperty({ example: 'xxx' })
-  @IsOptional()
-  @IsBoolean()
-  with_env: string;
-
-  @ApiProperty({ example: 'xxx' })
-  @IsOptional()
-  @IsBoolean()
-  with_docker_compose: string;
 }
 
 export class ItemRepositoryDto {

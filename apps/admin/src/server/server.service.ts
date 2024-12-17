@@ -150,14 +150,11 @@ export class ServerService {
     return await callApi(
       process.env.SERVER_API + '/server/service/' + connectionId,
       'POST',
-      {
-        service: service.service.name.toLocaleLowerCase(),
-      },
+      { service: service.service.name.toLocaleLowerCase() },
     );
   }
 
   async setupService(id: string, connectionId: string) {
-    console.log(id, connectionId);
     const service = await this.serverServiceRepository.findOne({
       where: { id: id },
       relations: ['service'],
@@ -166,6 +163,17 @@ export class ServerService {
       process.env.SERVER_API + '/server/setup/service/' + connectionId,
       'POST',
       { script: service?.service?.script },
+    );
+  }
+  async updateDockerCompose(
+    connectionId: string,
+    serviceName: string,
+    values?: Record<string, any>,
+  ) {
+    return await callApi(
+      process.env.SERVER_API + '/server/update-docker-compose/' + connectionId,
+      'POST',
+      { values: values, serviceName: serviceName },
     );
   }
 
