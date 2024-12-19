@@ -2,13 +2,10 @@ import { Repository as RepositoryEntity, Server, User } from '@app/entities';
 import { callApi } from '@app/utils';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { NodeSSH } from 'node-ssh';
 import { Repository } from 'typeorm';
 import { CreateRepositoryDto, UpdateRepositoryDto } from './repository.dto';
 @Injectable()
 export class RepositoryService {
-  private clients: Record<string, NodeSSH> = {};
-
   constructor(
     @InjectRepository(RepositoryEntity)
     private repositoryRepository: Repository<RepositoryEntity>,

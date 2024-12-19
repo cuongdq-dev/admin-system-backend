@@ -132,6 +132,16 @@ export class ServerController {
     );
   }
 
+  @Get('/nginx/:serviceId/:connectionId')
+  partialGetNginx(
+    @Param() params: { serviceId: string; connectionId: string },
+  ) {
+    return this.serverService.getNginxInfo(
+      params.serviceId,
+      params.connectionId,
+    );
+  }
+
   @Post('/setup/service/:serviceId/:connectionId')
   setupService(@Param() params: { serviceId: string; connectionId: string }) {
     return this.serverService.setupService(
@@ -143,13 +153,32 @@ export class ServerController {
   @Post('/update/docker-compose/:connectionId')
   updateDockerCompose(
     @Param() params: { connectionId: string },
-    @Body() body: { values?: Record<string, any>; serviceName: string },
+    @Body() body: { values?: Record<string, any> },
   ) {
     return this.serverService.updateDockerCompose(
       params.connectionId,
-      body.serviceName,
       body.values,
     );
+  }
+
+  @Post('/update/nginx/:connectionId')
+  updateNginx(
+    @Param() params: { connectionId: string },
+    @Body() body: { fileContent?: string; fileName?: string },
+  ) {
+    return this.serverService.updateNginx(
+      params.connectionId,
+      body.fileContent,
+      body.fileName,
+    );
+  }
+
+  @Delete('/delete/nginx/:connectionId')
+  deleteNginx(
+    @Param() params: { connectionId: string },
+    @Body() body: { fileName?: string },
+  ) {
+    return this.serverService.deleteNginx(params.connectionId, body.fileName);
   }
 
   @Get('/status/:connectionId')

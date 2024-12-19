@@ -154,6 +154,13 @@ export class ServerService {
     );
   }
 
+  async getNginxInfo(id: string, connectionId: string) {
+    return await callApi(
+      process.env.SERVER_API + '/server/nginx/' + connectionId,
+      'POST',
+    );
+  }
+
   async setupService(id: string, connectionId: string) {
     const service = await this.serverServiceRepository.findOne({
       where: { id: id },
@@ -167,13 +174,32 @@ export class ServerService {
   }
   async updateDockerCompose(
     connectionId: string,
-    serviceName: string,
     values?: Record<string, any>,
   ) {
     return await callApi(
       process.env.SERVER_API + '/server/update-docker-compose/' + connectionId,
       'POST',
-      { values: values, serviceName: serviceName },
+      { values: values },
+    );
+  }
+
+  async updateNginx(
+    connectionId: string,
+    fileContent?: string,
+    fileName?: string,
+  ) {
+    return await callApi(
+      process.env.SERVER_API + '/server/update-nginx/' + connectionId,
+      'POST',
+      { fileContent, fileName },
+    );
+  }
+
+  async deleteNginx(connectionId: string, fileName?: string) {
+    return await callApi(
+      process.env.SERVER_API + '/server/delete-nginx/' + connectionId,
+      'DELETE',
+      { fileName },
     );
   }
 

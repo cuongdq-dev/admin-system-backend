@@ -218,6 +218,11 @@ export const languages = [
 
       repository_down_title: 'Down',
       repository_down_description: '',
+
+      nginx_title: 'Nginx Config',
+      nginx_add_file_title: 'Add new config',
+      nginx_name_file_item: 'File name (.conf)',
+      nginx_content_file_item: 'Content',
     },
   },
   {
@@ -438,6 +443,11 @@ export const languages = [
 
       repository_down_title: 'Down',
       repository_down_description: '',
+
+      nginx_title: 'Nginx Config',
+      nginx_add_file_title: 'Add new config',
+      nginx_name_file_item: 'File name (.conf)',
+      nginx_content_file_item: 'Content',
     },
   },
 ];
