@@ -14,7 +14,7 @@ export const configs: PostgresConnectionOptions = {
       __dirname,
       '/common/modules/database/EnableUuidOsspExtension.{ts,js}',
     ),
-    path.join(__dirname, '/common/modules/database/migrations/*{.ts,.js}'),
+    path.join(__dirname, '/common/modules/src/database/migrations/*{.ts,.js}'),
   ],
   dropSchema: false,
   logging: false,

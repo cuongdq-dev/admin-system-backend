@@ -18,8 +18,8 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@app/config": ["common/config/src"],
-      "@app/config/*": ["common/config/src/*"],
+      "@app/config": ["common/config"],
+      "@app/config/*": ["common/config/*"],
 
       "@app/crud": ["common/crud/src"],
       "@app/crud/*": ["common/crud/src/*"],

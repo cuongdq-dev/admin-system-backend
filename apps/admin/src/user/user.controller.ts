@@ -39,14 +39,9 @@ export class UserController {
   }
 
   @Patch('/me')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Update logged in user',
-  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Update logged in user' })
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({
-    summary: 'update logged in user',
-  })
+  @ApiOperation({ summary: 'update logged in user' })
   @UseInterceptors(FileInterceptor('avatar'))
   async update(
     @UserParam() user: User,

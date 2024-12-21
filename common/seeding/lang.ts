@@ -223,6 +223,9 @@ export const languages = [
       nginx_add_file_title: 'Add new config',
       nginx_name_file_item: 'File name (.conf)',
       nginx_content_file_item: 'Content',
+
+      server_notify_fetching_data: 'The data is being updated...',
+      server_notify_disconnected: 'Unable to connect to the server.',
     },
   },
   {

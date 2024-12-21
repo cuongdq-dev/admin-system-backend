@@ -19,13 +19,14 @@ export async function callApi(
         throw new BadRequestException('Empty response from API');
       }
       const { status, data, error } = JSON.parse(textResponse);
+
       if (status != 0) throw new BadRequestException(error);
       return data;
     } else {
       const errorData = await response.json();
-      throw new BadRequestException(errorData.message || 'API request failed');
+      throw new BadRequestException(errorData?.message || 'API request failed');
     }
   } catch (error) {
-    throw new BadRequestException('API request failed');
+    throw new BadRequestException(error?.message || 'API request failed');
   }
 }

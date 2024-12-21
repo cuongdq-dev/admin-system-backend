@@ -5,6 +5,7 @@ import {
   Service,
   User,
 } from '@app/entities';
+import { MessagesService } from '@app/modules/messages/messages.service';
 import {
   callApi,
   convertImageData,
@@ -29,6 +30,8 @@ export class ServerService {
 
     @InjectRepository(ServerService)
     private serverServiceRepository: Repository<ServerServiceEntity>,
+
+    private readonly messageService: MessagesService,
   ) {}
 
   // API SERVER
@@ -125,6 +128,13 @@ export class ServerService {
     };
   }
 
+  async disconnectServer(connectionId: string) {
+    return await callApi(
+      process.env.SERVER_API + '/server/disconnect/' + connectionId,
+      'DELETE',
+    );
+  }
+
   async createServer(createDto: ServerCreateDto, user: User) {
     const services = await this.serviceRepository.find();
     const server = this.serverRepository.create({
@@ -197,7 +207,17 @@ export class ServerService {
       process.env.SERVER_API + '/server/service/' + connectionId,
       'POST',
       { service: service.service.name.toLocaleLowerCase() },
-    );
+    )
+      .then((res) => {
+        return res;
+      })
+      .catch((error) => {
+        this.messageService.sendNotification({
+          notification: { text: error.message },
+        });
+        throw new BadRequestException(error?.message);
+      });
+
     return { data: { ...result, ...service } };
   }
 

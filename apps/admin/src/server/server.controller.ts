@@ -52,6 +52,15 @@ export class ServerController {
     return this.serverService.connectServer(server);
   }
 
+  @Delete('/disconnect/:connectionId')
+  @ApiParam({ name: 'connectionId', type: 'string', format: 'uuid' })
+  disconnectServer(
+    @Param('connectionId') connectionId: string,
+    @UserParam() user: User,
+  ) {
+    return this.serverService.disconnectServer(connectionId);
+  }
+
   @Get('/list')
   @ApiOperation({ summary: 'get list server' })
   @SetMetadata('entity', ServerEntity)
