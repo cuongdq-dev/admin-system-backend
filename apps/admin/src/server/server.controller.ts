@@ -136,7 +136,7 @@ export class ServerController {
   partialGetNginx(
     @Param() params: { serviceId: string; connectionId: string },
   ) {
-    return this.serverService.getNginxInfo(params.serviceId);
+    return this.serverService.getNginxInfo(params.connectionId);
   }
 
   @Post('/setup/service/:serviceId/:connectionId')

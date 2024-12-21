@@ -38,6 +38,7 @@ export class ServerService {
       this.serverRepository,
       { ...serverPaginateConfig, where: { owner_id: user.id } },
     );
+
     return list;
   }
 
@@ -117,7 +118,11 @@ export class ServerService {
         throw new BadRequestException();
       });
 
-    return { is_connected: !!connectionId, connectionId: connectionId };
+    return {
+      ...server,
+      is_connected: !!connectionId,
+      connectionId: connectionId,
+    };
   }
 
   async createServer(createDto: ServerCreateDto, user: User) {
