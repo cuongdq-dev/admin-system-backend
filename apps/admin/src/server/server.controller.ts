@@ -40,7 +40,7 @@ export class ServerController {
   constructor(private serverService: ServerService) {}
 
   // API ACTION SERVER
-  @Post('/connection/:id')
+  @Get('/connection/:id')
   @SetMetadata('entity', ServerEntity)
   @UseGuards(OwnershipGuard)
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
@@ -49,7 +49,7 @@ export class ServerController {
     server: ServerEntity,
     @UserParam() user: User,
   ) {
-    return this.serverService.connectServer(server, user);
+    return this.serverService.connectServer(server);
   }
 
   @Get('/list')
@@ -63,16 +63,19 @@ export class ServerController {
     return this.serverService.getListServer(paginateQuery, user);
   }
 
-  @Get('/detail/:id')
+  @Get('/detail/:connectionId/:id')
   @SetMetadata('entity', ServerEntity)
   @UseGuards(OwnershipGuard)
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  @ApiParam({ name: 'connectionId', type: 'string', format: 'uuid' })
   partialGetDetail(
     @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: ServerEntity }))
     server: ServerEntity,
+    @Param('connectionId')
+    connectionId: string,
     @UserParam() user: User,
   ) {
-    return this.serverService.getServerById(server, user);
+    return this.serverService.getServerById(connectionId, server, user);
   }
 
   @Post('/create')
@@ -126,20 +129,14 @@ export class ServerController {
   partialGetService(
     @Param() params: { serviceId: string; connectionId: string },
   ) {
-    return this.serverService.getServiceInfo(
-      params.serviceId,
-      params.connectionId,
-    );
+    return this.serverService.getServiceInfo(params.connectionId);
   }
 
   @Get('/nginx/:serviceId/:connectionId')
   partialGetNginx(
     @Param() params: { serviceId: string; connectionId: string },
   ) {
-    return this.serverService.getNginxInfo(
-      params.serviceId,
-      params.connectionId,
-    );
+    return this.serverService.getNginxInfo(params.serviceId);
   }
 
   @Post('/setup/service/:serviceId/:connectionId')

@@ -1,10 +1,16 @@
 import {
+  Repository as RepositoryEntity,
   Server,
   ServerService as ServerServiceEntity,
   Service,
   User,
 } from '@app/entities';
-import { callApi, ServiceStatusEnum } from '@app/utils';
+import {
+  callApi,
+  convertImageData,
+  convertResponseRepository,
+  ServiceStatusEnum,
+} from '@app/utils';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
@@ -17,6 +23,9 @@ export class ServerService {
     @InjectRepository(Server) private serverRepository: Repository<Server>,
 
     @InjectRepository(Service) private serviceRepository: Repository<Service>,
+
+    @InjectRepository(RepositoryEntity)
+    private repositoryRepository: Repository<RepositoryEntity>,
 
     @InjectRepository(ServerService)
     private serverServiceRepository: Repository<ServerServiceEntity>,
@@ -32,7 +41,7 @@ export class ServerService {
     return list;
   }
 
-  async getServerById(server: Server, user: User) {
+  async getServerById(connectionId: string, server: Server, user: User) {
     const serverDB = await this.serverRepository.findOne({
       where: { id: server.id },
       select: {
@@ -50,39 +59,47 @@ export class ServerService {
       relations: ['server_services', 'server_services.service'],
     });
 
-    const connectionId = await callApi(
-      process.env.SERVER_API + '/server/connect',
-      'POST',
-      {
-        host: server.host,
-        username: server.user,
-        password: server.password,
-        owner_id: serverDB.owner_id,
-      },
-    )
-      .then((res) => {
-        return res.connectionId;
-      })
-      .catch((err) => {
-        throw new BadRequestException();
-      });
+    const [
+      serverStatus,
+      serviceInfo,
+      nginxInfo,
+      repositories,
+      images,
+      containers,
+    ] = await Promise.allSettled([
+      this.getServerStatus(connectionId),
+      this.getServiceInfo(connectionId),
+      this.getNginxInfo(connectionId),
+      this.getListRepository(server, user),
+      this.getListImages(connectionId, user),
+      this.getListContainers(connectionId),
+    ]);
 
     return {
       ...serverDB,
       is_connected: !!connectionId,
       connectionId: connectionId,
-      server_services: serverDB.server_services.map((s) => {
-        return {
-          ...s,
-          icon: s.service.icon,
-          name: s.service.name,
-          description: s.service.description,
-        };
-      }),
+      serverStatus: serverStatus,
+      listServices: serviceInfo,
+      listNginx: nginxInfo,
+      listRepositories: repositories,
+      listImages: images,
+      listContainer: containers,
     };
   }
 
-  async connectServer(server: Server, user: User) {
+  async getListRepository(server: Server, user: User) {
+    const list = await this.repositoryRepository.find({
+      where: { server_id: server.id, deleted_by: null, deleted_at: null },
+    });
+    return {
+      data: list?.map((item) => {
+        return convertResponseRepository(item);
+      }),
+      meta: undefined,
+    };
+  }
+  async connectServer(server: Server) {
     const connectionId = await callApi(
       process.env.SERVER_API + '/server/connect',
       'POST',
@@ -137,28 +154,54 @@ export class ServerService {
 
   // CALL TO API SERVER CONTROL
 
+  async getListContainers(connectionId: string) {
+    const container = await callApi(
+      process.env.SERVER_API + '/docker/containers/' + connectionId,
+      'GET',
+    );
+    return { data: container, meta: undefined };
+  }
+
+  async getListImages(connectionId: string, user: User) {
+    const url = process.env.SERVER_API + '/docker/images/' + connectionId;
+    const repoDb = await this.repositoryRepository.find({
+      where: { created_by: user.id },
+    });
+
+    const images = await callApi(url, 'GET');
+    return {
+      data: images.map((image) => {
+        const mergeData = convertImageData(repoDb, image?.name);
+        return { ...image, ...mergeData };
+      }),
+      meta: undefined,
+    };
+  }
+
   async getServerStatus(connectionId: string) {
     const url = process.env.SERVER_API + '/server/status/' + connectionId;
     return await callApi(url, 'GET');
   }
 
-  async getServiceInfo(id: string, connectionId: string) {
+  async getServiceInfo(connectionId: string) {
     const service = await this.serverServiceRepository.findOne({
-      where: { id: id },
+      where: { service: { name: 'docker' } },
       relations: ['service'],
     });
-    return await callApi(
+    const result = await callApi(
       process.env.SERVER_API + '/server/service/' + connectionId,
       'POST',
       { service: service.service.name.toLocaleLowerCase() },
     );
+    return { data: { ...result, ...service } };
   }
 
-  async getNginxInfo(id: string, connectionId: string) {
-    return await callApi(
+  async getNginxInfo(connectionId: string) {
+    const result = await callApi(
       process.env.SERVER_API + '/server/nginx/' + connectionId,
       'POST',
     );
+    return { data: result };
   }
 
   async setupService(id: string, connectionId: string) {

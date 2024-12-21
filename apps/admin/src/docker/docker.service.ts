@@ -1,5 +1,5 @@
 import { Repository as RepositoryEntity, User } from '@app/entities';
-import { callApi } from '@app/utils';
+import { callApi, convertImageData } from '@app/utils';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -28,7 +28,7 @@ export class DockerService {
     const images = await callApi(url, 'GET');
     return {
       data: images.map((image) => {
-        const mergeData = this.convertImageData(repoDb, image?.name);
+        const mergeData = convertImageData(repoDb, image?.name);
         return { ...image, ...mergeData };
       }),
       meta: undefined,
@@ -118,22 +118,4 @@ export class DockerService {
   }
 
   //hepler
-  convertImageData = (repoDb: RepositoryEntity[], imageName: string) => {
-    const repo = repoDb?.find((repo, index) => {
-      const service = repo.services.find(
-        (service) => service.image.split(':')[0] == imageName,
-      );
-      if (service) return true;
-    });
-
-    const service = repo?.services?.find(
-      (service) => service?.image?.split(':')[0] == imageName,
-    );
-
-    return {
-      server_path: repo?.server_path || '',
-      repository: repo,
-      service: service,
-    };
-  };
 }

@@ -1,5 +1,5 @@
 import { Repository as RepositoryEntity, Server, User } from '@app/entities';
-import { callApi } from '@app/utils';
+import { callApi, convertResponseRepository } from '@app/utils';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,7 +17,7 @@ export class RepositoryService {
     });
     return {
       data: list?.map((item) => {
-        return this.convertResponse(item);
+        return convertResponseRepository(item);
       }),
       meta: undefined,
     };
@@ -52,7 +52,7 @@ export class RepositoryService {
       { server_path: serverAction.server_path },
     );
 
-    return this.convertResponse({ ...repository, ...serverAction });
+    return convertResponseRepository({ ...repository, ...serverAction });
   }
 
   async updateReposiroty(
@@ -68,7 +68,7 @@ export class RepositoryService {
     const result = await this.repositoryRepository.findOne({
       where: { id: repository.id },
     });
-    return this.convertResponse(result);
+    return convertResponseRepository(result);
   }
 
   async cloneRepository(
@@ -87,7 +87,7 @@ export class RepositoryService {
     const newData = await this.repositoryRepository.findOne({
       where: { id: repository.id },
     });
-    return this.convertResponse(newData);
+    return convertResponseRepository(newData);
   }
 
   async buildReposiroty(
@@ -116,7 +116,7 @@ export class RepositoryService {
       where: { id: repository.id },
     });
 
-    return this.convertResponse(newRepository);
+    return convertResponseRepository(newRepository);
   }
 
   async deleteReposiroty(
@@ -138,16 +138,5 @@ export class RepositoryService {
     return await this.repositoryRepository.softDelete({
       id: repository.id,
     });
-  }
-
-  //hepler
-  convertResponse(data: RepositoryEntity) {
-    return {
-      ...data,
-      images: data.services.reduce(
-        (acc, item) => (item.image ? [...acc, item.image] : acc),
-        [],
-      ),
-    };
   }
 }
