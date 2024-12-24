@@ -22,6 +22,7 @@ import { Service } from './service.entity';
 import { ServerService } from './service_service.entity';
 import { User } from './user.entity';
 import { Session } from './user_session.entity';
+import { Notification } from './notification.entity';
 import { Token, TokenType as UserTokenType } from './user_token.entity';
 
 export {
@@ -42,6 +43,7 @@ export {
   Customer,
   Address,
   Product,
+  Notification,
   ProductVariant,
   ProductVariantMedia,
   Cart,
@@ -75,6 +77,7 @@ export const loadEntities = [
   Lang,
   Server,
   Service,
+  Notification,
   Repository,
   ServerService,
   LangContent,

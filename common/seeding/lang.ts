@@ -127,6 +127,9 @@ export const languages = [
       notification_read_all: 'Mark all as read',
       notification_before_that: 'Before That',
       notification_count: 'You have {count} unread messages',
+      notification_tab_all: 'All',
+      notification_tab_new: 'Unread',
+      notification_tab_archived: 'Archived',
 
       notify_changed_language: 'Language has been changed!',
       notify_success_api_call: 'API call was successful!',
@@ -225,6 +228,7 @@ export const languages = [
       nginx_content_file_item: 'Content',
 
       server_notify_fetching_data: 'The data is being updated...',
+      server_notify_connecting: 'Re-connect to server...',
       server_notify_disconnected: 'Unable to connect to the server.',
     },
   },
@@ -357,6 +361,9 @@ export const languages = [
       notification_read_all: 'Đánh dấu tất cả đã đọc',
       notification_before_that: 'Trước đó',
       notification_count: 'Bạn có {count} tin nhắn chưa đọc',
+      notification_tab_all: 'All',
+      notification_tab_new: 'Unread',
+      notification_tab_archived: 'Archived',
 
       notify_changed_language: 'Ngôn ngữ đã được thay đổi!',
       notify_success_api_call: 'Cuộc gọi API thành công!',
@@ -451,6 +458,10 @@ export const languages = [
       nginx_add_file_title: 'Add new config',
       nginx_name_file_item: 'File name (.conf)',
       nginx_content_file_item: 'Content',
+
+      server_notify_fetching_data: 'The data is being updated...',
+      server_notify_connecting: 'Re-connect to server...',
+      server_notify_disconnected: 'Unable to connect to the server.',
     },
   },
 ];

@@ -1,5 +1,5 @@
 import { SelectQueryBuilder } from 'typeorm';
-import { PaginationQuery } from '../pagination.dto';
+import { PaginationQuery } from './pagination.dto';
 
 export const paginate = <T>(
   query: SelectQueryBuilder<T>,

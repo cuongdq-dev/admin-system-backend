@@ -18,6 +18,7 @@ import type { Media } from './media.entity';
 import type { Session } from './user_session.entity';
 import type { Post } from './post.entity';
 import { Server } from './server.entity';
+import { Notification } from './notification.entity';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -65,6 +66,9 @@ export class User extends BaseEntity {
 
   @OneToMany('Server', 'user')
   servers: Relation<Server[]>;
+
+  @OneToMany('Notification', 'user')
+  notifications: Relation<Notification[]>;
 
   @AfterLoad()
   storePasswordInCache() {

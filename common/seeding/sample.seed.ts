@@ -4,8 +4,13 @@ import {
   loadEntities,
   Server,
   Service,
+  Notification,
   User,
 } from '@app/entities';
+import {
+  NotificationStatus,
+  NotificationType,
+} from '@app/entities/notification.entity';
 import dataSource from 'ormconfig';
 import { languages } from './lang';
 
@@ -183,8 +188,48 @@ async function createServer() {
     await queryRunner.release();
   }
 }
+async function createNotification() {
+  dataSource.setOptions({
+    entities: loadEntities,
+  });
 
-void create();
-void createUser();
-void createService();
-void createLanguages();
+  await dataSource.initialize();
+
+  const queryRunner = dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+  const notificationRepository = dataSource.getRepository(Notification);
+
+  try {
+    // Fetch a user to associate the notifications
+    // Create notifications covering all statuses and types
+    const notifications = Object.values(NotificationStatus).flatMap((status) =>
+      Object.values(NotificationType).map((type) =>
+        notificationRepository.create({
+          title: `${type} Notification - ${status}`,
+          message: `This is a ${type} notification with status ${status}.`,
+          status,
+          type,
+
+          meta_data: JSON.stringify({
+            detail: `Meta for ${type} and status ${status}`,
+          }),
+          user_id: '8992e717-9554-434d-b055-474d6f5396a2',
+        }),
+      ),
+    );
+
+    // Save notifications to the database
+    await notificationRepository.save(notifications);
+
+    console.log('Full notifications seeded successfully.');
+  } catch (error) {
+    console.error('Error seeding full notifications:', error.message);
+  }
+}
+
+// void create();
+// void createUser();
+// void createService();
+// void createLanguages();
+void createNotification();
