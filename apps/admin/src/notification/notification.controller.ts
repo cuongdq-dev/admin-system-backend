@@ -112,7 +112,7 @@ export class NotificationController {
 
   @Patch('/read-all')
   @ApiCreatedResponse({ type: Notification })
-  @UseGuards(OwnershipGuard)
+  @UseGuards(AuthGuard('jwt'))
   readAllNotification(@UserParam() user: User) {
     return this.notificationService.readAllNotification(user);
   }
