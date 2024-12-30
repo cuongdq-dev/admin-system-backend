@@ -8,6 +8,8 @@
   "scripts": {
     "build:user": "nest build user",
     "build:admin": "nest build admin",
+    "build:socket": "nest build socket",
+    "build:vps": "nest build vps",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch user && nest start --watch admin",
@@ -15,6 +17,7 @@
     "start:user": "nest start --watch user",
     "start:admin": "nest start --watch admin",
     "start:socket": "nest start --watch socket",
+    "start:vps": "nest start --watch vps",
     "start:debug": "nest start --debug --watch",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
@@ -48,11 +51,13 @@
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "dotenv": "^16.4.7",
     "googleapis": "^134.0.0",
     "install": "^0.13.0",
     "morgan": "^1.10.0",
     "multer-s3": "^3.0.1",
     "nestjs-paginate": "^8.6.2",
+    "node-ssh": "^13.2.0",
     "npm": "^10.7.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -63,7 +68,8 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "stripe": "^15.7.0",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "yaml": "^2.6.1"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",

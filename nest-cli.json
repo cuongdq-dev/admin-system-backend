@@ -38,6 +38,17 @@
         "tsConfigPath": "apps/socket/tsconfig.app.json"
       }
     },
+
+    "vps": {
+      "type": "application",
+      "root": "apps/vps",
+      "entryFile": "main",
+      "sourceRoot": "apps/vps/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/vps/tsconfig.app.json"
+      }
+    },
+
     "config": {
       "type": "library",
       "root": "common/config",

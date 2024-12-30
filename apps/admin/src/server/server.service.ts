@@ -212,9 +212,6 @@ export class ServerService {
         return res;
       })
       .catch((error) => {
-        this.messageService.sendNotification({
-          notification: { text: error.message },
-        });
         throw new BadRequestException(error?.message);
       });
 

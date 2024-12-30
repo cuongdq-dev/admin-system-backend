@@ -1,22 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SocketMessageService } from './socket.messages.service';
-
-type NotificationOptions = { notification?: Notification };
-type Notification = { type?: number; text?: string };
-
+import { ISocket } from './message.dto';
 @Injectable()
 export class MessagesService {
   private readonly _logger = new Logger('MessagesService');
 
   constructor(private readonly _socketService: SocketMessageService) {}
 
-  async sendNotification(options: NotificationOptions) {
+  async sendNotification(socket: ISocket) {
     this._logger.log(
-      `<----- messages service ------> sendNotification --- options: ${JSON.stringify(options)}`,
+      `<----- messages service ------> sendNotification --- socket: ${JSON.stringify(socket)}`,
     );
-
-    const { notification } = options;
-
-    this._socketService.sendMessage('message', notification);
+    this._socketService.sendMessage('message', socket);
   }
 }
