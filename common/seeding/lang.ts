@@ -6,15 +6,16 @@ export const languages = [
     content: {
       dashboard_nav: 'Dashboard',
       dashboard_page: 'Dashboard',
+      pull_button: 'Pull',
+      clone_button: 'Clone',
 
       user_nav: 'User',
       user_list_page: 'User List',
       user_new_button: 'New User',
-      clone_button: 'Clone',
-      pull_button: 'Pull',
       user_detail_page: 'User Detail',
       user_table_title: 'Users',
       user_detail_title: 'User Detail',
+      user_profile_title: 'Profile',
       server_nav: 'Server',
       server_new_button: 'New Server',
       connect_server_button: 'Connect Server',
@@ -156,6 +157,8 @@ export const languages = [
       system_mode_title: 'System Mode',
       contrast_title: 'Contrast',
       preset_title: 'Preset',
+      list_title: 'List',
+      detail_title: 'Detail',
 
       docker_container_id_item: 'Id',
       docker_container_name_item: 'Container',
@@ -241,15 +244,16 @@ export const languages = [
     content: {
       dashboard_nav: 'Bảng điều khiển',
       dashboard_page: 'Bảng điều khiển',
+      pull_button: 'Pull',
+      clone_button: 'Clone',
 
       user_nav: 'Người dùng',
       user_list_page: 'Danh sách người dùng',
       user_new_button: 'Thêm người dùng mới',
-      clone_button: 'Clone',
-      pull_button: 'Pull',
       user_detail_page: 'Chi tiết người dùng',
       user_table_title: 'Người dùng',
       user_detail_title: 'Chi tiết người dùng',
+      user_profile_title: 'Profile',
 
       server_nav: 'Máy chủ',
       server_new_button: 'Thêm máy chủ mới',
@@ -391,6 +395,8 @@ export const languages = [
       system_mode_title: 'Chế độ hệ thống',
       contrast_title: 'Contrast',
       preset_title: 'Preset',
+      list_title: 'List',
+      detail_title: 'Detail',
 
       docker_container_id_item: 'Id',
       docker_container_name_item: 'Container',
