@@ -1,28 +1,34 @@
+import { SessionParam, UserParam } from '@app/decorators';
+import { Session, User } from '@app/entities';
 import {
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthService } from './auth.service';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SessionService } from '../session/session.service';
-import { SessionParam } from '@app/decorators';
-import { Session } from '@app/entities';
+import { AuthService } from './auth.service';
 
 @ApiTags('Auth')
 @ApiBearerAuth()
-@Controller({
-  path: 'auth',
-  version: '1',
-})
+@Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(
     private authService: AuthService,
     private sessionService: SessionService,
   ) {}
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('/profile')
+  @ApiOperation({ summary: 'Refresh your access token.' })
+  @HttpCode(HttpStatus.OK)
+  async getProfile(@UserParam() user: User) {
+    return this.authService.getProfile(user);
+  }
 
   @UseGuards(AuthGuard('refresh'))
   @Post('/refresh-token')
