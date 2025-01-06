@@ -1,9 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  Relation,
+  Unique,
+} from 'typeorm';
 import { BaseEntity } from './base';
 import { Lang } from './lang.entity';
 
 @Entity({ name: 'lang_content' })
+@Unique(['code', 'lang_id'])
 export class LangContent extends BaseEntity {
   @ApiProperty({ example: 'LANGUAGE_CODE' })
   @Column({ type: 'varchar', length: 200 })

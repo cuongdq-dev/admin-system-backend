@@ -1,11 +1,12 @@
 import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, OneToMany, Unique } from 'typeorm';
 import { BaseEntity } from './base';
 import { ServerService } from './service_service.entity';
 
 @Entity({ name: 'services' })
+@Unique(['name'])
 export class Service extends BaseEntity {
   @ApiProperty({ example: 'Docker' })
   @Column({ type: 'varchar', length: 100 })

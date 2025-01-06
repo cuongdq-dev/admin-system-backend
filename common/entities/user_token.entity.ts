@@ -7,8 +7,8 @@ import {
   ManyToOne,
   Relation,
 } from 'typeorm';
-import type { User } from './user.entity';
 import { BaseEntity } from './base';
+import type { User } from './user.entity';
 
 export enum TokenType {
   REGISTER_VERIFY = 'REGISTER_VERIFY',

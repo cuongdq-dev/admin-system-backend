@@ -5,6 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   Relation,
+  Unique,
 } from 'typeorm';
 import { BaseEntity } from './base';
 import type { Customer } from './customer.entity';

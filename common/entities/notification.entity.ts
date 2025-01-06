@@ -1,6 +1,6 @@
 import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
 import { BaseEntity } from './base';
 import { User } from './user.entity';

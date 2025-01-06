@@ -7,9 +7,9 @@ import {
   OneToOne,
   Relation,
 } from 'typeorm';
+import type { Address } from './address.entity';
 import { BaseEntity } from './base';
 import type { Customer } from './customer.entity';
-import type { Address } from './address.entity';
 import type { Payment } from './payment.entity';
 
 export enum OrderStatus {

@@ -1,3 +1,6 @@
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import * as bcrypt from 'bcryptjs';
+import { Exclude } from 'class-transformer';
 import {
   AfterLoad,
   BeforeInsert,
@@ -8,19 +11,18 @@ import {
   ManyToOne,
   OneToMany,
   Relation,
+  Unique,
 } from 'typeorm';
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from './base';
-import { Token } from './user_token.entity';
-import * as bcrypt from 'bcryptjs';
-import { Exclude } from 'class-transformer';
 import type { Media } from './media.entity';
-import type { Session } from './user_session.entity';
+import { Notification } from './notification.entity';
 import type { Post } from './post.entity';
 import { Server } from './server.entity';
-import { Notification } from './notification.entity';
+import type { Session } from './user_session.entity';
+import { Token } from './user_token.entity';
 
 @Entity({ name: 'users' })
+@Unique(['name', 'email'])
 export class User extends BaseEntity {
   @ApiProperty({ example: 'Danimai' })
   @Column({ type: 'varchar', length: 200 })

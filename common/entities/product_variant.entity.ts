@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   Column,
   Entity,
@@ -5,14 +6,15 @@ import {
   ManyToOne,
   OneToMany,
   Relation,
+  Unique,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from './base';
+import type { CartItem } from './cart_item.entity';
 import type { Product } from './product.entity';
 import type { ProductVariantMedia } from './product_variant_media.entity';
-import type { CartItem } from './cart_item.entity';
 
 @Entity({ name: 'product_variants' })
+@Unique(['id'])
 export class ProductVariant extends BaseEntity {
   @ApiProperty({ example: 'Metadata' })
   @Column({ type: 'jsonb', default: {} })

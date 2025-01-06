@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, Relation } from 'typeorm';
+import { Column, Entity, OneToMany, Relation, Unique } from 'typeorm';
 import { BaseEntity } from './base';
 import type { User } from './user.entity';
 import type { ProductVariantMedia } from './product_variant_media.entity';

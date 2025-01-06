@@ -1,4 +1,11 @@
-import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  Relation,
+  Unique,
+} from 'typeorm';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from './base';
 import type { ProductVariant } from './product_variant.entity';

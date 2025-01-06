@@ -2,15 +2,16 @@ import {
   Lang,
   LangContent,
   loadEntities,
+  Notification,
   Server,
   Service,
-  Notification,
   User,
 } from '@app/entities';
 import {
   NotificationStatus,
   NotificationType,
 } from '@app/entities/notification.entity';
+import * as bcrypt from 'bcryptjs';
 import dataSource from 'ormconfig';
 import { languages } from './lang';
 
@@ -26,13 +27,20 @@ async function create() {
   const adminRepository = dataSource.getRepository(User);
 
   try {
-    const admin = adminRepository.create({
-      name: 'Admin',
-      is_active: true,
-      email: process.env.ADMIN_EMAIL,
-      password: process.env.ADMIN_PASSWORD,
-    });
-    await adminRepository.save(admin);
+    const salt = await bcrypt.genSalt();
+    const password = await bcrypt.hash(process.env.ADMIN_PASSWORD, salt);
+    await adminRepository.upsert(
+      {
+        name: 'Admin',
+        is_active: true,
+        email: process.env.ADMIN_EMAIL,
+        password: password,
+      },
+      {
+        conflictPaths: ['name', 'email'],
+        skipUpdateIfNoValuesChanged: true,
+      },
+    );
     console.log('Admin created successfully.');
   } catch (error) {
     await queryRunner.rollbackTransaction();
@@ -54,13 +62,21 @@ async function createUser() {
   const userRepository = dataSource.getRepository(User);
 
   try {
-    const user = userRepository.create({
-      name: 'User',
-      is_active: true,
-      email: 'user@example.com',
-      password: process.env.ADMIN_PASSWORD,
-    });
-    await userRepository.save(user);
+    const salt = await bcrypt.genSalt();
+    const password = await bcrypt.hash(process.env.ADMIN_PASSWORD, salt);
+
+    await userRepository.upsert(
+      {
+        name: 'User',
+        is_active: true,
+        email: 'user@example.com',
+        password: password,
+      },
+      {
+        conflictPaths: ['name', 'email'],
+        skipUpdateIfNoValuesChanged: true,
+      },
+    );
     console.log('User created successfully.');
   } catch (error) {
     await queryRunner.rollbackTransaction();
@@ -71,7 +87,7 @@ async function createUser() {
 }
 
 async function createLanguages() {
-  // Set các options cho DataSource nếu chưa được cấu hình sẵn
+  // Configure data source options if not already configured
   dataSource.setOptions({
     entities: loadEntities,
   });
@@ -86,39 +102,45 @@ async function createLanguages() {
   const langContentRepository = dataSource.getRepository(LangContent);
 
   try {
-    for (const language of languages as any) {
-      const existingLanguage = await langRepository.findOne({
-        where: { code: language.code },
-      });
-
-      if (!existingLanguage) {
-        const newLanguage = langRepository.create({
+    for (const language of languages) {
+      // Upsert the language
+      const { generatedMaps } = await langRepository.upsert(
+        {
           code: language.code,
           name: language.name,
           description: language.description,
-        });
-        await langRepository.save(newLanguage);
-        console.log(`${language.name} language added.`);
+        },
+        { conflictPaths: ['code'] },
+      );
+      const newLanguage = generatedMaps[0];
+      console.log(
+        `${language.name} - ${language.code} - ${newLanguage.id} language added/updated.`,
+      );
 
-        for (const [key, content] of Object.entries(language.content)) {
-          const langContent = langContentRepository.create({
-            code: key,
-            content: content as string,
-            lang_id: newLanguage.id,
-          });
-          await langContentRepository.save(langContent);
-          console.log(`Content for ${language.name} added: ${key}`);
-        }
-      } else {
-        console.log(`${language.name} language already exists.`);
-      }
+      // Upsert associated content for the language
+      const contentEntries = Object.entries(language.content).map(
+        ([key, content]) => ({
+          code: key,
+          content: content as string,
+          lang_id: newLanguage.id, // Reference the new or existing language
+        }),
+      );
+
+      await langContentRepository.upsert(contentEntries, {
+        conflictPaths: ['code', 'lang_id'],
+      });
+
+      console.log(`Content for ${language.name} added/updated.`);
     }
 
+    // Commit the transaction
     await queryRunner.commitTransaction();
   } catch (error) {
+    // Rollback the transaction on error
     await queryRunner.rollbackTransaction();
     console.error('Error seeding languages:', error.message);
   } finally {
+    // Release the query runner
     await queryRunner.release();
   }
 }
@@ -140,13 +162,81 @@ async function createService() {
         name: 'Docker',
         icon: 'skill-icons:docker',
         description: '30mb',
-        script:
-          'curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh',
+        script: `
+          #!/bin/bash
+
+          # Cài đặt Docker
+          echo "Đang cài đặt Docker..."
+          curl -fsSL https://get.docker.com -o get-docker.sh
+          sudo sh get-docker.sh
+
+          # Khởi động Docker và đảm bảo Docker khởi động lại khi hệ thống khởi động
+          sudo systemctl start docker
+          sudo systemctl enable docker
+
+          # Thêm người dùng vào nhóm docker (không cần sudo khi sử dụng Docker)
+          sudo usermod -aG docker $USER
+
+          # Cài đặt Docker Compose
+          echo "Đang cài đặt Docker Compose..."
+          sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+          # Cấp quyền thực thi cho Docker Compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+          # Kiểm tra Docker và Docker Compose
+          echo "Kiểm tra phiên bản Docker..."
+          docker --version
+
+          echo "Kiểm tra phiên bản Docker Compose..."
+          docker-compose --version
+
+          echo "Tạo file docker-compose.yml..."
+          cat <<EOL > docker-compose.yml
+          version: "3.8"
+          services:
+            postgres_db:
+              image: postgres:latest
+              container_name: PostgresCont
+              restart: always
+              environment:
+                - POSTGRES_DB=database_dev
+                - POSTGRES_USER=postgres
+                - POSTGRES_PASSWORD=postgres123
+              ports:
+                - 5432:5432
+              networks:
+                - system_control
+              volumes:
+                - postgres_db:/var/lib/postgresql/data
+            nginx:
+              image: nginx:latest
+              container_name: nginx_container
+              ports:
+                - "80:80"
+              volumes:
+                  - ./nginx:/etc/nginx/conf.d/
+              networks:
+                - system_control
+              restart: always
+          volumes:
+            postgres_db:
+              driver: local
+
+          networks:
+            system_control:
+              driver: bridge
+          EOL
+          # Thông báo hoàn tất
+          echo "Cài đặt Docker, Docker Compose và file docker-compose.yml đã hoàn tất!"        
+        `,
       },
     ];
 
-    const serviceCreate = serviceRepository.create(serviceArr);
-    await serviceRepository.save(serviceCreate);
+    await serviceRepository.upsert(serviceArr, {
+      conflictPaths: { name: true },
+      skipUpdateIfNoValuesChanged: true,
+    });
     console.log('Service created successfully.');
   } catch (error) {
     await queryRunner.rollbackTransaction();
@@ -167,7 +257,11 @@ async function createServer() {
   await queryRunner.startTransaction();
 
   const serverRepository = dataSource.getRepository(Server);
+  const adminRepository = dataSource.getRepository(User);
   try {
+    const admin = await adminRepository.findOne({
+      where: { email: process.env.ADMIN_EMAIL },
+    });
     const serverArr = [
       {
         name: 'Contabo Singapore',
@@ -175,11 +269,14 @@ async function createServer() {
         port: '22',
         user: 'root',
         password: '!g6hXE,./gL4~',
+        owner_id: admin.id,
       },
     ];
 
-    const serverCreate = serverRepository.create(serverArr);
-    await serverRepository.save(serverCreate);
+    await serverRepository.upsert(serverArr, {
+      conflictPaths: ['name', 'host'],
+      skipUpdateIfNoValuesChanged: true,
+    });
     console.log('Server created successfully.');
   } catch (error) {
     await queryRunner.rollbackTransaction();
@@ -199,10 +296,14 @@ async function createNotification() {
   await queryRunner.connect();
   await queryRunner.startTransaction();
   const notificationRepository = dataSource.getRepository(Notification);
+  const adminRepository = dataSource.getRepository(User);
 
   try {
     // Fetch a user to associate the notifications
     // Create notifications covering all statuses and types
+    const admin = await adminRepository.findOne({
+      where: { email: process.env.ADMIN_EMAIL },
+    });
     const notifications = Object.values(NotificationStatus).flatMap((status) =>
       Object.values(NotificationType).map((type) =>
         notificationRepository.create({
@@ -214,7 +315,7 @@ async function createNotification() {
           meta_data: JSON.stringify({
             detail: `Meta for ${type} and status ${status}`,
           }),
-          user_id: '8992e717-9554-434d-b055-474d6f5396a2',
+          user_id: admin.id,
         }),
       ),
     );
@@ -228,8 +329,9 @@ async function createNotification() {
   }
 }
 
-// void create();
-// void createUser();
-// void createService();
-// void createLanguages();
+void create();
+void createUser();
+void createServer();
+void createService();
+void createLanguages();
 void createNotification();

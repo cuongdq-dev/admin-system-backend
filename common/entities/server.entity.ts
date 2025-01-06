@@ -8,6 +8,7 @@ import {
   ManyToOne,
   OneToMany,
   Relation,
+  Unique,
 } from 'typeorm';
 import { BaseEntity } from './base';
 import { Repository } from './repository.entity';
@@ -15,6 +16,7 @@ import { ServerService } from './service_service.entity';
 import { User } from './user.entity';
 
 @Entity({ name: 'servers' })
+@Unique(['name', 'host'])
 export class Server extends BaseEntity {
   @ApiProperty({ example: 'Server Contabo' })
   @IsOptional({ groups: [ValidationGroup.UPDATE] })

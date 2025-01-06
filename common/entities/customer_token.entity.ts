@@ -1,5 +1,12 @@
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
-import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  Unique,
+} from 'typeorm';
 import { BaseEntity } from './base';
 import type { Customer } from './customer.entity';
 

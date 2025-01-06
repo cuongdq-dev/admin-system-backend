@@ -154,6 +154,8 @@ export const languages = [
       dark_mode_title: 'Dark Mode',
       light_mode_title: 'Light Mode',
       system_mode_title: 'System Mode',
+      contrast_title: 'Contrast',
+      preset_title: 'Preset',
 
       docker_container_id_item: 'Id',
       docker_container_name_item: 'Container',
@@ -387,6 +389,8 @@ export const languages = [
       dark_mode_title: 'Chế độ tối',
       light_mode_title: 'Chế độ sáng',
       system_mode_title: 'Chế độ hệ thống',
+      contrast_title: 'Contrast',
+      preset_title: 'Preset',
 
       docker_container_id_item: 'Id',
       docker_container_name_item: 'Container',

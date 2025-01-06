@@ -1,8 +1,13 @@
-import { ValidationGroup } from '@app/crud/validation-group';
 import { ServiceStatusEnum as StatusEnum } from '@app/utils';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
-import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  Relation,
+  Unique,
+} from 'typeorm';
 import { BaseEntity } from './base';
 import { Server } from './server.entity';
 import { Service } from './service.entity';

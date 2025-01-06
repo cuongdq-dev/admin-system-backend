@@ -8,6 +8,7 @@ import {
   ManyToOne,
   OneToMany,
   Relation,
+  Unique,
 } from 'typeorm';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from './base';
@@ -26,6 +27,7 @@ export enum AuthProvider {
 }
 
 @Entity({ name: 'customers' })
+@Unique(['email', 'phone_number'])
 export class Customer extends BaseEntity {
   @ApiProperty({ example: 'Danimai' })
   @Column({ type: 'varchar', length: 50 })
@@ -36,11 +38,11 @@ export class Customer extends BaseEntity {
   last_name: string;
 
   @ApiProperty({ example: 'example@danimai.com' })
-  @Column({ type: 'varchar', length: 255, unique: true })
+  @Column({ type: 'varchar', length: 255 })
   email: string;
 
   @ApiProperty({ example: '77220646XX' })
-  @Column({ type: 'varchar', length: 13, unique: true })
+  @Column({ type: 'varchar', length: 13 })
   phone_number: string;
 
   @ApiProperty({ example: '91' })

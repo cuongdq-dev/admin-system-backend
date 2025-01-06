@@ -1,17 +1,25 @@
 import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
-import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  Relation,
+  Unique,
+} from 'typeorm';
 import { BaseEntity } from './base';
 import { Server } from './server.entity';
 
 @Entity({ name: 'repositories' })
+@Unique(['name'])
 export class Repository extends BaseEntity {
   @ApiProperty({ example: 'Repo Name' })
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   @IsString({ always: true })
   @MaxLength(255, { always: true })
-  @Column({ type: 'varchar', length: 255, unique: true })
+  @Column({ type: 'varchar', length: 255 })
   name: string;
 
   @ApiProperty({ example: 'https://github.com....' })
