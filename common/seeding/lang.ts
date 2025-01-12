@@ -16,6 +16,7 @@ export const languages = [
       user_table_title: 'Users',
       user_detail_title: 'User Detail',
       user_profile_title: 'Profile',
+      user_tab_profile: 'Profile',
       server_nav: 'Server',
       server_new_button: 'New Server',
       connect_server_button: 'Connect Server',
@@ -235,6 +236,11 @@ export const languages = [
       server_notify_fetching_data: 'The data is being updated...',
       server_notify_connecting: 'Re-connect to server...',
       server_notify_disconnected: 'Unable to connect to the server.',
+
+      trending_now_title: 'Trending Now',
+      trending_title_item: 'Title',
+      trending_search_volume_item: 'Search Volume',
+      trending_started_item: 'Started',
     },
   },
   {
@@ -254,6 +260,7 @@ export const languages = [
       user_table_title: 'Người dùng',
       user_detail_title: 'Chi tiết người dùng',
       user_profile_title: 'Profile',
+      user_tab_profile: 'Profile',
 
       server_nav: 'Máy chủ',
       server_new_button: 'Thêm máy chủ mới',

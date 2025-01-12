@@ -39,6 +39,16 @@
       }
     },
 
+    "batch": {
+      "type": "application",
+      "root": "apps/batch",
+      "entryFile": "main",
+      "sourceRoot": "apps/batch/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/batch/tsconfig.app.json"
+      }
+    },
+
     "vps": {
       "type": "application",
       "root": "apps/vps",

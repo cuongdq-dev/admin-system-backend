@@ -1,7 +1,7 @@
 import { Address } from './address.entity';
 import { Cart } from './cart.entity';
 import { CartItem } from './cart_item.entity';
-import { Customer, AuthProvider } from './customer.entity';
+import { AuthProvider, Customer } from './customer.entity';
 import { CustomerSession } from './customer_session.entity';
 import {
   CustomerToken,
@@ -10,9 +10,11 @@ import {
 import { Lang } from './lang.entity';
 import { LangContent } from './lang_content.entity';
 import { Media, StorageType } from './media.entity';
+import { Notification } from './notification.entity';
 import { Order, OrderStatus } from './order.entity';
 import { Payment, PaymentProvider, PaymentStatus } from './payment.entity';
 import { Post } from './post.entity';
+import { PostCategory } from './post_category.entity';
 import { Product } from './product.entity';
 import { ProductVariant } from './product_variant.entity';
 import { ProductVariantMedia } from './product_variant_media.entity';
@@ -20,42 +22,46 @@ import { Repository } from './repository.entity';
 import { Server } from './server.entity';
 import { Service } from './service.entity';
 import { ServerService } from './service_service.entity';
+import { Trending } from './trending.entity';
+import { TrendingArticle } from './trending_articles.entity';
 import { User } from './user.entity';
 import { Session } from './user_session.entity';
-import { Notification } from './notification.entity';
 import { Token, TokenType as UserTokenType } from './user_token.entity';
 
 export {
-  CustomerSession,
-  AuthProvider,
-  StorageType,
-  OrderStatus,
-  PaymentProvider,
-  PaymentStatus,
-  CustomerToken,
-  UserTokenType,
-  CustomerTokenType,
-  Media,
-  Post,
-  Session,
-  Token,
-  User,
-  Customer,
   Address,
-  Product,
-  Notification,
-  ProductVariant,
-  ProductVariantMedia,
+  AuthProvider,
   Cart,
   CartItem,
-  Order,
-  Payment,
+  Customer,
+  CustomerSession,
+  CustomerToken,
+  CustomerTokenType,
   Lang,
-  Server,
-  Service,
-  Repository,
-  ServerService,
   LangContent,
+  Media,
+  Notification,
+  Order,
+  OrderStatus,
+  Payment,
+  PaymentProvider,
+  PaymentStatus,
+  Post,
+  Product,
+  ProductVariant,
+  ProductVariantMedia,
+  Repository,
+  Server,
+  ServerService,
+  Service,
+  Session,
+  StorageType,
+  Token,
+  Trending,
+  TrendingArticle,
+  User,
+  UserTokenType,
+  PostCategory,
 };
 export const loadEntities = [
   CustomerSession,
@@ -75,10 +81,13 @@ export const loadEntities = [
   Order,
   Payment,
   Lang,
+  Trending,
+  TrendingArticle,
   Server,
   Service,
   Notification,
   Repository,
   ServerService,
   LangContent,
+  PostCategory,
 ];

@@ -8,16 +8,15 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
-  UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
   ApiParam,
@@ -34,12 +33,7 @@ import { postPaginateConfig } from './post.pagination';
 import { PostService } from './post.service';
 
 @ApiTags('Post')
-@Controller({
-  path: 'posts',
-  version: '1',
-})
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@Controller({ path: 'post', version: '1' })
 export class PostController {
   constructor(private postService: PostService) {}
 
@@ -63,23 +57,36 @@ export class PostController {
     return this.postService.create(createDto, user);
   }
 
-  @Get()
+  @Get('/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
   getAll(@Paginate() query: PaginateQuery, @UserParam() user: User) {
-    return this.postService.getAll(user, query);
+    return this.postService.getAll(query);
   }
 
-  @Get(':id')
-  @ApiCreatedResponse({
-    type: PostEntity,
-  })
-  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  // GET KEYWORD FROM GOOGLE: HOT SEARCH
+  @Get('/trendings')
+  @HttpCode(HttpStatus.OK)
+  async getTrendings() {
+    return this.postService.getTrendings();
+  }
+  //
+  @Get(':slug')
+  @ApiParam({ name: 'slug', type: 'varchar' })
   getOne(
     @Param(
-      'id',
-      ParseUUIDPipe,
-      IsIDExistPipe({ entity: PostEntity, relations: { user: true } }),
+      'slug',
+      IsIDExistPipe({
+        entity: PostEntity,
+        filterField: 'slug',
+        relations: [
+          'user',
+          'thumbnail',
+          'article.trending',
+          'article.thumbnail',
+          'article.trending.thumbnail',
+        ],
+      }),
     )
     post: PostEntity,
   ) {

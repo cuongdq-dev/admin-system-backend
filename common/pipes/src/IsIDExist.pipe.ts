@@ -6,12 +6,9 @@ import { DataSource, FindOptionsRelations } from 'typeorm';
 type IsIDExistPipeType = (options: {
   entity: EntityClassOrSchema;
   filterField?: string;
-  relations?: FindOptionsRelations<any>;
+  relations?: FindOptionsRelations<any> | string[];
 }) => any;
 
-// To solve mixin issue of class returned by function you refer below link
-// https://github.com/microsoft/TypeScript/issues/30355#issuecomment-839834550
-// for now we are just going with any
 export const IsIDExistPipe: IsIDExistPipeType = ({
   entity,
   filterField = 'id',
@@ -27,8 +24,9 @@ export const IsIDExistPipe: IsIDExistPipeType = ({
       const repository = this.dataSource.getRepository(entity);
       const instance = await repository.findOne({
         where: { [filterField]: value },
-        relations,
+        relations: relations,
       });
+
       if (!instance) {
         throw new NotFoundException(
           `${filterField} ${value.toString()} of ${(entity as any).name} does not exists.`,

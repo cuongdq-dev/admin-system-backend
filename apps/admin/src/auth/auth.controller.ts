@@ -24,7 +24,6 @@ export class AuthController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('/profile')
-  @ApiOperation({ summary: 'Refresh your access token.' })
   @HttpCode(HttpStatus.OK)
   async getProfile(@UserParam() user: User) {
     return this.authService.getProfile(user);

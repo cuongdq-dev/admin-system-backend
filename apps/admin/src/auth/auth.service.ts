@@ -100,6 +100,6 @@ export class AuthService {
   }
 
   async getProfile(user: User) {
-    return { ...user };
+    return true;
   }
 }
