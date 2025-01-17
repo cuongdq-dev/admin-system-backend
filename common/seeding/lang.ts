@@ -67,6 +67,13 @@ export const languages = [
       blog_new_button: 'New Blog',
       blog_table_title: 'Blogs',
       blog_detail_title: 'Blog Detail',
+      blog_public_button: 'Public',
+      blog_draft_button: 'Draft',
+
+      blog_title_item: 'Title',
+      blog_description_item: 'Description',
+      blog_keywords_item: 'Keywords',
+      blog_content_item: 'Content',
 
       language_nav: 'Language',
       language_list_page: 'Language List',
@@ -312,6 +319,13 @@ export const languages = [
       blog_new_button: 'Thêm bài viết mới',
       blog_table_title: 'Các bài viết',
       blog_detail_title: 'Chi tiết bài viết',
+      blog_public_button: 'Public',
+      blog_draft_button: 'Draft',
+
+      blog_title_item: 'Tiêu đề',
+      blog_description_item: 'Mô tả',
+      blog_keywords_item: 'Từ khoá',
+      blog_content_item: 'Nội dung',
 
       language_nav: 'Ngôn ngữ',
       language_list_page: 'Danh sách ngôn ngữ',

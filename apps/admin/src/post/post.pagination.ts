@@ -1,13 +1,23 @@
-import { Post, Trending, TrendingArticle } from '@app/entities';
+import { Post, Trending } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const postPaginateConfig: PaginateConfig<Post> = {
-  relations: ['thumbnail'],
+  relations: ['thumbnail', 'article'],
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
   searchableColumns: ['title', 'content'],
   maxLimit: 50,
   defaultLimit: 23,
+  select: [
+    'article.source',
+    'id',
+    'title',
+    'meta_description',
+    'created_at',
+    'thumbnail',
+    'thumbnail.data',
+    'slug',
+  ],
   filterableColumns: { title: [FilterOperator.EQ] },
 };
 

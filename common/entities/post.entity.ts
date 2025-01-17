@@ -1,12 +1,19 @@
-import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsOptional } from 'class-validator';
 import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
 import { BaseEntity } from './base';
 import { Media } from './media.entity';
 import { PostCategory } from './post_category.entity';
 import { TrendingArticle } from './trending_articles.entity';
 import type { User } from './user.entity';
+import { IsOptional } from 'class-validator';
+import { ValidationGroup } from 'common/crud';
+
+export enum PostStatus {
+  NEW = 'NEW',
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  DELETED = 'DELETED',
+}
 
 @Entity({ name: 'posts' })
 export class Post extends BaseEntity {
@@ -29,6 +36,7 @@ export class Post extends BaseEntity {
   category: Relation<PostCategory>;
 
   @Column({ type: 'uuid', nullable: true })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
   category_id: string;
 
   @ManyToOne(() => Media, { nullable: true })
@@ -39,18 +47,22 @@ export class Post extends BaseEntity {
   thumbnail_id: string;
 
   @Column({ type: 'varchar', length: 255 })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
   title: string;
 
   @Column({ type: 'varchar', length: 255, unique: true })
   slug: string;
 
   @Column({ type: 'text' })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
   content: string;
 
   @Column({ type: 'jsonb', nullable: true })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
   relatedQueries: { query?: string }[];
 
   @Column({ type: 'varchar', length: 500, nullable: true })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
   meta_description: string;
 
   @ManyToOne('User', 'posts')
@@ -60,4 +72,8 @@ export class Post extends BaseEntity {
   @ApiProperty()
   @Column({ type: 'uuid', nullable: true })
   user_id: string;
+
+  @Column({ type: 'enum', enum: PostStatus, default: PostStatus.NEW })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  status: PostStatus;
 }

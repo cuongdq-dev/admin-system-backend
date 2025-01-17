@@ -57,6 +57,11 @@ export class PostController {
     return this.postService.create(createDto, user);
   }
 
+  @Get('/fetch-trending')
+  fetTrending() {
+    return this.postService.handleCrawlerArticles();
+  }
+
   @Get('/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
@@ -85,29 +90,62 @@ export class PostController {
           'article.trending',
           'article.thumbnail',
           'article.trending.thumbnail',
+          'article.trending.articles',
         ],
       }),
     )
     post: PostEntity,
   ) {
-    return post;
+    return this.postService.getPostBySlug(post);
+  }
+
+  @Post('fetch-content/:id')
+  @ApiParam({ name: 'id', type: 'varchar' })
+  fetchContent(
+    @Param(
+      'id',
+      IsIDExistPipe({
+        entity: PostEntity,
+        filterField: 'id',
+        relations: ['article'],
+      }),
+    )
+    post: PostEntity,
+    @Body() { index }: Record<string, any>,
+  ) {
+    return this.postService.fetchContent(index, post);
   }
 
   @Patch(':id')
-  @ApiCreatedResponse({
-    type: PostEntity,
-  })
   @ApiBody({
-    type: PickType(PostEntity, ['content', 'title', 'is_published']),
+    type: PickType(PostEntity, [
+      'content',
+      'title',
+      'status',
+      'meta_description',
+      'relatedQueries',
+    ]),
   })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   partialUpdate(
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({ entity: PostEntity, relations: { user: true } }),
+      IsIDExistPipe({
+        entity: PostEntity,
+        filterField: 'id',
+        relations: [
+          'user',
+          'thumbnail',
+          'article.trending',
+          'article.thumbnail',
+          'article.trending.thumbnail',
+          'article.trending.articles',
+        ],
+      }),
     )
     post: PostEntity,
+
     @Body(
       new ValidationPipe({
         ...validationOptions,
@@ -115,9 +153,8 @@ export class PostController {
       }),
     )
     updateDto: PostEntity,
-    @UserParam() user: User,
   ) {
-    return this.postService.update(post, user, updateDto);
+    return this.postService.update(post, updateDto);
   }
 
   @Delete(':id')
