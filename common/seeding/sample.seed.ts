@@ -163,72 +163,72 @@ async function createService() {
         icon: 'skill-icons:docker',
         description: '30mb',
         script: `
-          #!/bin/bash
+        #!/bin/bash
 
-          # Cài đặt Docker
-          echo "Đang cài đặt Docker..."
-          curl -fsSL https://get.docker.com -o get-docker.sh
-          sudo sh get-docker.sh
+        # Cài đặt Docker
+        echo "Đang cài đặt Docker..."
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        sudo sh get-docker.sh
 
-          # Khởi động Docker và đảm bảo Docker khởi động lại khi hệ thống khởi động
-          sudo systemctl start docker
-          sudo systemctl enable docker
+        # Khởi động Docker và đảm bảo Docker khởi động lại khi hệ thống khởi động
+        sudo systemctl start docker
+        sudo systemctl enable docker
 
-          # Thêm người dùng vào nhóm docker (không cần sudo khi sử dụng Docker)
-          sudo usermod -aG docker $USER
+        # Thêm người dùng vào nhóm docker (không cần sudo khi sử dụng Docker)
+        sudo usermod -aG docker $USER
 
-          # Cài đặt Docker Compose
-          echo "Đang cài đặt Docker Compose..."
-          sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        # Cài đặt Docker Compose
+        echo "Đang cài đặt Docker Compose..."
+        sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 
-          # Cấp quyền thực thi cho Docker Compose
-          sudo chmod +x /usr/local/bin/docker-compose
+        # Cấp quyền thực thi cho Docker Compose
+        sudo chmod +x /usr/local/bin/docker-compose
 
-          # Kiểm tra Docker và Docker Compose
-          echo "Kiểm tra phiên bản Docker..."
-          docker --version
+        # Kiểm tra Docker và Docker Compose
+        echo "Kiểm tra phiên bản Docker..."
+        docker --version
 
-          echo "Kiểm tra phiên bản Docker Compose..."
-          docker-compose --version
+        echo "Kiểm tra phiên bản Docker Compose..."
+        docker-compose --version
 
-          echo "Tạo file docker-compose.yml..."
-          cat <<EOL > docker-compose.yml
-          version: "3.8"
-          services:
-            postgres_db:
-              image: postgres:latest
-              container_name: PostgresCont
-              restart: always
-              environment:
-                - POSTGRES_DB=database_dev
-                - POSTGRES_USER=postgres
-                - POSTGRES_PASSWORD=postgres123
-              ports:
-                - 5432:5432
-              networks:
-                - system_control
-              volumes:
-                - postgres_db:/var/lib/postgresql/data
-            nginx:
-              image: nginx:latest
-              container_name: nginx_container
-              ports:
-                - "80:80"
-              volumes:
-                  - ./nginx:/etc/nginx/conf.d/
-              networks:
-                - system_control
-              restart: always
-          volumes:
-            postgres_db:
-              driver: local
+        echo "Tạo file docker-compose.yml..."
+        cat <<EOL > docker-compose.yml
+        version: "3.8"
+        services:
+          postgres_db:
+            image: postgres:latest
+            container_name: PostgresCont
+            restart: always
+            environment:
+              - POSTGRES_DB=database_dev
+              - POSTGRES_USER=postgres
+              - POSTGRES_PASSWORD=postgres123
+            ports:
+              - 5432:5432
+            networks:
+              - system_control
+            volumes:
+              - postgres_db:/var/lib/postgresql/data
+          nginx:
+            image: nginx:latest
+            container_name: nginx_container
+            ports:
+              - "80:80"
+            volumes:
+                - ./nginx:/etc/nginx/conf.d/
+            networks:
+              - system_control
+            restart: always
+        volumes:
+          postgres_db:
+            driver: local
 
-          networks:
-            system_control:
-              driver: bridge
-          EOL
-          # Thông báo hoàn tất
-          echo "Cài đặt Docker, Docker Compose và file docker-compose.yml đã hoàn tất!"        
+        networks:
+          system_control:
+            driver: bridge
+        EOL
+        # Thông báo hoàn tất
+        echo "Cài đặt Docker, Docker Compose và file docker-compose.yml đã hoàn tất!"
         `,
       },
     ];
@@ -328,10 +328,10 @@ async function createNotification() {
     console.error('Error seeding full notifications:', error.message);
   }
 }
-
-void create();
-void createUser();
-void createServer();
 void createService();
-void createLanguages();
-void createNotification();
+
+// void create();
+// void createUser();
+// void createServer();
+// void createLanguages();
+// void createNotification();
