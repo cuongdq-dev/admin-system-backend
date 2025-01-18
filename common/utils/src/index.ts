@@ -18,7 +18,7 @@ export const convertImageData = (
 ) => {
   const repo = repoDb?.find((repo, index) => {
     const service = repo.services.find(
-      (service) => service.image.split(':')[0] == imageName,
+      (service) => service.image?.split(':')[0] == imageName,
     );
     if (service) return true;
   });

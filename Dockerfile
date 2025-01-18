@@ -17,6 +17,9 @@ COPY . .
 # Build ứng dụng
 RUN yarn build:user
 RUN yarn build:admin
+RUN yarn build:batch
+RUN yarn build:vps
+RUN yarn build:socket
 
 # Stage 2: Final Image
 FROM node:23-alpine
