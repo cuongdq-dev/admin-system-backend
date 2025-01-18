@@ -200,7 +200,7 @@ export class ServerService {
 
   async getServiceInfo(connectionId: string) {
     const service = await this.serverServiceRepository.findOne({
-      where: { service: { name: 'docker' } },
+      where: { service: { name: 'Docker' } },
       relations: ['service'],
     });
     const result = await callApi(
@@ -237,6 +237,7 @@ export class ServerService {
       { script: service?.service?.script },
     );
   }
+
   async updateDockerCompose(
     connectionId: string,
     values?: Record<string, any>,
