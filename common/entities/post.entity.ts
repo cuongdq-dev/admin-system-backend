@@ -6,7 +6,7 @@ import { PostCategory } from './post_category.entity';
 import { TrendingArticle } from './trending_articles.entity';
 import type { User } from './user.entity';
 import { IsOptional } from 'class-validator';
-import { ValidationGroup } from 'common/crud';
+import { ValidationGroup } from '@app/crud/validation-group';
 
 export enum PostStatus {
   NEW = 'NEW',

@@ -20,6 +20,8 @@ import type { Post } from './post.entity';
 import { Server } from './server.entity';
 import type { Session } from './user_session.entity';
 import { Token } from './user_token.entity';
+import { IsOptional } from 'class-validator';
+import { ValidationGroup } from 'common/crud';
 
 @Entity({ name: 'users' })
 @Unique(['name', 'email'])
@@ -44,6 +46,10 @@ export class User extends BaseEntity {
   @ApiHideProperty()
   @OneToMany(() => Token, (token) => token.user)
   tokens: Token[];
+
+  @Column({ type: 'text', nullable: true })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  firebase_token: string;
 
   @ApiHideProperty()
   @Exclude()

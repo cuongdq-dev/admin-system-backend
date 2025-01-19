@@ -99,23 +99,6 @@ export class PostController {
     return this.postService.getPostBySlug(post);
   }
 
-  @Post('fetch-content/:id')
-  @ApiParam({ name: 'id', type: 'varchar' })
-  fetchContent(
-    @Param(
-      'id',
-      IsIDExistPipe({
-        entity: PostEntity,
-        filterField: 'id',
-        relations: ['article'],
-      }),
-    )
-    post: PostEntity,
-    @Body() { index }: Record<string, any>,
-  ) {
-    return this.postService.fetchContent(index, post);
-  }
-
   @Patch(':id')
   @ApiBody({
     type: PickType(PostEntity, [

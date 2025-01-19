@@ -17,6 +17,7 @@ export const postPaginateConfig: PaginateConfig<Post> = {
     'thumbnail',
     'thumbnail.data',
     'slug',
+    'status',
   ],
   filterableColumns: { title: [FilterOperator.EQ] },
 };
