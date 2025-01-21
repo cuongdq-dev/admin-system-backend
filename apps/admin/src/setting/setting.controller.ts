@@ -1,10 +1,12 @@
 import { UserParam } from '@app/decorators';
 import { User } from '@app/entities';
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -25,5 +27,16 @@ export class SettingController {
   @ApiBearerAuth()
   getSeting(@UserParam() user: User) {
     return this.settingService.getSetting(user);
+  }
+
+  @Post('firebase-token')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  setFirebaseToken(
+    @UserParam() user: User,
+    @Body() { token }: { token: string },
+  ) {
+    return this.settingService.setFirebaseToken(token, user);
   }
 }

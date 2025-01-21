@@ -28,4 +28,11 @@ export class SettingService {
       notifyNew: notifyNew,
     };
   }
+
+  async setFirebaseToken(token: string, user: User) {
+    return await this.userRepository.update(
+      { id: user.id },
+      { firebase_token: token },
+    );
+  }
 }
