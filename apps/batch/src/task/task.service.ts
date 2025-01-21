@@ -51,21 +51,21 @@ export class TaskService {
 
       if (trending?.articles?.length) {
         await this.processArticles(trending.articles, trendingData.id);
-        const currentCountPost = await this.postRepository.count({
-          where: { deleted_at: null },
-        });
-
-        await FirebaseAdmin.messaging().sendEachForMulticast({
-          tokens,
-          webpush: {
-            notification: {
-              title: 'New Posts Available',
-              body: `There are ${currentCountPost - prevCountPost} new posts. Please check them out!`,
-            },
-          },
-        });
       }
     }
+    const currentCountPost = await this.postRepository.count({
+      where: { deleted_at: null },
+    });
+
+    await FirebaseAdmin.messaging().sendEachForMulticast({
+      tokens,
+      webpush: {
+        notification: {
+          title: 'New Posts Available',
+          body: `There are ${currentCountPost - prevCountPost} new posts. Please check them out!`,
+        },
+      },
+    });
 
     this.logger.debug('END - Crawler Articles.');
   }
