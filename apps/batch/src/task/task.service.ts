@@ -1,4 +1,11 @@
-import { Media, Post, Trending, TrendingArticle, User } from '@app/entities';
+import {
+  Media,
+  Post,
+  Trending,
+  TrendingArticle,
+  User,
+  Notification,
+} from '@app/entities';
 import {
   fetchTrendings,
   generatePostFromHtml,
@@ -10,6 +17,10 @@ import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import * as FirebaseAdmin from 'firebase-admin';
+import {
+  NotificationStatus,
+  NotificationType,
+} from '@app/entities/notification.entity';
 
 @Injectable()
 export class TaskService {
@@ -25,22 +36,21 @@ export class TaskService {
     @InjectRepository(Media)
     private readonly mediaRepository: Repository<Media>,
     @InjectRepository(User)
-    private readonly UserRepository: Repository<User>,
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Notification)
+    private readonly notificationRepository: Repository<Notification>,
   ) {}
   @Cron('*/10 * * * *')
   async handleCrawlerArticles() {
     this.logger.debug('START - Crawler Articles.');
 
     const trendingList = await fetchTrendings();
-    const admins = await this.UserRepository.find({
+    const admins = await this.userRepository.find({
       where: { firebase_token: Not(IsNull()) },
     });
     const tokens = admins
       .map((admin) => admin.firebase_token)
       .filter((token) => token);
-    const prevCountPost = await this.postRepository.count({
-      where: { deleted_at: null },
-    });
 
     for (const trending of trendingList) {
       this.logger.debug(
@@ -53,16 +63,25 @@ export class TaskService {
         await this.processArticles(trending.articles, trendingData.id);
       }
     }
-    const currentCountPost = await this.postRepository.count({
-      where: { deleted_at: null },
-    });
+
+    // Save notifications to the database
+    for (const admin of admins) {
+      const notify = this.notificationRepository.create({
+        title: `New Posts Available `,
+        message: `Please check them out!`,
+        status: NotificationStatus.NEW,
+        type: NotificationType.SYSTEM,
+        user_id: admin.id,
+      });
+      await this.notificationRepository.save(notify);
+    }
 
     await FirebaseAdmin.messaging().sendEachForMulticast({
       tokens,
       webpush: {
         notification: {
           title: 'New Posts Available',
-          body: `There are ${currentCountPost - prevCountPost} new posts. Please check them out!`,
+          body: 'Please check them out!',
         },
       },
     });

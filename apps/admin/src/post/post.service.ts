@@ -196,7 +196,15 @@ export class PostService {
   // ****************************************
 
   async getPostBySlug(post: Post) {
-    return { ...post };
+    const result = await this.postRepository.update(
+      { id: post.id, status: PostStatus.NEW },
+      { status: PostStatus.DRAFT },
+    );
+
+    return {
+      ...post,
+      status: !!result.affected ? PostStatus.DRAFT : post.status,
+    };
   }
   async fetchContent(index: number, post: Post) {
     const content = await generatePostFromHtml({
