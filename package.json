@@ -55,6 +55,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "dotenv": "^16.4.7",
+    "firebase-admin": "^13.0.2",
     "googleapis": "^134.0.0",
     "install": "^0.13.0",
     "morgan": "^1.10.0",

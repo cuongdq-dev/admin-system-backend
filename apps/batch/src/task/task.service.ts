@@ -1,4 +1,4 @@
-import { Media, Post, Trending, TrendingArticle } from '@app/entities';
+import { Media, Post, Trending, TrendingArticle, User } from '@app/entities';
 import {
   fetchTrendings,
   generatePostFromHtml,
@@ -8,7 +8,8 @@ import {
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
+import * as FirebaseAdmin from 'firebase-admin';
 
 @Injectable()
 export class TaskService {
@@ -23,12 +24,23 @@ export class TaskService {
     private readonly postRepository: Repository<Post>,
     @InjectRepository(Media)
     private readonly mediaRepository: Repository<Media>,
+    @InjectRepository(User)
+    private readonly UserRepository: Repository<User>,
   ) {}
-  @Cron('*/2 * * * *') // Cứ mỗi 5 phút
+  @Cron('*/10 * * * *')
   async handleCrawlerArticles() {
     this.logger.debug('START - Crawler Articles.');
 
     const trendingList = await fetchTrendings();
+    const admins = await this.UserRepository.find({
+      where: { firebase_token: Not(IsNull()) },
+    });
+    const tokens = admins
+      .map((admin) => admin.firebase_token)
+      .filter((token) => token);
+    const prevCountPost = await this.postRepository.count({
+      where: { deleted_at: null },
+    });
 
     for (const trending of trendingList) {
       this.logger.debug(
@@ -39,6 +51,19 @@ export class TaskService {
 
       if (trending?.articles?.length) {
         await this.processArticles(trending.articles, trendingData.id);
+        const currentCountPost = await this.postRepository.count({
+          where: { deleted_at: null },
+        });
+
+        await FirebaseAdmin.messaging().sendEachForMulticast({
+          tokens,
+          webpush: {
+            notification: {
+              title: 'New Posts Available',
+              body: `There are ${currentCountPost - prevCountPost} new posts. Please check them out!`,
+            },
+          },
+        });
       }
     }
 

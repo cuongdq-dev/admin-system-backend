@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskModule } from './task/task.module';
+import * as FirebaseAdmin from 'firebase-admin';
 
 export const global_modules = [
   ConfigModule.forRoot({
@@ -18,4 +19,14 @@ export const global_modules = [
 @Module({
   imports: [...global_modules, ScheduleModule.forRoot(), TaskModule],
 })
-export class BatchModule {}
+export class BatchModule {
+  constructor() {
+    FirebaseAdmin.initializeApp({
+      credential: FirebaseAdmin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+  }
+}
