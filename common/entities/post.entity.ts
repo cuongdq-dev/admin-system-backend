@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  Relation,
+} from 'typeorm';
 import { BaseEntity } from './base';
 import { Media } from './media.entity';
 import { PostCategory } from './post_category.entity';
@@ -29,15 +37,15 @@ export class Post extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   article_id: string;
 
-  @ManyToOne(() => PostCategory, (category) => category.posts, {
-    nullable: true,
+  @ManyToMany(() => PostCategory, (category) => category.posts, {
+    cascade: true,
   })
-  @JoinColumn({ name: 'category_id' })
-  category: Relation<PostCategory>;
-
-  @Column({ type: 'uuid', nullable: true })
-  @IsOptional({ groups: [ValidationGroup.UPDATE] })
-  category_id: string;
+  @JoinTable({
+    name: 'post_categories',
+    joinColumn: { name: 'post_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
+  })
+  categories: Relation<PostCategory[]>;
 
   @ManyToOne(() => Media, { nullable: true })
   @JoinColumn({ name: 'thumbnail_id' })

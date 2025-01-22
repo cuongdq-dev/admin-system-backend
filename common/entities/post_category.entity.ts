@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, Relation } from 'typeorm';
+import { Column, Entity, ManyToMany, OneToMany, Relation } from 'typeorm';
 import { BaseEntity } from './base';
 import { Post } from './post.entity';
 
@@ -13,6 +13,6 @@ export class PostCategory extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @OneToMany('Post', 'category')
+  @ManyToMany(() => Post, (post) => post.categories)
   posts: Relation<Post[]>;
 }

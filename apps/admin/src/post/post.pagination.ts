@@ -23,13 +23,24 @@ export const postPaginateConfig: PaginateConfig<Post> = {
 };
 
 export const trendingPaginateConfig: PaginateConfig<Trending> = {
+  relations: ['articles', 'thumbnail', 'articles.thumbnail'],
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
-  relations: ['articles', 'thumbnail', 'articles.thumbnail'],
-  maxLimit: 10000,
-  defaultLimit: 100000,
-  filterableColumns: {
-    titleQuery: [FilterOperator.EQ],
-    created_at: [FilterOperator.GTE],
-  },
+  searchableColumns: ['titleQuery', 'trendDate'],
+  maxLimit: 15,
+  defaultLimit: 15,
+  select: [
+    'articles.title',
+    'articles.relatedQueries',
+    'articles.thumbnail.data',
+    'articles.thumbnail.slug',
+    'articles.thumbnail.url',
+    'titleQuery',
+    'thumbnail.url',
+    'thumbnail.data',
+    'thumbnail.slug',
+    'formattedTraffic',
+    'trendDate',
+  ],
+  filterableColumns: { titleQuery: [FilterOperator.EQ] },
 };

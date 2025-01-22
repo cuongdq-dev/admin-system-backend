@@ -1,6 +1,6 @@
 import { ValidationGroup } from '@app/crud/validation-group';
 import { UserParam } from '@app/decorators';
-import { Post as PostEntity, User } from '@app/entities';
+import { Post as PostEntity, Trending, User } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
 import validationOptions from '@app/utils/validation-options';
 import {
@@ -29,7 +29,7 @@ import {
   Paginate,
   PaginateQuery,
 } from 'nestjs-paginate';
-import { postPaginateConfig } from './post.pagination';
+import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
 import { PostService } from './post.service';
 
 @ApiTags('Post')
@@ -57,25 +57,20 @@ export class PostController {
     return this.postService.create(createDto, user);
   }
 
-  @Get('/fetch-trending')
-  fetTrending() {
-    return this.postService.handleCrawlerArticles();
-  }
-
   @Get('/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
-  getAll(@Paginate() query: PaginateQuery, @UserParam() user: User) {
+  getAll(@Paginate() query: PaginateQuery) {
     return this.postService.getAll(query);
   }
 
-  // GET KEYWORD FROM GOOGLE: HOT SEARCH
   @Get('/trendings')
-  @HttpCode(HttpStatus.OK)
-  async getTrendings() {
-    return this.postService.getTrendings();
+  @ApiOkPaginatedResponse(Trending, trendingPaginateConfig)
+  @ApiPaginationQuery(trendingPaginateConfig)
+  async getTrendings(@Paginate() query: PaginateQuery) {
+    return this.postService.getTrendings(query);
   }
-  //
+
   @Get(':slug')
   @ApiParam({ name: 'slug', type: 'varchar' })
   getOne(
