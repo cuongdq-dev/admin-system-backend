@@ -36,6 +36,6 @@ export class CategoryService {
   }
 
   async delete(category: PostCategory) {
-    await this.postCategoryRepository.delete(category.id);
+    await this.postCategoryRepository.softDelete(category.id);
   }
 }
