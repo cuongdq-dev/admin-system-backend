@@ -2,7 +2,7 @@ import { Column, Entity, ManyToMany, OneToMany, Relation } from 'typeorm';
 import { BaseEntity } from './base';
 import { Post } from './post.entity';
 import { IsOptional } from 'class-validator';
-import { ValidationGroup } from 'common/crud';
+import { ValidationGroup } from '@app/crud/validation-group';
 
 @Entity({ name: 'categories' })
 export class PostCategory extends BaseEntity {
