@@ -9,6 +9,13 @@ export const languages = [
       pull_button: 'Pull',
       clone_button: 'Clone',
 
+      category_nav: 'Category',
+      category_list_page: 'Category List',
+      category_new_button: 'Add New',
+      category_slug_item: 'Slug',
+      category_name_item: 'Name',
+      category_description_item: 'Description',
+
       user_nav: 'User',
       user_list_page: 'User List',
       user_new_button: 'New User',
@@ -259,6 +266,13 @@ export const languages = [
       dashboard_page: 'Bảng điều khiển',
       pull_button: 'Pull',
       clone_button: 'Clone',
+
+      category_nav: 'Category',
+      category_list_page: 'Category List',
+      category_new_button: 'Add New',
+      category_slug_item: 'Slug',
+      category_name_item: 'Name',
+      category_description_item: 'Description',
 
       user_nav: 'Người dùng',
       user_list_page: 'Danh sách người dùng',

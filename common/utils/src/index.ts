@@ -4,6 +4,7 @@ import {
   StorageType,
 } from '@app/entities';
 import * as cheerio from 'cheerio';
+import slugify from 'slugify';
 import { Parser } from 'xml2js';
 
 export * from './bootstrap';
@@ -558,12 +559,19 @@ async function processImages(
 }
 
 export function generateSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-    .replace(/[^a-z0-9\s-]/g, '') // Remove invalid characters
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/-+/g, '-') // Collapse dashes
-    .trim();
+  const slug = slugify(text, {
+    lower: true,
+    trim: true,
+    strict: true,
+    locale: 'vi',
+  });
+  return slug;
+  // return text
+  //   .toLowerCase()
+  //   .normalize('NFD')
+  //   .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+  //   .replace(/[^a-z0-9\s-]/g, '') // Remove invalid characters
+  //   .replace(/\s+/g, '-') // Replace spaces with -
+  //   .replace(/-+/g, '-') // Collapse dashes
+  //   .trim();
 }

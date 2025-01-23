@@ -1,0 +1,3 @@
+interface CategoryDto {
+  //   slug: tr;
+}

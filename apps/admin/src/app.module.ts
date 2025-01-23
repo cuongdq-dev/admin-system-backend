@@ -15,6 +15,7 @@ import { RepositoryModule } from './repository/repository.module';
 import { ServerModule } from './server/server.module';
 import { SettingModule } from './setting/setting.module';
 import { UserModule } from './user/user.module';
+import { CategoryModule } from './category/category.module';
 
 const modules = [
   AuthModule,
@@ -27,6 +28,7 @@ const modules = [
   SettingModule,
   RepositoryModule,
   NotificationModule,
+  CategoryModule,
 ];
 
 export const global_modules = [

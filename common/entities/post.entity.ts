@@ -47,6 +47,16 @@ export class Post extends BaseEntity {
   })
   categories: Relation<PostCategory[]>;
 
+  @ManyToMany(() => PostCategory, (category) => category.posts, {
+    cascade: true,
+  })
+  @JoinTable({
+    name: 'post_sites',
+    joinColumn: { name: 'post_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
+  })
+  sites: Relation<PostCategory[]>;
+
   @ManyToOne(() => Media, { nullable: true })
   @JoinColumn({ name: 'thumbnail_id' })
   thumbnail: Relation<Media>;
