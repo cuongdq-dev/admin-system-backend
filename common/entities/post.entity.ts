@@ -1,20 +1,20 @@
+import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
 import {
   Column,
   Entity,
   JoinColumn,
-  JoinTable,
   ManyToMany,
   ManyToOne,
   Relation,
 } from 'typeorm';
 import { BaseEntity } from './base';
+import { Category } from './category.entity';
 import { Media } from './media.entity';
-import { PostCategory } from './post_category.entity';
+import { Site } from './site.entity';
 import { TrendingArticle } from './trending_articles.entity';
 import type { User } from './user.entity';
-import { IsOptional } from 'class-validator';
-import { ValidationGroup } from '@app/crud/validation-group';
 
 export enum PostStatus {
   NEW = 'NEW',
@@ -36,16 +36,6 @@ export class Post extends BaseEntity {
 
   @Column({ type: 'uuid', nullable: true })
   article_id: string;
-
-  @ManyToMany(() => PostCategory, (category) => category.posts, {
-    cascade: true,
-  })
-  @JoinTable({
-    name: 'post_categories',
-    joinColumn: { name: 'post_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
-  })
-  categories: Relation<PostCategory[]>;
 
   @ManyToOne(() => Media, { nullable: true })
   @JoinColumn({ name: 'thumbnail_id' })
@@ -84,4 +74,10 @@ export class Post extends BaseEntity {
   @Column({ type: 'enum', enum: PostStatus, default: PostStatus.NEW })
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   status: PostStatus;
+
+  @ManyToMany(() => Category, (category) => category.posts)
+  categories: Relation<Category[]>;
+
+  @ManyToMany(() => Site, (site) => site.posts)
+  sites: Relation<Site[]>;
 }

@@ -1,5 +1,5 @@
 import { ValidationGroup } from '@app/crud/validation-group';
-import { Category } from '@app/entities';
+import { Site } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
 import validationOptions from '@app/utils/validation-options';
 import {
@@ -11,11 +11,9 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
   ApiParam,
@@ -28,34 +26,38 @@ import {
   Paginate,
   PaginateQuery,
 } from 'nestjs-paginate';
-import { categoryPaginateConfig } from './category.pagination';
-import { CategoryService } from './category.service';
-import { AuthGuard } from '@nestjs/passport';
+import { sitePaginateConfig } from './site.pagination';
+import { SiteService } from './site.service';
+import { SiteCreateDto } from './site.dto';
 
-@ApiTags('category')
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
-@Controller({ path: 'category', version: '1' })
-export class CategoryController {
-  constructor(private categoryService: CategoryService) {}
+@ApiTags('site')
+@Controller({ path: 'site', version: '1' })
+export class SiteController {
+  constructor(private siteService: SiteService) {}
 
   @Post('/create')
-  @ApiBody({ type: PickType(Category, ['slug', 'name', 'description']) })
-  @ApiCreatedResponse({ type: Category })
-  create(@Body() createDto: Category) {
-    return this.categoryService.create(createDto);
+  @ApiCreatedResponse({ type: Site })
+  create(@Body() createDto: SiteCreateDto) {
+    console.log(createDto);
+    return this.siteService.create(createDto);
   }
 
   @Get('/list')
-  @ApiOkPaginatedResponse(Category, categoryPaginateConfig)
-  @ApiPaginationQuery(categoryPaginateConfig)
+  @ApiOkPaginatedResponse(Site, sitePaginateConfig)
+  @ApiPaginationQuery(sitePaginateConfig)
   getAll(@Paginate() query: PaginateQuery) {
-    return this.categoryService.getAll(query);
+    return this.siteService.getAll(query);
   }
 
   @Patch('update/:id')
   @ApiBody({
-    type: PickType(Category, ['slug', 'description', 'name']),
+    type: PickType(Site, [
+      'name',
+      'description',
+      'domain',
+      'categories',
+      'posts',
+    ]),
   })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   partialUpdate(
@@ -63,12 +65,12 @@ export class CategoryController {
       'id',
       ParseUUIDPipe,
       IsIDExistPipe({
-        entity: Category,
+        entity: Site,
         filterField: 'id',
         relations: ['posts'],
       }),
     )
-    category: Category,
+    site: Site,
 
     @Body(
       new ValidationPipe({
@@ -76,9 +78,9 @@ export class CategoryController {
         groups: [ValidationGroup.UPDATE],
       }),
     )
-    updateDto: Category,
+    updateDto: Site,
   ) {
-    return this.categoryService.update(category, updateDto);
+    return this.siteService.update(site, updateDto);
   }
 
   @Delete('/delete/:id')
@@ -88,14 +90,13 @@ export class CategoryController {
       'id',
       ParseUUIDPipe,
       IsIDExistPipe({
-        entity: Category,
+        entity: Site,
         filterField: 'id',
         relations: ['posts'],
       }),
     )
-    category: Category,
+    site: Site,
   ) {
-    console.log(category);
-    return this.categoryService.delete(category);
+    return this.siteService.delete(site);
   }
 }

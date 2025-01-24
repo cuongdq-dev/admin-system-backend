@@ -14,9 +14,11 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
   ApiParam,
@@ -31,8 +33,11 @@ import {
 } from 'nestjs-paginate';
 import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
 import { PostService } from './post.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Post')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller({ path: 'post', version: '1' })
 export class PostController {
   constructor(private postService: PostService) {}

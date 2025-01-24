@@ -21,7 +21,7 @@ import { Server } from './server.entity';
 import type { Session } from './user_session.entity';
 import { Token } from './user_token.entity';
 import { IsOptional } from 'class-validator';
-import { ValidationGroup } from 'common/crud';
+import { ValidationGroup } from '@app/crud/validation-group';
 
 @Entity({ name: 'users' })
 @Unique(['name', 'email'])

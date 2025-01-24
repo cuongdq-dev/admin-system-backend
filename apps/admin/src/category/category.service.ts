@@ -1,4 +1,4 @@
-import { PostCategory, User } from '@app/entities';
+import { Category, User } from '@app/entities';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
@@ -10,8 +10,8 @@ export class CategoryService {
   private readonly logger = new Logger(CategoryService.name);
 
   constructor(
-    @InjectRepository(PostCategory)
-    private postCategoryRepository: Repository<PostCategory>,
+    @InjectRepository(Category)
+    private postCategoryRepository: Repository<Category>,
   ) {}
 
   async getAll(query: PaginateQuery) {
@@ -22,11 +22,11 @@ export class CategoryService {
     );
   }
 
-  create(createDto: PostCategory) {
+  create(createDto: Category) {
     return this.postCategoryRepository.create({ ...createDto }).save();
   }
 
-  async update(category: PostCategory, updateDto: PostCategory) {
+  async update(category: Category, updateDto: Category) {
     await this.postCategoryRepository.update(
       { id: category.id },
       { ...updateDto },
@@ -35,7 +35,7 @@ export class CategoryService {
     return { ...category, ...updateDto };
   }
 
-  async delete(category: PostCategory) {
+  async delete(category: Category) {
     await this.postCategoryRepository.softDelete(category.id);
   }
 }
