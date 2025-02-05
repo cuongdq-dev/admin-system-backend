@@ -8,8 +8,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -17,6 +15,7 @@ import {
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -33,7 +32,6 @@ import {
 } from 'nestjs-paginate';
 import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
 import { PostService } from './post.service';
-import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Post')
 @ApiBearerAuth()
@@ -41,26 +39,6 @@ import { AuthGuard } from '@nestjs/passport';
 @Controller({ path: 'post', version: '1' })
 export class PostController {
   constructor(private postService: PostService) {}
-
-  @Post()
-  @ApiBody({
-    type: PickType(PostEntity, ['content', 'title', 'is_published']),
-  })
-  @ApiCreatedResponse({
-    type: PostEntity,
-  })
-  create(
-    @Body(
-      new ValidationPipe({
-        ...validationOptions,
-        groups: [ValidationGroup.CREATE],
-      }),
-    )
-    createDto: PostEntity,
-    @UserParam() user: User,
-  ) {
-    return this.postService.create(createDto, user);
-  }
 
   @Get('/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
@@ -97,6 +75,26 @@ export class PostController {
     post: PostEntity,
   ) {
     return this.postService.getPostBySlug(post);
+  }
+
+  @Post()
+  @ApiBody({
+    type: PickType(PostEntity, ['content', 'title', 'is_published']),
+  })
+  @ApiCreatedResponse({
+    type: PostEntity,
+  })
+  create(
+    @Body(
+      new ValidationPipe({
+        ...validationOptions,
+        groups: [ValidationGroup.CREATE],
+      }),
+    )
+    createDto: PostEntity,
+    @UserParam() user: User,
+  ) {
+    return this.postService.create(createDto, user);
   }
 
   @Patch(':id')

@@ -10,9 +10,9 @@ async function bootstrap() {
   // User Module Setup
   const app = await NestFactory.create(UserAppModule);
   createApplication(app);
-  const adminConfigService = app.get(ConfigService);
-  documentationBuilder(app, adminConfigService, 'Admin');
+  const userConfigService = app.get(ConfigService);
+  documentationBuilder(app, userConfigService, 'User');
 
-  await app.listen(adminConfigService.get('ADMIN_PORT') || 8001);
+  await app.listen(userConfigService.get('USER_PORT') || 8001);
 }
 bootstrap();

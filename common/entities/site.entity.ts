@@ -1,9 +1,17 @@
 import { IsOptional } from 'class-validator';
 import { ValidationGroup } from '@app/crud/validation-group';
-import { Column, Entity, JoinTable, ManyToMany, Relation } from 'typeorm';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  Relation,
+} from 'typeorm';
 import { BaseEntity } from './base';
 import { Category } from './category.entity';
 import { Post } from './post.entity';
+import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 
 @Entity({ name: 'sites' })
 export class Site extends BaseEntity {
@@ -34,4 +42,12 @@ export class Site extends BaseEntity {
     inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
   })
   categories: Relation<Category[]>;
+
+  @Column({ type: 'varchar', length: 100, unique: true })
+  token: string;
+
+  @BeforeInsert()
+  async generateToken() {
+    this.token = `${randomStringGenerator()}-${randomStringGenerator()}`;
+  }
 }

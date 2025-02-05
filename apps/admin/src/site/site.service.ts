@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { sitePaginateConfig } from './site.pagination';
-import { SiteCreateDto } from './site.dto';
+import { SiteBodyDto } from './site.dto';
 
 @Injectable()
 export class SiteService {
@@ -20,7 +20,7 @@ export class SiteService {
     );
   }
 
-  async create(createDto: SiteCreateDto) {
+  async create(createDto: SiteBodyDto) {
     const result = await this.siteRepository.create({ ...createDto }).save();
     return this.siteRepository.findOne({
       where: { id: result.id },
@@ -28,8 +28,8 @@ export class SiteService {
     });
   }
 
-  async update(site: Site, updateDto: Site) {
-    await this.siteRepository.update({ id: site.id }, { ...updateDto });
+  async update(site: Site, updateDto: SiteBodyDto) {
+    await this.siteRepository.save({ ...site, ...updateDto });
     return this.siteRepository.findOne({
       where: { id: site.id },
       relations: ['posts', 'categories'],

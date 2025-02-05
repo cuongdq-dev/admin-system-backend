@@ -28,19 +28,12 @@ import {
 } from 'nestjs-paginate';
 import { sitePaginateConfig } from './site.pagination';
 import { SiteService } from './site.service';
-import { SiteCreateDto } from './site.dto';
+import { SiteBodyDto } from './site.dto';
 
 @ApiTags('site')
 @Controller({ path: 'site', version: '1' })
 export class SiteController {
   constructor(private siteService: SiteService) {}
-
-  @Post('/create')
-  @ApiCreatedResponse({ type: Site })
-  create(@Body() createDto: SiteCreateDto) {
-    console.log(createDto);
-    return this.siteService.create(createDto);
-  }
 
   @Get('/list')
   @ApiOkPaginatedResponse(Site, sitePaginateConfig)
@@ -49,17 +42,13 @@ export class SiteController {
     return this.siteService.getAll(query);
   }
 
+  @Post('/create')
+  @ApiCreatedResponse({ type: Site })
+  create(@Body() createDto: SiteBodyDto) {
+    return this.siteService.create(createDto);
+  }
+
   @Patch('update/:id')
-  @ApiBody({
-    type: PickType(Site, [
-      'name',
-      'description',
-      'domain',
-      'categories',
-      'posts',
-    ]),
-  })
-  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   partialUpdate(
     @Param(
       'id',
@@ -72,13 +61,7 @@ export class SiteController {
     )
     site: Site,
 
-    @Body(
-      new ValidationPipe({
-        ...validationOptions,
-        groups: [ValidationGroup.UPDATE],
-      }),
-    )
-    updateDto: Site,
+    @Body() updateDto: SiteBodyDto,
   ) {
     return this.siteService.update(site, updateDto);
   }

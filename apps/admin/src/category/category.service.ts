@@ -1,9 +1,10 @@
-import { Category, User } from '@app/entities';
+import { Category, Site, User } from '@app/entities';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { categoryPaginateConfig } from './category.pagination';
+import { CategoryBodyDto } from './category.dto';
 
 @Injectable()
 export class CategoryService {
@@ -22,19 +23,23 @@ export class CategoryService {
     );
   }
 
-  create(createDto: Category) {
-    return this.postCategoryRepository.create({ ...createDto }).save();
+  async create(createDto: CategoryBodyDto) {
+    const result = await this.postCategoryRepository
+      .create({ ...createDto })
+      .save();
+    return this.postCategoryRepository.findOne({
+      where: { id: result.id },
+      relations: ['posts', 'sites'],
+    });
   }
 
-  async update(category: Category, updateDto: Category) {
-    await this.postCategoryRepository.update(
-      { id: category.id },
-      { ...updateDto },
-    );
-
-    return { ...category, ...updateDto };
+  async update(category: Category, updateDto: CategoryBodyDto) {
+    await this.postCategoryRepository.save({ ...category, ...updateDto });
+    return this.postCategoryRepository.findOne({
+      where: { id: category.id },
+      relations: ['posts', 'sites'],
+    });
   }
-
   async delete(category: Category) {
     await this.postCategoryRepository.softDelete(category.id);
   }

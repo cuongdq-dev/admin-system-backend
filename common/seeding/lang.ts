@@ -15,6 +15,8 @@ export const languages = [
       category_slug_item: 'Slug',
       category_name_item: 'Name',
       category_description_item: 'Description',
+      category_posts_item: 'Posts',
+      category_sites_item: 'Sites',
 
       user_nav: 'User',
       user_list_page: 'User List',
@@ -279,6 +281,8 @@ export const languages = [
       category_slug_item: 'Slug',
       category_name_item: 'Name',
       category_description_item: 'Description',
+      category_posts_item: 'Posts',
+      category_sites_item: 'Sites',
 
       user_nav: 'Người dùng',
       user_list_page: 'Danh sách người dùng',

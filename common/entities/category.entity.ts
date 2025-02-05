@@ -1,5 +1,5 @@
 import { ValidationGroup } from '@app/crud/validation-group';
-import { IsOptional } from 'class-validator';
+import { IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Column, Entity, JoinTable, ManyToMany, Relation } from 'typeorm';
 import { BaseEntity } from './base';
 import { Post } from './post.entity';
@@ -19,7 +19,10 @@ export class Category extends BaseEntity {
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   description: string;
 
-  @ManyToMany(() => Post, (post) => post.categories, { cascade: true })
+  @ManyToMany(() => Post, (post) => post.categories, {
+    cascade: true,
+    nullable: true,
+  })
   @JoinTable({
     name: 'category_posts',
     joinColumn: { name: 'category_id', referencedColumnName: 'id' },
@@ -27,6 +30,6 @@ export class Category extends BaseEntity {
   })
   posts: Relation<Post[]>;
 
-  @ManyToMany(() => Site, (site) => site.categories)
+  @ManyToMany(() => Site, (site) => site.categories, { nullable: true })
   sites: Relation<Site[]>;
 }

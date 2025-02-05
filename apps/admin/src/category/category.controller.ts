@@ -31,6 +31,7 @@ import {
 import { categoryPaginateConfig } from './category.pagination';
 import { CategoryService } from './category.service';
 import { AuthGuard } from '@nestjs/passport';
+import { CategoryBodyDto } from './category.dto';
 
 @ApiTags('category')
 @ApiBearerAuth()
@@ -39,13 +40,6 @@ import { AuthGuard } from '@nestjs/passport';
 export class CategoryController {
   constructor(private categoryService: CategoryService) {}
 
-  @Post('/create')
-  @ApiBody({ type: PickType(Category, ['slug', 'name', 'description']) })
-  @ApiCreatedResponse({ type: Category })
-  create(@Body() createDto: Category) {
-    return this.categoryService.create(createDto);
-  }
-
   @Get('/list')
   @ApiOkPaginatedResponse(Category, categoryPaginateConfig)
   @ApiPaginationQuery(categoryPaginateConfig)
@@ -53,11 +47,13 @@ export class CategoryController {
     return this.categoryService.getAll(query);
   }
 
+  @Post('/create')
+  @ApiCreatedResponse({ type: Category })
+  create(@Body() createDto: CategoryBodyDto) {
+    return this.categoryService.create(createDto);
+  }
+
   @Patch('update/:id')
-  @ApiBody({
-    type: PickType(Category, ['slug', 'description', 'name']),
-  })
-  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   partialUpdate(
     @Param(
       'id',
@@ -65,24 +61,17 @@ export class CategoryController {
       IsIDExistPipe({
         entity: Category,
         filterField: 'id',
-        relations: ['posts'],
+        relations: ['posts', 'sites'],
       }),
     )
     category: Category,
 
-    @Body(
-      new ValidationPipe({
-        ...validationOptions,
-        groups: [ValidationGroup.UPDATE],
-      }),
-    )
-    updateDto: Category,
+    @Body() updateDto: CategoryBodyDto,
   ) {
     return this.categoryService.update(category, updateDto);
   }
 
   @Delete('/delete/:id')
-  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   delete(
     @Param(
       'id',

@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
@@ -7,6 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ValidationGroup } from '@app/crud/validation-group';
 
 class CategoryIdDto {
   @IsUUID()
@@ -18,13 +20,17 @@ class PostIdDto {
   id: string;
 }
 
-export class SiteCreateDto {
+export class SiteBodyDto {
   @IsString()
   @MaxLength(255)
+  @IsNotEmpty()
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
   name: string;
 
   @IsString()
   @MaxLength(255)
+  @IsNotEmpty()
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
   domain: string;
 
   @IsOptional()
@@ -32,12 +38,14 @@ export class SiteCreateDto {
   description?: string;
 
   @IsArray()
-  @ValidateNested({ each: true }) // Validate each item in the array
-  @Type(() => CategoryIdDto) // Transform each item to CategoryIdDto
+  @ValidateNested({ each: true })
+  @IsOptional()
+  @Type(() => CategoryIdDto)
   categories: CategoryIdDto[];
 
   @IsArray()
-  @ValidateNested({ each: true }) // Validate each item in the array
-  @Type(() => PostIdDto) // Transform each item to PostIdDto
+  @ValidateNested({ each: true })
+  @IsOptional()
+  @Type(() => PostIdDto)
   posts: PostIdDto[];
 }
