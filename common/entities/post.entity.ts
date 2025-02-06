@@ -59,7 +59,7 @@ export class Post extends BaseEntity {
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   relatedQueries: { query?: string }[];
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: 'text' })
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   meta_description: string;
 

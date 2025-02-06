@@ -15,16 +15,16 @@ import { Trending } from './trending.entity';
 @Entity({ name: 'trending_article' })
 @Unique(['url', 'title'])
 export class TrendingArticle extends BaseEntity {
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 500 })
   title: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 500 })
   slug: string;
 
   @Column({ type: 'varchar', length: 150 })
   source: string;
 
-  @Column({ type: 'varchar', length: 500 })
+  @Column({ type: 'text' })
   url: string;
 
   @ManyToOne(() => Trending, (trending) => trending.articles, {
@@ -46,7 +46,7 @@ export class TrendingArticle extends BaseEntity {
   @Column({ type: 'jsonb', nullable: true })
   relatedQueries: { query?: string }[];
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: 'text', nullable: true })
   meta_description: string;
 
   @OneToMany(() => Post, (post) => post.article)
