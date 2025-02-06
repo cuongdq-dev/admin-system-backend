@@ -75,16 +75,16 @@ export class TaskService {
       });
       await this.notificationRepository.save(notify);
     }
-
-    await FirebaseAdmin.messaging().sendEachForMulticast({
-      tokens,
-      webpush: {
-        notification: {
-          title: 'New Posts Available',
-          body: 'Please check them out!',
+    if (tokens && Number(tokens?.length) > 0)
+      await FirebaseAdmin.messaging().sendEachForMulticast({
+        tokens,
+        webpush: {
+          notification: {
+            title: 'New Posts Available',
+            body: 'Please check them out!',
+          },
         },
-      },
-    });
+      });
 
     this.logger.debug('END - Crawler Articles.');
   }
