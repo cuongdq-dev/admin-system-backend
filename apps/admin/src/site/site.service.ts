@@ -1,14 +1,16 @@
 import { Site } from '@app/entities';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
-import { sitePaginateConfig } from './site.pagination';
 import { SiteBodyDto } from './site.dto';
+import { sitePaginateConfig } from './site.pagination';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class SiteService {
   constructor(
+    private readonly jwtService: JwtService,
     @InjectRepository(Site) private siteRepository: Repository<Site>,
   ) {}
 
@@ -21,7 +23,13 @@ export class SiteService {
   }
 
   async create(createDto: SiteBodyDto) {
-    const result = await this.siteRepository.create({ ...createDto }).save();
+    const siteToken = this.jwtService.sign({
+      name: createDto.name,
+      domain: createDto.domain,
+    });
+    const result = await this.siteRepository
+      .create({ ...createDto, token: siteToken })
+      .save();
     return this.siteRepository.findOne({
       where: { id: result.id },
       relations: ['posts', 'categories'],

@@ -43,11 +43,6 @@ export class Site extends BaseEntity {
   })
   categories: Relation<Category[]>;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'text', nullable: true })
   token: string;
-
-  @BeforeInsert()
-  async generateToken() {
-    this.token = `${randomStringGenerator()}-${randomStringGenerator()}`;
-  }
 }
