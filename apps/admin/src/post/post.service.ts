@@ -1,16 +1,10 @@
-import { Media, Post, Trending, TrendingArticle, User } from '@app/entities';
+import { Post, Trending, User } from '@app/entities';
+import { PostStatus } from '@app/entities/post.entity';
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
-import {
-  fetchTrendings,
-  generatePostFromHtml,
-  generateSlug,
-  saveImageAsBase64,
-} from '@app/utils';
-import { PostStatus } from '@app/entities/post.entity';
 
 @Injectable()
 export class PostService {
@@ -18,9 +12,6 @@ export class PostService {
 
   constructor(
     @InjectRepository(Post) private postRepository: Repository<Post>,
-    @InjectRepository(Media) private mediaRepository: Repository<Media>,
-    @InjectRepository(TrendingArticle)
-    private trendingArticleRepository: Repository<TrendingArticle>,
 
     @InjectRepository(Trending)
     private trendingRepository: Repository<Trending>,

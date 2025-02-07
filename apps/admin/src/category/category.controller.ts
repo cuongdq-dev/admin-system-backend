@@ -84,7 +84,6 @@ export class CategoryController {
     )
     category: Category,
   ) {
-    console.log(category);
     return this.categoryService.delete(category);
   }
 }
