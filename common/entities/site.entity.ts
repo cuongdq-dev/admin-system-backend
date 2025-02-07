@@ -1,5 +1,6 @@
-import { IsOptional } from 'class-validator';
 import { ValidationGroup } from '@app/crud/validation-group';
+import { IsOptional } from 'class-validator';
+import { randomBytes } from 'node:crypto';
 import {
   BeforeInsert,
   Column,
@@ -11,7 +12,6 @@ import {
 import { BaseEntity } from './base';
 import { Category } from './category.entity';
 import { Post } from './post.entity';
-import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 
 @Entity({ name: 'sites' })
 export class Site extends BaseEntity {
@@ -45,4 +45,9 @@ export class Site extends BaseEntity {
 
   @Column({ type: 'text', nullable: true })
   token: string;
+
+  @BeforeInsert()
+  generateToken() {
+    this.token = randomBytes(32).toString('hex'); // 64 ký tự hex
+  }
 }

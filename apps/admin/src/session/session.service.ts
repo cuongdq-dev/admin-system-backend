@@ -11,17 +11,11 @@ export class SessionService {
   ) {}
 
   create(user: User) {
-    return this.sessionRepository
-      .create({
-        user,
-      })
-      .save();
+    return this.sessionRepository.create({ user }).save();
   }
 
   async get(id: string) {
-    const session = await this.sessionRepository.findOneBy({
-      id,
-    });
+    const session = await this.sessionRepository.findOneBy({ id });
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -29,8 +23,6 @@ export class SessionService {
   }
 
   async delete(id: string) {
-    await this.sessionRepository.softDelete({
-      id,
-    });
+    await this.sessionRepository.softDelete({ id });
   }
 }

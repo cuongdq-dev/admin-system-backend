@@ -17,10 +17,7 @@ import {
 import { EmailService } from './email.service';
 
 @ApiTags('Auth Email')
-@Controller({
-  path: 'auth/email',
-  version: '1',
-})
+@Controller({ path: 'auth/email', version: '1' })
 export class EmailController {
   constructor(private emailService: EmailService) {}
 

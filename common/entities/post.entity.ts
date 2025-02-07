@@ -4,6 +4,7 @@ import { IsOptional } from 'class-validator';
 import {
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToMany,
   ManyToOne,
@@ -49,6 +50,7 @@ export class Post extends BaseEntity {
   title: string;
 
   @Column({ type: 'varchar', length: 255, unique: true })
+  @Index()
   slug: string;
 
   @Column({ type: 'text' })
@@ -73,6 +75,7 @@ export class Post extends BaseEntity {
 
   @Column({ type: 'enum', enum: PostStatus, default: PostStatus.NEW })
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  @Index()
   status: PostStatus;
 
   @ManyToMany(() => Category, (category) => category.posts)

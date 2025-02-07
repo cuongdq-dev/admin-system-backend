@@ -5,12 +5,10 @@ import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { SiteBodyDto } from './site.dto';
 import { sitePaginateConfig } from './site.pagination';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class SiteService {
   constructor(
-    private readonly jwtService: JwtService,
     @InjectRepository(Site) private siteRepository: Repository<Site>,
   ) {}
 
@@ -23,13 +21,7 @@ export class SiteService {
   }
 
   async create(createDto: SiteBodyDto) {
-    const siteToken = this.jwtService.sign({
-      name: createDto.name,
-      domain: createDto.domain,
-    });
-    const result = await this.siteRepository
-      .create({ ...createDto, token: siteToken })
-      .save();
+    const result = await this.siteRepository.create(createDto).save();
     return this.siteRepository.findOne({
       where: { id: result.id },
       relations: ['posts', 'categories'],

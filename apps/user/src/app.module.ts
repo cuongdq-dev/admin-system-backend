@@ -6,10 +6,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { configLoads } from '@app/modules';
 import { TypeORMConfigFactory } from '@app/modules/database/typeorm.factory';
 import { MailerConfigClass } from '@app/modules/mail/mailerConfig.service';
-import { SessionModule } from './session/session.module';
-import { TokenModule } from './token/token.module';
+import { NewsModule } from './news/news.module';
 
-const modules = [SessionModule, TokenModule];
+const modules = [NewsModule];
 
 export const global_modules = [
   ConfigModule.forRoot({
