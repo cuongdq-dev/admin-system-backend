@@ -1,7 +1,9 @@
 import { Category, Post, Site } from '@app/entities';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
+import { newsPaginateConfig } from './news.pagination';
 
 @Injectable()
 export class NewsService {
@@ -10,7 +12,7 @@ export class NewsService {
     @InjectRepository(Post) private readonly postRepo: Repository<Post>,
   ) {}
 
-  async getHome(site: Site) {
+  async getHome(site: Site, query: PaginateQuery) {
     const categoryPostCounts = await this.siteRepo
       .createQueryBuilder('site')
       .innerJoin('site.categories', 'category')
@@ -26,35 +28,33 @@ export class NewsService {
     return categoryPostCounts;
   }
 
-  async getAllNews(site: Site) {
-    return await this.postRepo.find({
-      where: { sites: { id: site.id } },
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        thumbnail: { id: true, data: true, url: true, slug: true },
-        categories: true,
-        relatedQueries: true,
-        meta_description: true,
-      },
-      relations: ['thumbnail'],
-    });
+  async getAllNews(site: Site, query: PaginateQuery) {
+    const data = await paginate(
+      { ...query, filter: { ...query.filter } },
+      this.postRepo,
+      { ...newsPaginateConfig, where: { sites: { id: site.id } } },
+    );
+    return data;
   }
 
   async getNewsBySlug(site: Site, slug: string) {
     return await this.postRepo.findOne({
       where: { sites: { id: site.id }, slug: slug },
+
       select: {
         id: true,
         slug: true,
         title: true,
         thumbnail: { id: true, data: true, url: true, slug: true },
         categories: true,
+        content: true,
         relatedQueries: true,
+        created_at: true,
+        updated_at: true,
         meta_description: true,
+        article: { source: true, url: true },
       },
-      relations: ['thumbnail'],
+      relations: ['thumbnail', 'categories', 'article'],
     });
   }
 }

@@ -2,6 +2,8 @@ import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { NewsTokenGuard } from './guards/news-token.guard';
 import { NewsService } from './news.service';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
+import { newsPaginateConfig } from './news.pagination';
 
 @Controller('news')
 @ApiBearerAuth()
@@ -10,19 +12,15 @@ export class NewsController {
   constructor(private readonly newsService: NewsService) {}
 
   @Get()
-  async getHome(@Req() req) {
-    return {
-      message: 'Authorized request',
-      data: await this.newsService.getHome(req.site),
-    };
+  @ApiPaginationQuery(newsPaginateConfig)
+  getHome(@Req() req, @Paginate() query: PaginateQuery) {
+    return this.newsService.getHome(req?.site, query);
   }
 
   @Get('posts')
-  async getAllNews(@Req() req) {
-    return {
-      message: 'Authorized request',
-      data: await this.newsService.getAllNews(req.site),
-    };
+  @ApiPaginationQuery(newsPaginateConfig)
+  getAllNews(@Req() req, @Paginate() query: PaginateQuery) {
+    return this.newsService.getAllNews(req.site, query);
   }
 
   @Get('posts/:slug')

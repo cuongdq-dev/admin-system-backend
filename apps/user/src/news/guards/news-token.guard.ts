@@ -27,22 +27,23 @@ export class NewsTokenGuard implements CanActivate {
     }
 
     const site = await this.siteRepo.findOne({ where: { token } });
-    if (!site) {
-      throw new UnauthorizedException('Invalid token');
-    }
+    // if (!site) {
+    //   throw new UnauthorizedException('Invalid token');
+    // }
 
-    const requestDomain = request.headers.origin || request.headers.referer;
-    if (!requestDomain) {
-      throw new ForbiddenException('Missing Origin or Referer');
-    }
+    // const requestDomain = request.headers.origin || request.headers.referer;
+    // console.log(request.headers);
+    // if (!requestDomain) {
+    //   throw new ForbiddenException('Missing Origin or Referer');
+    // }
 
-    const parsedUrl = url.parse(requestDomain);
-    const domainName = parsedUrl.host;
-    const siteDomain = url.parse(site.domain).host;
+    // const parsedUrl = url.parse(requestDomain);
+    // const domainName = parsedUrl.host;
+    // const siteDomain = url.parse(site.domain).host;
 
-    if (domainName !== siteDomain) {
-      throw new ForbiddenException(`Access denied from domain: ${domainName}`);
-    }
+    // if (domainName !== siteDomain) {
+    //   throw new ForbiddenException(`Access denied from domain: ${domainName}`);
+    // }
 
     request.site = site;
     return true;
