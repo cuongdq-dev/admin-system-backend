@@ -1,9 +1,9 @@
 import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
-import { NewsTokenGuard } from './guards/news-token.guard';
-import { NewsService } from './news.service';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
+import { NewsTokenGuard } from './guards/news-token.guard';
 import { newsPaginateConfig } from './news.pagination';
+import { NewsService } from './news.service';
 
 @Controller('news')
 @ApiBearerAuth()
@@ -12,9 +12,8 @@ export class NewsController {
   constructor(private readonly newsService: NewsService) {}
 
   @Get()
-  @ApiPaginationQuery(newsPaginateConfig)
   getHome(@Req() req, @Paginate() query: PaginateQuery) {
-    return this.newsService.getHome(req?.site, query);
+    return this.newsService.getHome(req?.site);
   }
 
   @Get('posts')

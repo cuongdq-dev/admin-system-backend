@@ -10,22 +10,70 @@ export class NewsService {
   constructor(
     @InjectRepository(Site) private readonly siteRepo: Repository<Site>,
     @InjectRepository(Post) private readonly postRepo: Repository<Post>,
+    @InjectRepository(Category)
+    private readonly categoryRepo: Repository<Category>,
   ) {}
 
-  async getHome(site: Site, query: PaginateQuery) {
-    const categoryPostCounts = await this.siteRepo
-      .createQueryBuilder('site')
-      .innerJoin('site.categories', 'category')
-      .innerJoin('category.posts', 'post')
-      .where('site.id = :siteId', { siteId: site.id })
-      .select('category.slug', 'categorySlug')
-      .addSelect('category.name', 'categoryName')
-      .addSelect('COUNT(DISTINCT post.id)', 'postCount')
-      .groupBy('category.id')
-      .addGroupBy('category.name')
-      .getRawMany();
+  async getHome(site: Site) {
+    const [categories, recentPost, featurePost] = await Promise.all([
+      this.categoryRepo
+        .createQueryBuilder('category')
+        .innerJoin('category.sites', 'site') // Lọc theo siteId
+        .leftJoinAndSelect('category.posts', 'post') // Lấy dữ liệu từ bảng `posts`
+        .where('site.id = :siteId', { siteId: site.id })
+        .select([
+          'category.id AS id',
+          'category.name AS name',
+          'category.slug as slug',
+          'COUNT(DISTINCT post.id) AS postCount', // Đếm số bài viết trong từng category
+        ])
+        .groupBy('category.id, category.name, category.slug')
+        .getRawMany(),
 
-    return categoryPostCounts;
+      this.postRepo
+        .createQueryBuilder('post')
+        .innerJoin('post.sites', 'site')
+        .innerJoin('post.thumbnail', 'thumbnail')
+        .leftJoin('post.categories', 'categories')
+        .where('site.id = :siteId', { siteId: site.id })
+        .select([
+          'post.id AS id',
+          'post.title AS title',
+          'post.meta_description AS meta_description',
+          'post.created_at AS created_at',
+          'post.slug AS slug',
+          'post.status AS status',
+          "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url) AS thumbnail",
+          `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`, // Gom nhóm categories
+        ])
+        .groupBy('post.id, thumbnail.data, thumbnail.url')
+        .orderBy('created_at', 'DESC')
+        .limit(5)
+        .getRawMany(),
+
+      this.postRepo
+        .createQueryBuilder('post')
+        .innerJoin('post.sites', 'site')
+        .innerJoin('post.thumbnail', 'thumbnail')
+        .leftJoin('post.categories', 'categories')
+        .where('site.id = :siteId', { siteId: site.id })
+        .select([
+          'post.id AS post_id',
+          'post.title AS title',
+          'post.meta_description AS meta_description',
+          'post.created_at AS created_at',
+          'post.slug AS slug',
+          'post.status AS status',
+          "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url) AS thumbnail", // Gói thumbnail vào object
+          `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`, // Gom nhóm categories
+        ])
+        .groupBy('post.id, thumbnail.data, thumbnail.url')
+        .orderBy('RANDOM()')
+        .limit(5)
+        .getRawMany(),
+    ]);
+
+    return { categories, recentPost, featurePost };
   }
 
   async getAllNews(site: Site, query: PaginateQuery) {
