@@ -86,7 +86,7 @@ export class NewsService {
   }
 
   async getNewsBySlug(site: Site, slug: string) {
-    return await this.postRepo.findOne({
+    const post = await this.postRepo.findOne({
       where: { sites: { id: site.id }, slug: slug },
 
       select: {
@@ -104,5 +104,56 @@ export class NewsService {
       },
       relations: ['thumbnail', 'categories', 'article'],
     });
+    const categoryIds = post?.categories?.map((cat) => cat.id);
+
+    if (categoryIds.length === 0) {
+      const relatedPosts = await this.postRepo
+        .createQueryBuilder('post')
+        .innerJoin('post.sites', 'site')
+        .innerJoin('post.thumbnail', 'thumbnail')
+        .leftJoin('post.categories', 'categories')
+        .where('site.id = :siteId', { siteId: site.id })
+        .andWhere('post.id != :postId', { postId: post.id }) // Loại trừ bài viết gốc
+        .select([
+          'post.id AS post_id',
+          'post.title AS title',
+          'post.meta_description AS meta_description',
+          'post.created_at AS created_at',
+          'post.slug AS slug',
+          'post.status AS status',
+          "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url) AS thumbnail", // Gói thumbnail vào object
+          `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`, // Gom nhóm categories
+        ])
+        .groupBy('post.id, thumbnail.data, thumbnail.url')
+        .orderBy('post.created_at', 'DESC')
+        .limit(2)
+        .getRawMany();
+      return { data: post, relatedPosts: relatedPosts };
+    }
+
+    const relatedPosts = await this.postRepo
+      .createQueryBuilder('post')
+      .innerJoin('post.sites', 'site')
+      .innerJoin('post.thumbnail', 'thumbnail')
+      .leftJoin('post.categories', 'categories')
+      .where('site.id = :siteId', { siteId: site.id })
+      .andWhere('post.id != :postId', { postId: post.id }) // Loại trừ bài viết gốc
+      .andWhere('categories.id IN (:...categoryIds)', { categoryIds }) // Chỉ lấy bài viết có chung category
+      .select([
+        'post.id AS id',
+        'post.title AS title',
+        'post.meta_description AS meta_description',
+        'post.created_at AS created_at',
+        'post.slug AS slug',
+        'post.status AS status',
+        "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url) AS thumbnail", // Gói thumbnail vào object
+        `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`, // Gom nhóm categories
+      ])
+      .groupBy('post.id, thumbnail.data, thumbnail.url')
+      .orderBy('post.created_at', 'DESC')
+      .limit(2)
+      .getRawMany();
+
+    return { data: post, relatedPosts };
   }
 }

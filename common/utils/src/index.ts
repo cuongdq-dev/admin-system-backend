@@ -3,6 +3,7 @@ import {
   Repository as RepositoryEntity,
   StorageType,
 } from '@app/entities';
+import { PostStatus } from '@app/entities/post.entity';
 import * as cheerio from 'cheerio';
 import slugify from 'slugify';
 import { Parser } from 'xml2js';
@@ -165,7 +166,7 @@ export async function generatePostFromHtml(body: {
   const description = extractMetaDescription($);
   const keywords = extractMetaKeywords($);
 
-  const contentHtml = getHtml(
+  const { content: contentHtml, status: contentStatus } = getHtml(
     new URL(body.url).hostname,
     $,
     body.title.trim(),
@@ -173,10 +174,10 @@ export async function generatePostFromHtml(body: {
   );
 
   if (!contentHtml) {
-    return { content: undefined, keywords, description };
+    return { content: undefined, keywords, description, contentStatus };
   }
   const processedContent = await processImages(contentHtml, body.title);
-  return { content: processedContent, keywords, description };
+  return { content: processedContent, keywords, description, contentStatus };
 }
 
 async function fetchWithRetry(
@@ -218,7 +219,7 @@ function getHtml(
   $: cheerio.CheerioAPI,
   title: string,
   description: string,
-): string {
+): { content: string; status: PostStatus } {
   $('script, video, source').remove();
   $('div')
     .filter(function () {
@@ -242,21 +243,24 @@ function getHtml(
     }
   });
 
-  const extractionStrategies: Record<string, () => string | undefined> = {
+  const extractionStrategies: Record<
+    string,
+    () => { content: string } | undefined
+  > = {
     'vnexpress.net': () => {
       $(
         '.wrap-sort.width_common, .header-content.width_common, .header-live.width_common, .tab-live.width_common, .wrap-notifile, .wrap-notifileback.wrap-notifile-backtotop',
       ).remove();
       const title = $('.title-detail').prop('outerHTML');
       const content = $('.fck_detail').prop('outerHTML');
-      return title + content;
+      return { content: title + content };
     },
     'vtv.vn': () => {
       $(
         '.author, .time, .chiase_top, .chiase,.kbv-social, .news_keyword',
       ).remove();
       const content = $('.noidung').prop('outerHTML');
-      return content;
+      return { content };
     },
 
     'afamily.vn': () => {
@@ -265,34 +269,34 @@ function getHtml(
 
       const title = $('.afcb-title').prop('outerHTML');
       const content = $('.afcbc-body').prop('outerHTML');
-      return title + content;
+      return { content: title + content };
     },
 
     'bongda24h.vn': () => {
       $('.muc-luc').remove();
       const title = $('.the-article-title').prop('outerHTML');
       const content = $('.the-article-content').prop('outerHTML');
-      return title + content;
+      return { content: title + content };
     },
 
     'kenh14.vn': () => {
       $('.knc-relate-wrapper,.knc-menu-nav,.knc-rate-link').remove();
       const title = $('.kbwc-title').prop('outerHTML');
       const content = $('.klw-new-content').prop('outerHTML');
-      return title + content;
+      return { content: title + content };
     },
 
     'dantri.com.vn': () => {
       $('.author-wrap').remove();
       const content = $('.singular-container').prop('outerHTML');
-      return content;
+      return { content: content };
     },
     'vietnamnet.vn': () => {
       $(
         '.article-author-multiple-wrapper,.article-author-multiple,.share-social,.articles-edit',
       ).remove();
       const content = $('#maincontent').prop('outerHTML');
-      return content;
+      return { content };
     },
 
     'znews.vn': () => {
@@ -301,7 +305,7 @@ function getHtml(
       const summary = $('.the-article-summary').prop('outerHTML');
       const content = $('.the-article-body').prop('outerHTML');
 
-      return title + summary + content;
+      return { content: title + summary + content };
     },
 
     'laodong.vn': () => {
@@ -309,7 +313,7 @@ function getHtml(
         '.art-info, .google-news, .tin-lien-quan, .m-bottom-20, .art-footer, .box-binh-luan',
       ).remove();
       const content = $('.article-detail').prop('outerHTML');
-      return content;
+      return { content };
     },
 
     'eva.vn': () => {
@@ -317,47 +321,47 @@ function getHtml(
         '.eva-breadcrumb, .eva-author-time-art, .eva-link-cate-art, .evtBox',
       ).remove();
       const content = $('#baiviet-container').prop('outerHTML');
-      return content;
+      return { content };
     },
 
     'thethao247.vn': () => {
       $('#comment_area, .expNoEditj').remove();
       const title = $('#title_detail').prop('outerHTML');
       const content = $('#content_detail');
-      return title + content;
+      return { content: title + content };
     },
 
     'tienphong.vn': () => {
       $('#comment_area, .expNoEditj').remove();
       const title = $('.article__title').prop('outerHTML');
       const content = $('.article-content');
-      return title + content;
+      return { content: title + content };
     },
     'gamek.vn': () => {
       $('.link-content-footer, zone, script').remove();
       const detail = $('.detail');
       const title = detail.find('h1').prop('outerHTML');
       const content = $('.rightdetail');
-      return title + content;
+      return { content: title + content };
     },
     'kinhtechungkhoan.vn': () => {
       $('.link-content-footer, zone, script').remove();
       const title = $('.detail-title').prop('outerHTML');
       const content = $('.item-content');
       content.find('table').remove();
-      return title + content;
+      return { content: title + content };
     },
 
     'webthethao.vn': () => {
       const title = $('h1').prop('outerHTML');
       const content = $('#abody');
-      return title + content;
+      return { content: title + content };
     },
     'viettimes.vn': () => {
       $('.article__relate__thumb, .article__relate__heading').remove();
       const title = $('.article__title').prop('outerHTML');
       const content = $('.article__body').prop('outerHTML');
-      return title + content;
+      return { content: title + content };
     },
 
     'cafebiz.vn': () => {
@@ -365,127 +369,21 @@ function getHtml(
       detail.find('.bottom-info').remove();
       const title = detail.find('.title').prop('outerHTML');
       const content = detail.find('.detail-content');
-      return title + content;
+      return { content: title + content };
     },
     'thanhnien.vn': () => {
       const detail = $('.detail__cmain');
       detail.find('.bottom-info').remove();
       const title = detail.find('.detail-title').prop('outerHTML');
       const content = detail.find('.detail-content');
-      return title + content;
+      return { content: title + content };
     },
 
     'tuoitre.vn': () => {
       const title = $('.detail-title').prop('outerHTML');
       const content = $('.detail-content.afcbc-body');
-      return title + content;
+      return { content: title + content };
     },
-
-    // // TODO
-    // 'www.19fortyfive.com': () => {
-    //   const content = $('.zox-post-body');
-    //   return content.html();
-    // },
-    // 'www.24h.com.vn': () => {
-    //   const content = $('.cate-24h-foot-arti-deta-info');
-    //   return content.html();
-    // },
-    // 'beinsports.com.tr': () => {
-    //   // TODO: Add logic for extracting content
-    //   console.log('TODO: Logic for beinsports.com.tr');
-    //   return $.html();
-    // },
-    // 'anadoludabugun.com.tr': () => {
-    //   const content = $('.col-12.col-lg-8.article-detail.news-detail');
-    //   return content.html();
-    // },
-
-    // 'www.nytimes.com': () => {
-    //   // TODO: Add logic for extracting content
-    //   console.log('TODO: Logic for www.nytimes.com');
-    //   return $.html();
-    // },
-    // 'www.who.int': () => {
-    //   const content = $('#PageContent_T0643CD2A003_Col00');
-    //   return content.html();
-    // },
-    // 'thethaovanhoa.vn': () => {
-    //   const content = $('.entry-body.normal.clearafter');
-    //   return content.html();
-    // },
-
-    // 'plo.vn': () => {
-    //   const content = $('.article__body.zce-content-body.cms-body');
-    //   return content.html();
-    // },
-    // 'nld.com.vn': () => {
-    //   const content = $('.detail-cmain');
-    //   return content.html();
-    // },
-    // 'ngoisao.vn': () => {
-    //   const content = $('.ct-content');
-    //   return content.html();
-    // },
-
-    // 'www.saostar.vn': () => {
-    //   const content = $('.art-content');
-    //   return content.html();
-    // },
-
-    // 'www.yahoo.com': () => {
-    //   const content = $('.caas-body');
-    //   return content.html();
-    // },
-    // 'variety.com': () => {
-    //   const content = $('article').find('h1.section-heading');
-    //   return content.html();
-    // },
-
-    // 'www.ibtimes.co.uk': () => {
-    //   $('.article-header, .block.block-ibtimes-header').remove();
-    //   const content = $('.content');
-    //   return content.html();
-    // },
-    // 'www.independent.co.uk': () => {
-    //   const content = $('.main-wrapper');
-    //   return content.html();
-    // },
-    // 'giaoducthoidai.vn': () => {
-    //   $(
-    //     '.article__meta, .adsWeb_AdsArticleAfterTag, .article__tag, .related-news',
-    //   ).remove();
-    //   const content = $('.article');
-    //   return content.html();
-    // },
-    // 'www.npr.org': () => {
-    //   const content = $('#storytext');
-    //   return content.html();
-    // },
-    // 'www.nbcnews.com': () => {
-    //   const content = $('.article-body__content');
-    //   return content.html();
-    // },
-    // 'www.aljazeera.com': () => {
-    //   const content = $('.main-content-area');
-    //   return content.html();
-    // },
-    // 'www.axios.com': () => {
-    //   // TODO: Add logic for extracting content
-    //   console.log('TODO: Logic for www.axios.com');
-    //   return $.html();
-    // },
-    // 'soha.vn': () => {
-    //   const content = $('article');
-    //   return content.html();
-    // },
-    // 'www.usatoday.com': () => {
-    //   const content = $('article');
-    //   return content.html();
-    // },
-    // 'ngoisao.vnexpress.net': () => {
-    //   const content = $('.sidebar-1');
-    //   return content.html();
-    // },
 
     default: () => {
       const titleElement = $('*').filter(function () {
@@ -497,7 +395,7 @@ function getHtml(
       });
 
       if (!titleElement.length || !descriptionElement.length) {
-        return '';
+        return undefined;
       }
 
       const titleParents = titleElement.parents();
@@ -511,14 +409,22 @@ function getHtml(
         }
       });
 
-      return commonParent ? $(commonParent).html() || '' : '';
+      return { content: commonParent ? $(commonParent).html() || '' : '' };
     },
   };
 
-  const content =
-    (extractionStrategies[hostname] || extractionStrategies.default)() || '';
+  const { content, status } = extractionStrategies[hostname]
+    ? {
+        content: extractionStrategies[hostname]().content,
+        status: PostStatus.PUBLISHED,
+      }
+    : {
+        content: extractionStrategies.default().content,
+        status: PostStatus.NEW,
+      };
+  // (extractionStrategies[hostname] || extractionStrategies.default)() || '';
 
-  return content;
+  return { content, status };
 }
 
 async function processImages(
@@ -566,12 +472,4 @@ export function generateSlug(text: string): string {
     locale: 'vi',
   });
   return slug;
-  // return text
-  //   .toLowerCase()
-  //   .normalize('NFD')
-  //   .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-  //   .replace(/[^a-z0-9\s-]/g, '') // Remove invalid characters
-  //   .replace(/\s+/g, '-') // Replace spaces with -
-  //   .replace(/-+/g, '-') // Collapse dashes
-  //   .trim();
 }

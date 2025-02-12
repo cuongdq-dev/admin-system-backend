@@ -25,9 +25,6 @@ export class NewsController {
   @Get('posts/:slug')
   @ApiParam({ name: 'slug', type: 'varchar' })
   async getNewsBySlug(@Req() req, @Param() { slug }: { slug: string }) {
-    return {
-      message: 'Authorized request',
-      data: await this.newsService.getNewsBySlug(req.site, slug),
-    };
+    return this.newsService.getNewsBySlug(req.site, slug);
   }
 }

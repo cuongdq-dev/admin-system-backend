@@ -21,6 +21,7 @@ import {
   NotificationStatus,
   NotificationType,
 } from '@app/entities/notification.entity';
+import { PostStatus } from '@app/entities/post.entity';
 
 @Injectable()
 export class TaskService {
@@ -207,7 +208,12 @@ export class TaskService {
 
   private async savePost(
     articleId: string,
-    postContent: any,
+    postContent: {
+      content?: string;
+      keywords?: { query: string }[];
+      description?: string;
+      contentStatus?: PostStatus;
+    },
     articleData: any,
   ) {
     const slug = generateSlug(articleData.title);
@@ -225,6 +231,7 @@ export class TaskService {
       slug,
       meta_description: postContent.description,
       relatedQueries: postContent.keywords,
+      status: postContent.contentStatus,
       is_published: false,
       article_id: articleId,
     });
