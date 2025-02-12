@@ -415,14 +415,13 @@ function getHtml(
 
   const { content, status } = extractionStrategies[hostname]
     ? {
-        content: extractionStrategies[hostname]().content,
+        content: extractionStrategies[hostname]()?.content,
         status: PostStatus.PUBLISHED,
       }
     : {
-        content: extractionStrategies.default().content,
+        content: extractionStrategies.default()?.content || '',
         status: PostStatus.NEW,
       };
-  // (extractionStrategies[hostname] || extractionStrategies.default)() || '';
 
   return { content, status };
 }
