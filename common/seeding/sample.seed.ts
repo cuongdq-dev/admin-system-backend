@@ -1,4 +1,5 @@
 import {
+  Category,
   Lang,
   LangContent,
   loadEntities,
@@ -14,6 +15,7 @@ import {
 import * as bcrypt from 'bcryptjs';
 import dataSource from 'ormconfig';
 import { languages } from './lang';
+import { generateSlug } from '@app/utils';
 
 async function create() {
   dataSource.setOptions({
@@ -246,6 +248,82 @@ async function createService() {
   }
 }
 
+async function createCategory() {
+  dataSource.setOptions({
+    entities: loadEntities,
+  });
+  await dataSource.initialize();
+
+  const queryRunner = dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  const categoryRepository = dataSource.getRepository(Category);
+  try {
+    const categoryArr = [
+      {
+        name: 'Thể Thao',
+        slug: generateSlug('Thể Thao'),
+        description:
+          'Sports - News, updates, and analysis of domestic and international sports events, including football, basketball, and more.',
+      },
+      {
+        name: 'Giải Trí',
+        slug: generateSlug('Giải Trí'),
+        description:
+          'Entertainment - The latest news, trends, and insights about showbiz, music, movies, celebrities, and the entertainment industry.',
+      },
+      {
+        name: 'Công Nghệ',
+        slug: generateSlug('Công Nghệ'),
+        description:
+          'Technology - News and developments in technology, AI, software, hardware, devices, and innovations shaping the future.',
+      },
+      {
+        name: 'Pháp Luật - Xã Hội',
+        slug: generateSlug('Pháp Luật - Xã Hội'),
+        description:
+          'Law & Society - Updates on legal matters, societal issues, policies, political events, and matters of public interest.',
+      },
+      {
+        name: 'Kinh Doanh - Thị Trường',
+        slug: generateSlug('Kinh Doanh - Thị Trường'),
+        description:
+          'Business & Market - Insights into business trends, market dynamics, financial news, investments, and economic developments.',
+      },
+      {
+        name: 'Giáo Dục - Khoa Học',
+        slug: generateSlug('Giáo Dục - Khoa Học'),
+        description:
+          'Education & Science - News about educational advancements, scientific breakthroughs, research, and academic insights.',
+      },
+      {
+        name: 'Sức Khỏe',
+        slug: generateSlug('Sức Khỏe - Đời Sống'),
+        description:
+          'Health & Lifestyle - Information on healthcare, wellness tips, medical advancements, and healthy living practices.',
+      },
+      {
+        name: 'Du Lịch - Ẩm Thực',
+        slug: generateSlug('Du Lịch - Ẩm Thực'),
+        description:
+          'Travel & Cuisine - Travel stories, guides, and culinary experiences, highlighting global destinations and cultural cuisines.',
+      },
+    ];
+
+    await categoryRepository.upsert(categoryArr, {
+      conflictPaths: ['slug'],
+      skipUpdateIfNoValuesChanged: true,
+    });
+    console.log('Category created successfully.');
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    console.error('Error seeding category:', error.message);
+  } finally {
+    await queryRunner.release();
+  }
+}
+
 async function createServer() {
   dataSource.setOptions({
     entities: loadEntities,
@@ -285,6 +363,7 @@ async function createServer() {
     await queryRunner.release();
   }
 }
+
 async function createNotification() {
   dataSource.setOptions({
     entities: loadEntities,
@@ -335,3 +414,5 @@ void createUser();
 void createServer();
 void createLanguages();
 void createNotification();
+
+void createCategory();

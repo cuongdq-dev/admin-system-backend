@@ -5,6 +5,7 @@ import {
   TrendingArticle,
   User,
   Notification,
+  Category,
 } from '@app/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -17,6 +18,7 @@ import { TaskService } from './task.service';
       TrendingArticle,
       User,
       Media,
+      Category,
       Post,
       Notification,
     ]),

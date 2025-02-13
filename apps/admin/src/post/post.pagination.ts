@@ -27,8 +27,8 @@ export const trendingPaginateConfig: PaginateConfig<Trending> = {
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
   searchableColumns: ['titleQuery', 'trendDate'],
-  maxLimit: 15,
-  defaultLimit: 15,
+  maxLimit: 100,
+  defaultLimit: 100,
   select: [
     'articles.title',
     'articles.relatedQueries',

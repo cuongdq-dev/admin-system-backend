@@ -66,6 +66,7 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.11.5",
+    "puppeteer": "18",
     "redis": "^4.7.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
@@ -73,6 +74,7 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "stripe": "^15.7.0",
+    "translate": "^3.0.1",
     "typeorm": "^0.3.20",
     "xml2js": "^0.6.2",
     "yaml": "^2.6.1"
