@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
+import { PostBodyDto } from './post.dto';
 
 @Injectable()
 export class PostService {
@@ -52,8 +53,8 @@ export class PostService {
       .save();
   }
 
-  async update(post: Post, updateDto: Post) {
-    await this.postRepository.update({ id: post.id }, { ...updateDto });
+  async update(post: Post, updateDto: Post & PostBodyDto) {
+    await this.postRepository.save({ ...post, ...updateDto });
     if (updateDto.status == PostStatus.DELETED)
       await this.postRepository.softDelete({ id: post.id });
 

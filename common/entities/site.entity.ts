@@ -19,6 +19,9 @@ export class Site extends BaseEntity {
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   name: string;
 
+  @Column({ type: 'boolean', default: false })
+  autoPost: boolean;
+
   @Column({ type: 'varchar', length: 255 })
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   domain: string;

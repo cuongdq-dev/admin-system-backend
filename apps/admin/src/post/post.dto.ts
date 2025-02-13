@@ -1,3 +1,15 @@
+import { Type } from 'class-transformer';
+import {
+  IsString,
+  MaxLength,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsUUID,
+} from 'class-validator';
+import { ValidationGroup } from 'common/crud';
+
 // TRENDING
 interface ITrendingArticle {
   id?: string;
@@ -21,4 +33,27 @@ interface ITrending {
   relatedQueries: { query?: string }[];
   image?: ITrendingImage;
   articles: ITrendingArticle[];
+}
+
+class CategoryIdDto {
+  @IsUUID()
+  id: string;
+}
+class SiteIdDto {
+  @IsUUID()
+  id: string;
+}
+
+export class PostBodyDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @IsOptional()
+  @Type(() => CategoryIdDto)
+  categories: CategoryIdDto[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @IsOptional()
+  @Type(() => SiteIdDto)
+  sites: SiteIdDto[];
 }

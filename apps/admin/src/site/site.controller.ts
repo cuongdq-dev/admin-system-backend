@@ -1,7 +1,5 @@
-import { ValidationGroup } from '@app/crud/validation-group';
 import { Site } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
-import validationOptions from '@app/utils/validation-options';
 import {
   Body,
   Controller,
@@ -11,24 +9,17 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  ValidationPipe,
 } from '@nestjs/common';
-import {
-  ApiBody,
-  ApiCreatedResponse,
-  ApiParam,
-  ApiTags,
-  PickType,
-} from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiParam, ApiTags } from '@nestjs/swagger';
 import {
   ApiOkPaginatedResponse,
   ApiPaginationQuery,
   Paginate,
   PaginateQuery,
 } from 'nestjs-paginate';
+import { SiteBodyDto } from './site.dto';
 import { sitePaginateConfig } from './site.pagination';
 import { SiteService } from './site.service';
-import { SiteBodyDto } from './site.dto';
 
 @ApiTags('site')
 @Controller({ path: 'site', version: '1' })

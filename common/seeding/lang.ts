@@ -84,6 +84,8 @@ export const languages = [
       blog_detail_title: 'Blog Detail',
       blog_public_button: 'Public',
       blog_draft_button: 'Draft',
+      blog_site_item: 'Sites',
+      blog_category_item: 'Categories',
 
       blog_title_item: 'Title',
       blog_description_item: 'Description',
@@ -351,6 +353,8 @@ export const languages = [
       blog_detail_title: 'Chi tiết bài viết',
       blog_public_button: 'Public',
       blog_draft_button: 'Draft',
+      blog_site_item: 'Sites',
+      blog_category_item: 'Categories',
 
       blog_title_item: 'Tiêu đề',
       blog_description_item: 'Mô tả',

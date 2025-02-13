@@ -32,6 +32,7 @@ import {
 } from 'nestjs-paginate';
 import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
 import { PostService } from './post.service';
+import { PostBodyDto } from './post.dto';
 
 @ApiTags('Post')
 @ApiBearerAuth()
@@ -66,6 +67,8 @@ export class PostController {
           'user',
           'thumbnail',
           'article.trending',
+          'categories',
+          'sites',
           'article.thumbnail',
           'article.trending.thumbnail',
           'article.trending.articles',
@@ -129,7 +132,7 @@ export class PostController {
         groups: [ValidationGroup.UPDATE],
       }),
     )
-    updateDto: PostEntity,
+    updateDto: PostEntity & PostBodyDto,
   ) {
     return this.postService.update(post, updateDto);
   }
