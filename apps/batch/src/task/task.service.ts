@@ -21,7 +21,6 @@ import {
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { pipeline } from '@xenova/transformers';
 import * as FirebaseAdmin from 'firebase-admin';
 import { IsNull, Not, Repository } from 'typeorm';
 
