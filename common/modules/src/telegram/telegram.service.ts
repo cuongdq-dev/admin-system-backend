@@ -123,7 +123,7 @@ export class TelegramService {
           },
           {
             text: '👀 Xem',
-            url: `https://admin.ck-tech.asia/posts/${savedPost.slug}`,
+            url: `https://admin.ck-tech.asia/blog/${savedPost.slug}`,
           },
         ],
       ];
@@ -143,7 +143,7 @@ export class TelegramService {
           },
           {
             text: '👀 Xem',
-            url: `https://admin.ck-tech.asia/posts/${savedPost.slug}`,
+            url: `https://admin.ck-tech.asia/blog/${savedPost.slug}`,
           },
         ],
       ];
