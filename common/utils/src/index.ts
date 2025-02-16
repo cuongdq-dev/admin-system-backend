@@ -384,6 +384,15 @@ function getHtml(
       const content = $('.detail-content.afcbc-body');
       return { content: title + content };
     },
+    'oneesports.vn': () => {
+      const titleElement = $('*').filter(function () {
+        return $(this).text().trim() === title;
+      });
+      const titleParents = titleElement.parents();
+      titleParents.find('.post-meta').remove();
+      titleParents.find('.post-share').remove();
+      return { content: titleParents.prop('outerHTML') };
+    },
 
     default: () => {
       const titleElement = $('*').filter(function () {
