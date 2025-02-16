@@ -3,6 +3,8 @@ FROM node:23-alpine as builder
 
 WORKDIR /app
 
+RUN git pull || echo "⚠️ Git pull failed, but continuing..."
+
 # Copy các file cấu hình
 COPY package.json package-lock.json ./
 COPY .env /app/.env
