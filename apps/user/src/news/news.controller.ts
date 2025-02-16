@@ -16,6 +16,12 @@ export class NewsController {
     return this.newsService.getHome(req?.site);
   }
 
+  @Get('rss')
+  @ApiPaginationQuery(newsPaginateConfig)
+  getRss(@Req() req, @Paginate() query: PaginateQuery) {
+    return this.newsService.getRss(req.site);
+  }
+
   @Get('posts')
   @ApiPaginationQuery(newsPaginateConfig)
   getAllNews(@Req() req, @Paginate() query: PaginateQuery) {

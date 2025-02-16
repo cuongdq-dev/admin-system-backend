@@ -76,6 +76,20 @@ export class NewsService {
     return { categories, recentPost, featurePost };
   }
 
+  async getRss(site: Site) {
+    const data = await this.postRepo.find({
+      where: { sites: { id: site.id } },
+      select: {
+        created_at: true,
+        meta_description: true,
+        title: true,
+        slug: true,
+        id: true,
+      },
+    });
+    return data;
+  }
+
   async getAllNews(site: Site, query: PaginateQuery) {
     const data = await paginate(
       { ...query, filter: { ...query.filter } },
