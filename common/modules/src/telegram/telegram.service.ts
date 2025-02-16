@@ -89,9 +89,12 @@ export class TelegramService {
   ) {
     const categoryButtons = [];
     const chunkSize = 3; // Số nút mỗi hàng (có thể chỉnh về 2 nếu cần)
+
+    const selectedCategories = savedPost.categories?.map((c) => c.slug) || [];
+
     for (let i = 0; i < categories.length; i += chunkSize) {
       const row = categories.slice(i, i + chunkSize).map((cat) => ({
-        text: `${cat.name}`, // Giữ icon duy nhất
+        text: `${selectedCategories.includes(cat.slug) ? '✅' : ''} ${cat.name}`,
         callback_data: `cat_${savedPost.id}_${cat.slug}`,
       }));
       categoryButtons.push(row);
