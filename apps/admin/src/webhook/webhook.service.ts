@@ -76,7 +76,10 @@ export class WebhookService {
     categories: Category[],
   ) {
     const [_, postId] = data.split('_');
-    const post = await this.postRepository.findOne({ where: { id: postId } });
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+      relations: ['categories'],
+    });
 
     if (!post) {
       console.warn(`⚠️ Không tìm thấy bài viết`);
@@ -101,18 +104,21 @@ export class WebhookService {
     categories: Category[],
   ) {
     const [_, postId] = data.split('_');
-    const post = await this.postRepository.findOne({ where: { id: postId } });
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+      relations: ['categories'],
+    });
 
     if (!post) {
       console.warn(`⚠️ Không tìm thấy bài viết`);
       return;
     }
 
-    await this.postRepository.softDelete(post.id);
     const savedPost = await this.postRepository.save({
       id: post.id,
       status: PostStatus.DELETED,
     });
+    await this.postRepository.softDelete(post.id);
 
     await this.telegramService.editMessage(
       chatId,
@@ -129,7 +135,10 @@ export class WebhookService {
     categories: Category[],
   ) {
     const [_, postId] = data.split('_');
-    const post = await this.postRepository.findOne({ where: { id: postId } });
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+      relations: ['categories'],
+    });
     if (!post) {
       console.warn(`⚠️ Không tìm thấy bài viết`);
       return;
