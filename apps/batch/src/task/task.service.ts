@@ -47,12 +47,12 @@ export class TaskService {
     private readonly telegramService: TelegramService,
   ) {}
 
-  async onModuleInit() {
-    this.logger.log('✅ Module initialized, starting crawler...');
-    await this.handleCrawlerArticles();
-  }
+  // async onModuleInit() {
+  //   this.logger.log('✅ Module initialized, starting crawler...');
+  //   await this.handleCrawlerArticles();
+  // }
 
-  // @Cron('*/10 * * * *')
+  @Cron('*/10 * * * *')
   async handleCrawlerArticles() {
     this.logger.debug('START - Crawler Articles.');
 
