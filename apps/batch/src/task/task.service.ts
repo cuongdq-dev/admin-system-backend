@@ -81,7 +81,6 @@ export class TaskService {
       }
     }
 
-    // Save notifications to the database
     for (const admin of admins) {
       const notify = this.notificationRepository.create({
         title: `New Posts Available `,
@@ -183,9 +182,8 @@ export class TaskService {
             savedArticle.id,
             postContent,
             articleData,
+            categories,
           );
-
-          await this.telegramService.sendMessage(savedPost, categories);
 
           this.logger.debug(
             `Post Saved | ID: ${savedPost.id} | Content Length: ${postContent.content.length} | Description: "${postContent.description}"`,
@@ -227,6 +225,7 @@ export class TaskService {
       contentStatus?: PostStatus;
     },
     articleData: any,
+    categories: { name: string; slug: string }[],
   ) {
     const slug = generateSlug(articleData.title);
 
@@ -248,6 +247,7 @@ export class TaskService {
       article_id: articleId,
     });
     const savedPost = await this.postRepository.save(newPost);
+    await this.telegramService.sendMessage(savedPost, categories);
 
     return savedPost;
   }
