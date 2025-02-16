@@ -9,7 +9,7 @@ dotenv.config();
 export class TelegramService {
   private readonly botToken = process.env.TELE_BOT_TOKEN;
   private readonly chatId = process.env.TELE_BOT_CHAT_ID;
-  private readonly telegramApiUrl = `https://api.telegram.org/bot${this.botToken}/sendMessage`;
+  private readonly telegramApiUrl = `https://api.telegram.org/bot${this.botToken}`;
 
   async sendMessage(post: Post, categories?: { name: string; slug: string }[]) {
     if (!this.chatId) {
@@ -32,7 +32,7 @@ export class TelegramService {
         };
       }
 
-      const response = await fetch(this.telegramApiUrl, {
+      const response = await fetch(`${this.telegramApiUrl}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -123,7 +123,7 @@ export class TelegramService {
           },
           {
             text: '👀 Xem',
-            url: `https://news.ck-tech.asia/posts/${savedPost.slug}`,
+            url: `https://admin.ck-tech.asia/posts/${savedPost.slug}`,
           },
         ],
       ];
@@ -143,7 +143,7 @@ export class TelegramService {
           },
           {
             text: '👀 Xem',
-            url: `https://news.ck-tech.asia/posts/${savedPost.slug}`,
+            url: `https://admin.ck-tech.asia/posts/${savedPost.slug}`,
           },
         ],
       ];
