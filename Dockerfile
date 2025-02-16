@@ -14,13 +14,12 @@ RUN yarn  --frozen-lockfile
 COPY . .
 
 
-# Chỉ build APP_NAME được truyền vào ENV
-ARG APP_NAME
-RUN if [ "$APP_NAME" = "user" ]; then yarn build:user; fi
-RUN if [ "$APP_NAME" = "admin" ]; then yarn build:admin; fi
-RUN if [ "$APP_NAME" = "batch" ]; then yarn build:batch; fi
-RUN if [ "$APP_NAME" = "vps" ]; then yarn build:vps; fi
-RUN if [ "$APP_NAME" = "socket" ]; then yarn build:socket; fi
+# Build ứng dụng
+RUN yarn build:user
+RUN yarn build:admin
+RUN yarn build:batch
+RUN yarn build:vps
+RUN yarn build:socket
 
 # Stage 2: Final Image
 FROM node:23-alpine
