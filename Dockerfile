@@ -3,7 +3,8 @@ FROM node:23-alpine as builder
 
 WORKDIR /app
 
-RUN git pull || echo "⚠️ Git pull failed, but continuing..."
+# Git pull để cập nhật mã nguồn
+RUN apk add --no-cache git && git pull || true
 
 # Copy các file cấu hình
 COPY package.json package-lock.json ./
@@ -18,11 +19,8 @@ COPY . .
 
 # Chỉ build APP_NAME được truyền vào ENV
 ARG APP_NAME
-RUN if [ "$APP_NAME" = "user" ]; then yarn build:user; fi
-RUN if [ "$APP_NAME" = "admin" ]; then yarn build:admin; fi
-RUN if [ "$APP_NAME" = "batch" ]; then yarn build:batch; fi
-RUN if [ "$APP_NAME" = "vps" ]; then yarn build:vps; fi
-RUN if [ "$APP_NAME" = "socket" ]; then yarn build:socket; fi
+RUN  yarn build:$APP_NAME
+
 
 # Stage 2: Final Image
 FROM node:23-alpine
