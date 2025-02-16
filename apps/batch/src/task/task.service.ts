@@ -1,4 +1,5 @@
 import {
+  Category,
   Media,
   Notification,
   Post,
@@ -11,6 +12,7 @@ import {
   NotificationType,
 } from '@app/entities/notification.entity';
 import { PostStatus } from '@app/entities/post.entity';
+import { TelegramService } from '@app/modules/telegram/telegram.service';
 import {
   fetchTrendings,
   generatePostFromHtml,
@@ -20,7 +22,6 @@ import {
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as FirebaseAdmin from 'firebase-admin';
 import { IsNull, Not, Repository } from 'typeorm';
 
 @Injectable()
@@ -38,11 +39,20 @@ export class TaskService {
     private readonly mediaRepository: Repository<Media>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
+
+    private readonly telegramService: TelegramService,
   ) {}
 
-  @Cron('*/10 * * * *')
+  async onModuleInit() {
+    this.logger.log('✅ Module initialized, starting crawler...');
+    await this.handleCrawlerArticles();
+  }
+
+  // @Cron('*/10 * * * *')
   async handleCrawlerArticles() {
     this.logger.debug('START - Crawler Articles.');
 
@@ -50,10 +60,11 @@ export class TaskService {
     const admins = await this.userRepository.find({
       where: { firebase_token: Not(IsNull()) },
     });
-    const tokens = admins
-      .map((admin) => admin.firebase_token)
-      .filter((token) => token);
 
+    const categoryData = await this.categoryRepository.find();
+    const categoryList = categoryData.map((category) => {
+      return { name: category.name, slug: category.slug };
+    });
     for (const trending of trendingList) {
       this.logger.debug(
         `Processing Trending Topic: "${trending.title.query}" | Posts: ${trending?.articles?.length || 0}`,
@@ -62,7 +73,11 @@ export class TaskService {
       const trendingData = await this.processTrending(trending);
 
       if (trending?.articles?.length) {
-        await this.processArticles(trending.articles, trendingData.id);
+        await this.processArticles(
+          trending.articles,
+          trendingData.id,
+          categoryList,
+        );
       }
     }
 
@@ -77,16 +92,6 @@ export class TaskService {
       });
       await this.notificationRepository.save(notify);
     }
-    if (tokens && Number(tokens?.length) > 0)
-      await FirebaseAdmin.messaging().sendEachForMulticast({
-        tokens,
-        webpush: {
-          notification: {
-            title: 'New Posts Available',
-            body: 'Please check them out!',
-          },
-        },
-      });
 
     this.logger.debug('END - Crawler Articles.');
   }
@@ -128,7 +133,11 @@ export class TaskService {
     return savedTrending;
   }
 
-  private async processArticles(articles: any[], trendingId: string) {
+  private async processArticles(
+    articles: any[],
+    trendingId: string,
+    categories: { name: string; slug: string }[],
+  ) {
     for (const article of articles) {
       this.logger.debug(
         `Processing Article: "${article.title}" | Source: ${article.source}`,
@@ -175,6 +184,8 @@ export class TaskService {
             postContent,
             articleData,
           );
+
+          await this.telegramService.sendMessage(savedPost, categories);
 
           this.logger.debug(
             `Post Saved | ID: ${savedPost.id} | Content Length: ${postContent.content.length} | Description: "${postContent.description}"`,
@@ -237,6 +248,7 @@ export class TaskService {
       article_id: articleId,
     });
     const savedPost = await this.postRepository.save(newPost);
+
     return savedPost;
   }
 }

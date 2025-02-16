@@ -10,6 +10,7 @@ import {
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskService } from './task.service';
+import { TelegramModule } from '@app/modules/telegram/telegram.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { TaskService } from './task.service';
       Post,
       Notification,
     ]),
+    TelegramModule,
   ],
   providers: [TaskService],
 })

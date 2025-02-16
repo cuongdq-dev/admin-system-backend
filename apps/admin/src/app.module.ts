@@ -18,6 +18,7 @@ import { ServerModule } from './server/server.module';
 import { SettingModule } from './setting/setting.module';
 import { SiteModule } from './site/site.module';
 import { UserModule } from './user/user.module';
+import { WebhookModule } from './webhook/webhook.module';
 
 const modules = [
   AuthModule,
@@ -28,6 +29,7 @@ const modules = [
   ServerModule,
   DockerModule,
   SiteModule,
+  WebhookModule,
   DropdownModule,
   SettingModule,
   RepositoryModule,
