@@ -39,38 +39,6 @@ export class SiteController {
     return this.siteService.create(createDto);
   }
 
-  @Get('/:id')
-  @ApiParam({ name: 'id', type: 'varchar' })
-  getById(
-    @Param(
-      'id',
-      IsIDExistPipe({
-        entity: Site,
-        filterField: 'id',
-        relations: ['categories'],
-      }),
-    )
-    site: Site,
-  ) {
-    return this.siteService.getById(site);
-  }
-
-  @Get('/:id/:category/posts/list')
-  @ApiOkPaginatedResponse(Site, sitePaginateConfig)
-  @ApiPaginationQuery(sitePaginateConfig)
-  getPostBySiteId(
-    @Paginate() query: PaginateQuery,
-    @Param('id') id: string,
-    @Param('category') category: string,
-  ) {
-    return this.siteService.getPostBySiteId(query, id, category);
-  }
-
-  @Get('/:id/categories/list')
-  getCategoriesBySiteId(@Param('id') id: string) {
-    return this.siteService.getCategoriesBySiteId(id);
-  }
-
   @Patch('update/:id')
   partialUpdate(
     @Param(
@@ -103,5 +71,37 @@ export class SiteController {
     site: Site,
   ) {
     return this.siteService.delete(site);
+  }
+
+  @Get('/:id/categories/list')
+  getCategoriesBySiteId(@Param('id') id: string) {
+    return this.siteService.getCategoriesBySiteId(id);
+  }
+
+  @Get('/:id/:category/posts/list')
+  @ApiOkPaginatedResponse(Site, sitePaginateConfig)
+  @ApiPaginationQuery(sitePaginateConfig)
+  getPostBySiteId(
+    @Paginate() query: PaginateQuery,
+    @Param('id') id: string,
+    @Param('category') category: string,
+  ) {
+    return this.siteService.getPostBySiteId(query, id, category);
+  }
+
+  @Get('/:id')
+  @ApiParam({ name: 'id', type: 'varchar' })
+  getById(
+    @Param(
+      'id',
+      IsIDExistPipe({
+        entity: Site,
+        filterField: 'id',
+        relations: ['categories'],
+      }),
+    )
+    site: Site,
+  ) {
+    return this.siteService.getById(site);
   }
 }
