@@ -23,7 +23,6 @@ export const sitePaginateConfig: PaginateConfig<Site> = {
 };
 
 export const postSitePaginateConfig: PaginateConfig<Post> = {
-  relations: ['thumbnail', 'categories'],
   sortableColumns: ['created_at', 'status'],
   defaultSortBy: [
     ['status', 'DESC'],
@@ -32,19 +31,5 @@ export const postSitePaginateConfig: PaginateConfig<Post> = {
   searchableColumns: ['title', 'content'],
   maxLimit: 50,
   defaultLimit: 23,
-  select: [
-    'id',
-    'title',
-    'meta_description',
-    'created_at',
-    'thumbnail',
-    'thumbnail.data',
-    'categories.id',
-    'categories.slug',
-    'categories.name',
-    'slug',
-    'status',
-  ],
-
   filterableColumns: { title: [FilterOperator.EQ] },
 };
