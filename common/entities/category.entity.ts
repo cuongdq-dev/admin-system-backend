@@ -1,5 +1,4 @@
 import { ValidationGroup } from '@app/crud/validation-group';
-import { IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Column, Entity, JoinTable, ManyToMany, Relation } from 'typeorm';
 import { BaseEntity } from './base';
 import { Post } from './post.entity';
@@ -7,21 +6,18 @@ import { Site } from './site.entity';
 
 @Entity({ name: 'categories' })
 export class Category extends BaseEntity {
-  @Column({ type: 'varchar', length: 255 })
-  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  @Column({ type: 'varchar', length: 255, unique: true })
   name: string;
 
   @Column({ type: 'varchar', length: 255, unique: true })
-  @IsOptional({ groups: [ValidationGroup.UPDATE] })
   slug: string;
 
   @Column({ type: 'text', nullable: true })
-  @IsOptional({ groups: [ValidationGroup.UPDATE] })
   description: string;
 
+  // Một category có thể có nhiều bài viết
   @ManyToMany(() => Post, (post) => post.categories, {
     cascade: true,
-    nullable: true,
   })
   @JoinTable({
     name: 'category_posts',
@@ -30,6 +26,7 @@ export class Category extends BaseEntity {
   })
   posts: Relation<Post[]>;
 
-  @ManyToMany(() => Site, (site) => site.categories, { nullable: true })
+  // Một category có thể được sử dụng bởi nhiều site
+  @ManyToMany(() => Site, (site) => site.categories)
   sites: Relation<Site[]>;
 }

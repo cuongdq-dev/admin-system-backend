@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -36,6 +37,10 @@ export class SiteBodyDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  autoPost?: boolean;
 
   @IsArray()
   @ValidateNested({ each: true })

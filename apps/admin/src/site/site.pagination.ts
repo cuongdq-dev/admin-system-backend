@@ -1,8 +1,8 @@
-import { Site } from '@app/entities';
+import { Post, Site } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const sitePaginateConfig: PaginateConfig<Site> = {
-  relations: ['categories', 'posts'],
+  relations: ['categories'],
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
   maxLimit: 50,
@@ -12,14 +12,39 @@ export const sitePaginateConfig: PaginateConfig<Site> = {
     'name',
     'description',
     'domain',
+    'autoPost',
     'token',
     'created_at',
     'categories.id',
     'categories.slug',
     'categories.name',
-    'posts.id',
-    'posts.title',
-    'posts.slug',
   ],
+  filterableColumns: { title: [FilterOperator.EQ] },
+};
+
+export const postSitePaginateConfig: PaginateConfig<Post> = {
+  relations: ['thumbnail', 'categories'],
+  sortableColumns: ['created_at', 'status'],
+  defaultSortBy: [
+    ['status', 'DESC'],
+    ['created_at', 'DESC'],
+  ],
+  searchableColumns: ['title', 'content'],
+  maxLimit: 50,
+  defaultLimit: 23,
+  select: [
+    'id',
+    'title',
+    'meta_description',
+    'created_at',
+    'thumbnail',
+    'thumbnail.data',
+    'categories.id',
+    'categories.slug',
+    'categories.name',
+    'slug',
+    'status',
+  ],
+
   filterableColumns: { title: [FilterOperator.EQ] },
 };

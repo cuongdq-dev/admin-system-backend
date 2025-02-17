@@ -1,6 +1,5 @@
 import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
 import {
   Column,
   Entity,
@@ -26,9 +25,30 @@ export enum PostStatus {
 
 @Entity({ name: 'posts' })
 export class Post extends BaseEntity {
+  @Column({ type: 'varchar', length: 255, unique: true })
+  title: string;
+
+  @Column({ type: 'varchar', length: 255, unique: true })
+  @Index()
+  slug: string;
+
+  @Column({ type: 'text' })
+  content: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  relatedQueries: { query?: string }[];
+
+  @Column({ type: 'text' })
+  meta_description: string;
+
   @Column({ type: 'boolean', default: false })
   is_published: boolean;
 
+  @Column({ type: 'enum', enum: PostStatus, default: PostStatus.NEW })
+  @Index()
+  status: PostStatus;
+
+  // Quan hệ với bài báo trending (nullable)
   @ManyToOne(() => TrendingArticle, (article) => article.posts, {
     nullable: true,
   })
@@ -38,6 +58,7 @@ export class Post extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   article_id: string;
 
+  // Quan hệ với thumbnail
   @ManyToOne(() => Media, { nullable: true })
   @JoinColumn({ name: 'thumbnail_id' })
   thumbnail: Relation<Media>;
@@ -45,26 +66,7 @@ export class Post extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   thumbnail_id: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  @IsOptional({ groups: [ValidationGroup.UPDATE] })
-  title: string;
-
-  @Column({ type: 'varchar', length: 255, unique: true })
-  @Index()
-  slug: string;
-
-  @Column({ type: 'text' })
-  @IsOptional({ groups: [ValidationGroup.UPDATE] })
-  content: string;
-
-  @Column({ type: 'jsonb', nullable: true })
-  @IsOptional({ groups: [ValidationGroup.UPDATE] })
-  relatedQueries: { query?: string }[];
-
-  @Column({ type: 'text' })
-  @IsOptional({ groups: [ValidationGroup.UPDATE] })
-  meta_description: string;
-
+  // Quan hệ với người tạo bài viết
   @ManyToOne('User', 'posts')
   @JoinColumn({ name: 'user_id' })
   user: Relation<User>;
@@ -73,14 +75,11 @@ export class Post extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   user_id: string;
 
-  @Column({ type: 'enum', enum: PostStatus, default: PostStatus.NEW })
-  @IsOptional({ groups: [ValidationGroup.UPDATE] })
-  @Index()
-  status: PostStatus;
-
+  // Quan hệ với categories
   @ManyToMany(() => Category, (category) => category.posts)
   categories: Relation<Category[]>;
 
+  // Quan hệ với sites
   @ManyToMany(() => Site, (site) => site.posts)
   sites: Relation<Site[]>;
 }

@@ -67,6 +67,8 @@ export const languages = [
       site_name_item: 'Name',
       site_description_item: 'Description',
       site_posts_item: 'Posts',
+      site_token_item: 'Token',
+      site_auto_post_item: 'Auto Post',
       site_categories_item: 'Categories',
 
       product_nav: 'Product',
@@ -336,6 +338,8 @@ export const languages = [
       site_name_item: 'Name',
       site_description_item: 'Description',
       site_posts_item: 'Posts',
+      site_token_item: 'Token',
+      site_auto_post_item: 'Auto Post',
       site_categories_item: 'Categories',
 
       product_nav: 'Sản phẩm',
