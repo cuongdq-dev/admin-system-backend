@@ -39,6 +39,23 @@ export class SiteController {
     return this.siteService.create(createDto);
   }
 
+  @Post('/telegram/:id')
+  getTelegram(
+    @Body() body: { token: string },
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      IsIDExistPipe({
+        entity: Site,
+        filterField: 'id',
+        relations: ['posts', 'categories'],
+      }),
+    )
+    site: Site,
+  ) {
+    return this.siteService.getTelegram(body.token, site);
+  }
+
   @Patch('update/:id')
   partialUpdate(
     @Param(

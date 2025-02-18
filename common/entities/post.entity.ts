@@ -41,9 +41,6 @@ export class Post extends BaseEntity {
   @Column({ type: 'text' })
   meta_description: string;
 
-  @Column({ type: 'boolean', default: false })
-  is_published: boolean;
-
   @Column({ type: 'enum', enum: PostStatus, default: PostStatus.NEW })
   @Index()
   status: PostStatus;

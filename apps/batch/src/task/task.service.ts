@@ -3,6 +3,7 @@ import {
   Media,
   Notification,
   Post,
+  Site,
   Trending,
   TrendingArticle,
   User,
@@ -27,7 +28,8 @@ import { IsNull, Not, Repository } from 'typeorm';
 @Injectable()
 export class TaskService {
   private readonly logger = new Logger(TaskService.name);
-
+  private readonly botToken = process.env.TELE_BOT_TOKEN;
+  private readonly chatId = process.env.TELE_BOT_CHAT_ID;
   constructor(
     @InjectRepository(Trending)
     private readonly trendingRepository: Repository<Trending>,
@@ -35,6 +37,8 @@ export class TaskService {
     private readonly trendingArticleRepository: Repository<TrendingArticle>,
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+    @InjectRepository(Site)
+    private readonly siteRepository: Repository<Site>,
     @InjectRepository(Media)
     private readonly mediaRepository: Repository<Media>,
     @InjectRepository(User)
@@ -243,11 +247,36 @@ export class TaskService {
       meta_description: postContent.description,
       relatedQueries: postContent.keywords,
       status: postContent.contentStatus,
-      is_published: false,
       article_id: articleId,
     });
     const savedPost = await this.postRepository.save(newPost);
-    await this.telegramService.sendMessage(savedPost, categories);
+    await this.telegramService.sendMessageWithPost(
+      this.chatId,
+      this.botToken,
+      savedPost,
+      categories,
+    );
+
+    if (savedPost.status === PostStatus.PUBLISHED) {
+      const autoPostSites = await this.siteRepository.find({
+        where: { autoPost: true },
+      });
+
+      for (const site of autoPostSites) {
+        await this.siteRepository
+          .createQueryBuilder()
+          .relation(Site, 'posts')
+          .of(site.id)
+          .add(savedPost.id);
+
+        await this.telegramService.sendMessageWithPost(
+          site.teleChatId,
+          site.teleToken,
+          savedPost,
+          categories,
+        );
+      }
+    }
 
     return savedPost;
   }

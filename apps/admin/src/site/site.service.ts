@@ -5,6 +5,7 @@ import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { In, Repository } from 'typeorm';
 import { SiteBodyDto } from './site.dto';
 import { postSitePaginateConfig, sitePaginateConfig } from './site.pagination';
+import { TelegramService } from '@app/modules/telegram/telegram.service';
 
 @Injectable()
 export class SiteService {
@@ -13,6 +14,8 @@ export class SiteService {
     @InjectRepository(Post) private postRepository: Repository<Post>,
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
+
+    private readonly telegramService: TelegramService,
   ) {}
 
   async getAll(query: PaginateQuery) {
@@ -125,6 +128,45 @@ export class SiteService {
       where: { id: result.id },
       relations: ['posts', 'categories'],
     });
+  }
+
+  async getTelegram(token: string, site: Site) {
+    try {
+      // 🔍 Lấy thông tin từ Telegram bot
+      const data = await this.telegramService.getChatInfo(token);
+      if (!data || !data.chatId) {
+        throw new NotFoundException('Not found Telegram BOT.');
+      }
+
+      if (site.teleToken === token && site.teleChatId === data.chatId) {
+        console.log(
+          'ℹ️ No changes in Telegram bot details. Skipping message sending.',
+        );
+      } else {
+        const res = await this.telegramService.sendBotAddedNotification(
+          site.domain,
+          data.chatId,
+          token,
+        );
+
+        if (!res.success) {
+          throw new Error('System error! Please try again later.');
+        }
+      }
+
+      await this.siteRepository.save({
+        ...site,
+        teleBotName: data.botUsername,
+        teleChatName: data.botName,
+        teleChatId: data.chatId,
+        teleToken: token,
+      });
+
+      return data;
+    } catch (error) {
+      console.error('🚨 Telegram Integration Error:', error);
+      throw new Error('System error! Please try again later.');
+    }
   }
 
   async update(site: Site, dto: SiteBodyDto) {

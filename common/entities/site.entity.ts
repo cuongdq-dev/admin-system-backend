@@ -30,6 +30,22 @@ export class Site extends BaseEntity {
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   description: string;
 
+  @Column({ type: 'text', nullable: true })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  teleToken: string;
+
+  @Column({ type: 'text', nullable: true })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  teleBotName: string;
+
+  @Column({ type: 'text', nullable: true })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  teleChatName: string;
+
+  @Column({ type: 'text', nullable: true })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  teleChatId: string;
+
   @ManyToMany(() => Post, (post) => post.sites, { cascade: true })
   @JoinTable({
     name: 'site_posts',

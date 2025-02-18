@@ -17,6 +17,7 @@ export const sitePaginateConfig: PaginateConfig<Site> = {
     'created_at',
     'posts.id',
     'posts.slug',
+    'posts.title',
     'categories.id',
     'categories.slug',
     'categories.name',

@@ -6,6 +6,7 @@ import {
   User,
   Notification,
   Category,
+  Site,
 } from '@app/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -14,6 +15,7 @@ import { TelegramModule } from '@app/modules/telegram/telegram.module';
 
 @Module({
   imports: [
+    TelegramModule,
     TypeOrmModule.forFeature([
       Trending,
       TrendingArticle,
@@ -21,9 +23,9 @@ import { TelegramModule } from '@app/modules/telegram/telegram.module';
       Media,
       Category,
       Post,
+      Site,
       Notification,
     ]),
-    TelegramModule,
   ],
   providers: [TaskService],
 })

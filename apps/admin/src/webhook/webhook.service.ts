@@ -7,6 +7,8 @@ import { PostStatus } from '@app/entities/post.entity';
 
 @Injectable()
 export class WebhookService {
+  private readonly botToken = process.env.TELE_BOT_TOKEN;
+
   constructor(
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
@@ -61,9 +63,10 @@ export class WebhookService {
     post.categories = [category]; // Cập nhật danh mục
     const savePost = await this.postRepository.save(post);
 
-    await this.telegramService.editMessage(
+    await this.telegramService.editMessageWithPost(
       chatId,
       messageId,
+      this.botToken,
       savePost,
       categories,
     );
@@ -89,9 +92,10 @@ export class WebhookService {
     post.status = PostStatus.PUBLISHED;
     const savedPost = await this.postRepository.save(post);
 
-    await this.telegramService.editMessage(
+    await this.telegramService.editMessageWithPost(
       chatId,
       messageId,
+      this.botToken,
       savedPost,
       categories,
     );
@@ -120,9 +124,10 @@ export class WebhookService {
     });
     await this.postRepository.softDelete(post.id);
 
-    await this.telegramService.editMessage(
+    await this.telegramService.editMessageWithPost(
       chatId,
       messageId,
+      this.botToken,
       savedPost,
       categories,
     );
@@ -146,9 +151,10 @@ export class WebhookService {
 
     post.status = PostStatus.DRAFT;
     const savedPost = await this.postRepository.save(post);
-    await this.telegramService.editMessage(
+    await this.telegramService.editMessageWithPost(
       chatId,
       messageId,
+      this.botToken,
       savedPost,
       categories,
     );

@@ -81,7 +81,7 @@ export class PostController {
   }
 
   @Post()
-  @ApiBody({ type: PickType(PostEntity, ['content', 'title', 'is_published']) })
+  @ApiBody({ type: PickType(PostEntity, ['content', 'title']) })
   @ApiCreatedResponse({ type: PostEntity })
   create(
     @Body(

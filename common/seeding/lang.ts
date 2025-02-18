@@ -70,6 +70,11 @@ export const languages = [
       site_token_item: 'Token',
       site_auto_post_item: 'Auto Post',
       site_categories_item: 'Categories',
+      site_tele_token: 'Telegram Token',
+      site_tele_bot_name: 'Telegram Bot Name',
+      site_tele_chat_name: 'Telegram Chat Name',
+      site_tele_chat_id: 'Telegram Chat Id',
+      site_tele_verify: 'Verified',
 
       product_nav: 'Product',
       product_list_page: 'Product List',
@@ -341,6 +346,11 @@ export const languages = [
       site_token_item: 'Token',
       site_auto_post_item: 'Auto Post',
       site_categories_item: 'Categories',
+      site_tele_token: 'Telegram Token',
+      site_tele_bot_name: 'Telegram Bot Name',
+      site_tele_chat_name: 'Telegram Chat Name',
+      site_tele_chat_id: 'Telegram Chat Id',
+      site_tele_verify: 'Verified',
 
       product_nav: 'Sản phẩm',
       product_list_page: 'Danh sách sản phẩm',
