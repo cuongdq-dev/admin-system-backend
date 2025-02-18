@@ -333,8 +333,12 @@ function getHtml(
 
     'tienphong.vn': () => {
       $('#comment_area, .expNoEditj').remove();
+      $('.article__author').remove();
+      $('.ads_middle').remove();
+      $('.banner group-fyi-wrap ').remove();
       const title = $('.article__title').prop('outerHTML');
       const content = $('.article-content');
+
       return { content: title + content };
     },
     'gamek.vn': () => {
