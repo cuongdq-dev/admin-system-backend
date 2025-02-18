@@ -2,7 +2,7 @@ import { Post, Site } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const sitePaginateConfig: PaginateConfig<Site> = {
-  relations: ['categories'],
+  relations: ['categories', 'posts'],
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
   maxLimit: 50,
@@ -15,6 +15,8 @@ export const sitePaginateConfig: PaginateConfig<Site> = {
     'autoPost',
     'token',
     'created_at',
+    'posts.id',
+    'posts.slug',
     'categories.id',
     'categories.slug',
     'categories.name',
