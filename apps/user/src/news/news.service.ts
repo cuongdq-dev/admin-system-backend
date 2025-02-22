@@ -97,6 +97,33 @@ export class NewsService {
     return { categories, recentNews, featureNews, otherNews };
   }
 
+  async getCategories(site: Site) {
+    const siteId = site.id;
+    const categories = await this.categoryRepo
+      .createQueryBuilder('categories')
+      .leftJoinAndSelect('categories.sites', 'site')
+      .leftJoin('categories.posts', 'post')
+      .leftJoin('post.sites', 'postSite')
+      .where('site.id = :siteId', { siteId })
+      .loadRelationCountAndMap(
+        'categories.postCount',
+        'categories.posts',
+        'post',
+        (qb) => {
+          return qb
+            .leftJoin('post.sites', 'filteredSite')
+            .where('filteredSite.id = :siteId', { siteId });
+        },
+      )
+      .getMany();
+
+    categories.forEach((category: any) => {
+      if (!category.postCount) category.postCount = 0;
+    });
+
+    return categories;
+  }
+
   async getRss(site: Site) {
     const data = await this.postRepo.find({
       where: { sites: { id: site.id } },
@@ -109,6 +136,20 @@ export class NewsService {
       },
     });
     return data;
+  }
+
+  async getPostsByCategory(site: Site, slug: string, query: PaginateQuery) {
+    const category = await this.categoryRepo.findOne({ where: { slug: slug } });
+
+    const data = await paginate(
+      { ...query, filter: { ...query.filter } },
+      this.postRepo,
+      {
+        ...newsPaginateConfig,
+        where: { sites: { id: site.id }, categories: { slug: category.slug } },
+      },
+    );
+    return { ...data, category: category };
   }
 
   async getAllNews(site: Site, query: PaginateQuery) {

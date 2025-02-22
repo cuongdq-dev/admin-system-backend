@@ -265,6 +265,9 @@ function getHtml(
       $(
         '.author, .time, .chiase_top, .chiase,.kbv-social, .news_keyword',
       ).remove();
+      $('div[type="RelatedOneNews"]').remove();
+      $('.tinlienquan').remove();
+
       const content = $('.noidung').prop('outerHTML');
       return { content };
     },

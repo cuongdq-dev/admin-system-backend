@@ -21,10 +21,27 @@ export class NewsController {
     return this.newsService.getRss(req.site);
   }
 
+  @Get('categories')
+  @ApiPaginationQuery(newsPaginateConfig)
+  getCategories(@Req() req) {
+    return this.newsService.getCategories(req.site);
+  }
+
   @Get('posts')
   @ApiPaginationQuery(newsPaginateConfig)
   getAllNews(@Req() req, @Paginate() query: PaginateQuery) {
     return this.newsService.getAllNews(req.site, query);
+  }
+
+  @Get('posts/category/:slug')
+  @ApiParam({ name: 'slug', type: 'varchar' })
+  @ApiPaginationQuery(newsPaginateConfig)
+  getPostsByCategory(
+    @Req() req,
+    @Paginate() query: PaginateQuery,
+    @Param() { slug }: { slug: string },
+  ) {
+    return this.newsService.getPostsByCategory(req.site, slug, query);
   }
 
   @Get('posts/:slug')

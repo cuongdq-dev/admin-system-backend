@@ -54,7 +54,7 @@ export class SiteService {
         'post.status',
       ])
       .orderBy('post.created_at', 'DESC'); // Thêm sắp xếp nếu cần
-    console.log(categorySlug);
+
     if (categorySlug === 'uncategorized') {
       qb.andWhere('category.id IS NULL'); // Lấy bài viết không có category
     } else if (categorySlug !== 'all') {
