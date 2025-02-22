@@ -201,10 +201,10 @@ export class TaskService {
             categories,
             postContent.thumbnail,
           );
-
-          this.logger.debug(
-            `Post Saved | ID: ${savedPost.id} | Content Length: ${postContent.content.length} | Description: "${postContent.description}"`,
-          );
+          savedPost &&
+            this.logger.debug(
+              `Post Saved | ID: ${savedPost.id} | Content Length: ${postContent.content.length} | Description: "${postContent.description}"`,
+            );
         }
       }
     }
