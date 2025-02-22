@@ -176,8 +176,14 @@ export async function generatePostFromHtml(body: {
   if (!contentHtml) {
     return { content: undefined, keywords, description, contentStatus };
   }
-  const processedContent = await processImages(contentHtml, body.title);
-  return { content: processedContent, keywords, description, contentStatus };
+  const { content, thumbnail } = await processImages(contentHtml, body.title);
+  return {
+    content: content,
+    keywords,
+    description,
+    contentStatus,
+    thumbnail,
+  };
 }
 
 async function fetchWithRetry(
@@ -442,9 +448,11 @@ function getHtml(
 async function processImages(
   contentHtml: string,
   title: string,
-): Promise<string> {
+): Promise<{ content: string; thumbnail: Media }> {
   const $ = cheerio.load(contentHtml);
   const imgTags = $('img');
+
+  let thumbnail: Media;
 
   for (let i = 0; i < imgTags.length; i++) {
     const img = imgTags[i];
@@ -462,9 +470,13 @@ async function processImages(
     if (imgSrc && imgSrc.startsWith('http')) {
       const base64Image = await saveImageAsBase64(
         'post image ' + title,
-        title,
+        'post thumbnail ' + title,
         imgSrc,
       );
+
+      if (i == 0) {
+        thumbnail = base64Image;
+      }
       if (base64Image?.data) {
         $(img).attr('src', `data:image/png;base64,${base64Image.data}`);
         $(img).removeAttr('data-original');
@@ -473,7 +485,10 @@ async function processImages(
     }
   }
 
-  return $('body').length ? $('body').html() : $.html();
+  return {
+    content: $('body').length ? $('body').html() : $.html(),
+    thumbnail: thumbnail,
+  };
 }
 
 export function generateSlug(text: string): string {

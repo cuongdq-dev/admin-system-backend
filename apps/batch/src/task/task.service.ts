@@ -165,7 +165,7 @@ export class TaskService {
       if (article?.image?.imageUrl) {
         const thumbnail = await this.mediaRepository.upsert(
           {
-            filename: article.title.query,
+            filename: articleData.title,
             slug: generateSlug(`thumbnail article ${articleSlug}`),
             storage_type: StorageType.URL,
             url: article.image.imageUrl,
@@ -199,6 +199,7 @@ export class TaskService {
             postContent,
             articleData,
             categories,
+            postContent.thumbnail,
           );
 
           this.logger.debug(
@@ -233,6 +234,7 @@ export class TaskService {
     },
     articleData: any,
     categories: { name: string; slug: string }[],
+    thumbnail?: Media,
   ) {
     const slug = generateSlug(articleData.title);
 
@@ -242,10 +244,14 @@ export class TaskService {
 
     if (existingPost) return existingPost;
 
+    const thumbnailUpsert = await this.mediaRepository.upsert(thumbnail, {
+      conflictPaths: ['slug'],
+    });
+
     const newPost = this.postRepository.create({
       content: postContent.content,
       title: articleData.title,
-      thumbnail_id: articleData.thumbnail_id,
+      thumbnail_id: thumbnailUpsert.generatedMaps[0]?.id,
       slug,
       meta_description: postContent.description,
       relatedQueries: postContent.keywords,
