@@ -7,6 +7,7 @@ export enum StorageType {
   LOCAL = 'LOCAL',
   S3 = 'S3',
   BASE64 = 'BASE64',
+  URL = 'URL',
 }
 @Entity({ name: 'media' })
 @Unique(['slug'])
@@ -23,13 +24,13 @@ export class Media extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   data: string;
 
-  @Column({ type: 'varchar', length: 150 })
+  @Column({ type: 'varchar', length: 150, nullable: true })
   mimetype: string;
 
   @Column({ type: 'enum', enum: StorageType, default: StorageType.LOCAL })
   storage_type: StorageType;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   size: number;
 
   @OneToMany(() => User, (user) => user.avatar)

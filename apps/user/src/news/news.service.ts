@@ -15,7 +15,7 @@ export class NewsService {
   ) {}
 
   async getHome(site: Site) {
-    const [categories, recentPost, featurePost] = await Promise.all([
+    const [categories, recentNews, featureNews, otherNews] = await Promise.all([
       this.categoryRepo
         .createQueryBuilder('category')
         .innerJoin('category.sites', 'site') // Lọc theo siteId
@@ -43,12 +43,12 @@ export class NewsService {
           'post.created_at AS created_at',
           'post.slug AS slug',
           'post.status AS status',
-          "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url) AS thumbnail",
+          "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
           `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`, // Gom nhóm categories
         ])
-        .groupBy('post.id, thumbnail.data, thumbnail.url')
+        .groupBy('post.id, thumbnail.data, thumbnail.url, thumbnail.slug')
         .orderBy('created_at', 'DESC')
-        .limit(5)
+        .limit(4)
         .getRawMany(),
 
       this.postRepo
@@ -64,16 +64,37 @@ export class NewsService {
           'post.created_at AS created_at',
           'post.slug AS slug',
           'post.status AS status',
-          "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url) AS thumbnail", // Gói thumbnail vào object
+          "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
           `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`, // Gom nhóm categories
         ])
-        .groupBy('post.id, thumbnail.data, thumbnail.url')
+        .groupBy('post.id, thumbnail.data, thumbnail.url, thumbnail.slug')
         .orderBy('RANDOM()')
-        .limit(5)
+        .limit(9)
+        .getRawMany(),
+
+      this.postRepo
+        .createQueryBuilder('post')
+        .innerJoin('post.sites', 'site')
+        .innerJoin('post.thumbnail', 'thumbnail')
+        .leftJoin('post.categories', 'categories')
+        .where('site.id = :siteId', { siteId: site.id })
+        .select([
+          'post.id AS post_id',
+          'post.title AS title',
+          'post.meta_description AS meta_description',
+          'post.created_at AS created_at',
+          'post.slug AS slug',
+          'post.status AS status',
+          "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
+          `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`, // Gom nhóm categories
+        ])
+        .groupBy('post.id, thumbnail.data, thumbnail.url, thumbnail.slug')
+        .orderBy('RANDOM()')
+        .limit(6)
         .getRawMany(),
     ]);
 
-    return { categories, recentPost, featurePost };
+    return { categories, recentNews, featureNews, otherNews };
   }
 
   async getRss(site: Site) {

@@ -4,6 +4,7 @@ import {
   Notification,
   Post,
   Site,
+  StorageType,
   Trending,
   TrendingArticle,
   User,
@@ -14,12 +15,7 @@ import {
 } from '@app/entities/notification.entity';
 import { PostStatus } from '@app/entities/post.entity';
 import { TelegramService } from '@app/modules/telegram/telegram.service';
-import {
-  fetchTrendings,
-  generatePostFromHtml,
-  generateSlug,
-  saveImageAsBase64,
-} from '@app/utils';
+import { fetchTrendings, generatePostFromHtml, generateSlug } from '@app/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -51,10 +47,10 @@ export class TaskService {
     private readonly telegramService: TelegramService,
   ) {}
 
-  // async onModuleInit() {
-  //   this.logger.log('✅ Module initialized, starting crawler...');
-  //   await this.handleCrawlerArticles();
-  // }
+  async onModuleInit() {
+    this.logger.log('✅ Module initialized, starting crawler...');
+    await this.handleCrawlerArticles();
+  }
 
   @Cron('*/10 * * * *')
   async handleCrawlerArticles() {
@@ -111,11 +107,21 @@ export class TaskService {
     };
 
     if (trending?.image?.imageUrl) {
-      const thumbnailId = await this.saveThumbnail(
-        trending.image.imageUrl,
-        `thumbnail trending ${trending.title.query}`,
-        trending.title.query,
+      const thumbnail = await this.mediaRepository.upsert(
+        {
+          filename: trending.title.query,
+          slug: generateSlug(`thumbnail trending ${trending.title.query}`),
+          storage_type: StorageType.URL,
+          url: trending.image.imageUrl,
+          mimetype: 'url',
+        },
+        {
+          conflictPaths: ['slug'],
+        },
       );
+
+      const thumbnailId = thumbnail.generatedMaps[0]?.id;
+
       trendingData.thumbnail_id = thumbnailId;
 
       this.logger.debug(
@@ -157,11 +163,17 @@ export class TaskService {
       const articleSlug = generateSlug(article.title);
 
       if (article?.image?.imageUrl) {
-        const thumbnailId = await this.saveThumbnail(
-          article.image.imageUrl,
-          `thumbnail article ${articleSlug}`,
-          article.title,
+        const thumbnail = await this.mediaRepository.upsert(
+          {
+            filename: article.title.query,
+            slug: generateSlug(`thumbnail article ${articleSlug}`),
+            storage_type: StorageType.URL,
+            url: article.image.imageUrl,
+            mimetype: 'url',
+          },
+          { conflictPaths: ['slug'] },
         );
+        const thumbnailId = thumbnail.generatedMaps[0]?.id;
         articleData.thumbnail_id = thumbnailId;
 
         this.logger.debug(
@@ -195,15 +207,6 @@ export class TaskService {
         }
       }
     }
-  }
-
-  private async saveThumbnail(imageUrl: string, name: string, query: string) {
-    const thumbnailEntity = await saveImageAsBase64(name, query, imageUrl);
-    const thumbnail = await this.mediaRepository.upsert(thumbnailEntity, {
-      conflictPaths: ['slug'],
-    });
-
-    return thumbnail.generatedMaps[0]?.id;
   }
 
   private async saveArticle(articleData: any, postContent: any) {
@@ -249,6 +252,7 @@ export class TaskService {
       status: postContent.contentStatus,
       article_id: articleId,
     });
+
     const savedPost = await this.postRepository.save(newPost);
     await this.telegramService.sendMessageWithPost(
       this.chatId,

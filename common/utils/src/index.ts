@@ -140,7 +140,7 @@ export async function saveImageAsBase64(
     url: imageUrl,
     slug: generateSlug(slug),
     filename: filename,
-    data: base64Image,
+    data: `data:image/png;base64, + ${base64Image}`,
     mimetype: contentType,
     storage_type: StorageType.BASE64,
     size: buffer.length,
