@@ -140,7 +140,7 @@ export async function saveImageAsBase64(
     url: imageUrl,
     slug: generateSlug(slug),
     filename: filename,
-    data: `data:image/png;base64, + ${base64Image}`,
+    data: `data:image/png;base64, ${base64Image}`,
     mimetype: contentType,
     storage_type: StorageType.BASE64,
     size: buffer.length,
@@ -478,7 +478,7 @@ async function processImages(
         thumbnail = base64Image;
       }
       if (base64Image?.data) {
-        $(img).attr('src', `data:image/png;base64,${base64Image.data}`);
+        $(img).attr('src', `${base64Image.data}`);
         $(img).removeAttr('data-original');
         $(img).removeAttr('data-src');
       }

@@ -244,14 +244,16 @@ export class TaskService {
 
     if (existingPost) return existingPost;
 
-    const thumbnailUpsert = await this.mediaRepository.upsert(thumbnail, {
-      conflictPaths: ['slug'],
-    });
+    const thumbnailUpsert = thumbnail
+      ? await this.mediaRepository.upsert(thumbnail, {
+          conflictPaths: ['slug'],
+        })
+      : undefined;
 
     const newPost = this.postRepository.create({
       content: postContent.content,
       title: articleData.title,
-      thumbnail_id: thumbnailUpsert.generatedMaps[0]?.id,
+      thumbnail_id: thumbnailUpsert?.generatedMaps[0]?.id,
       slug,
       meta_description: postContent.description,
       relatedQueries: postContent.keywords,
