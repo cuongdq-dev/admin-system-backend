@@ -236,6 +236,14 @@ export class TaskService {
     categories: { name: string; slug: string }[],
     thumbnail?: Media,
   ) {
+    if (!postContent.content) {
+      console.log('------------>   Post Content undefined');
+      return;
+    }
+    if (!thumbnail) {
+      console.log('------------>   Thumbnail Post undefined');
+      return;
+    }
     const slug = generateSlug(articleData.title);
 
     const existingPost = await this.postRepository.findOne({
@@ -244,11 +252,9 @@ export class TaskService {
 
     if (existingPost) return existingPost;
 
-    const thumbnailUpsert = thumbnail
-      ? await this.mediaRepository.upsert(thumbnail, {
-          conflictPaths: ['slug'],
-        })
-      : undefined;
+    const thumbnailUpsert = await this.mediaRepository.upsert(thumbnail, {
+      conflictPaths: ['slug'],
+    });
 
     const newPost = this.postRepository.create({
       content: postContent.content,
