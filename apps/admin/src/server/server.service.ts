@@ -5,7 +5,6 @@ import {
   Service,
   User,
 } from '@app/entities';
-import { MessagesService } from '@app/modules/messages/messages.service';
 import {
   callApi,
   convertImageData,
@@ -30,8 +29,6 @@ export class ServerService {
 
     @InjectRepository(ServerService)
     private serverServiceRepository: Repository<ServerServiceEntity>,
-
-    private readonly messageService: MessagesService,
   ) {}
 
   // API SERVER

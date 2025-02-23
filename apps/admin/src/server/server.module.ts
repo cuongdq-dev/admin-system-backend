@@ -16,7 +16,6 @@ import { ServerService } from './server.service';
     TypeOrmModule.forFeature([ServerServiceEntity]),
     TypeOrmModule.forFeature([Service]),
     TypeOrmModule.forFeature([Repository]),
-    MessagesModule,
   ],
   providers: [ServerService],
   controllers: [ServerController],
