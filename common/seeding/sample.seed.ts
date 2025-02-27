@@ -409,10 +409,10 @@ async function createNotification() {
 }
 void createService();
 
-// void create();
-// void createUser();
-// void createServer();
+void create();
+void createUser();
+void createServer();
 void createLanguages();
-// void createNotification();
+void createNotification();
 
-// void createCategory();
+void createCategory();

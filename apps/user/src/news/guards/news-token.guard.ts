@@ -20,19 +20,18 @@ export class NewsTokenGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-
     const token = request.headers['authorization']?.replace('Bearer ', '');
     if (!token) {
       throw new UnauthorizedException('Missing token');
     }
 
     const site = await this.siteRepo.findOne({ where: { token } });
-    // if (!site) {
-    //   throw new UnauthorizedException('Invalid token');
-    // }
+    if (!site) {
+      throw new UnauthorizedException('Invalid token');
+    }
 
     // const requestDomain = request.headers.origin || request.headers.referer;
-    // console.log(request.headers);
+    // console.log(requestDomain);
     // if (!requestDomain) {
     //   throw new ForbiddenException('Missing Origin or Referer');
     // }
@@ -40,7 +39,6 @@ export class NewsTokenGuard implements CanActivate {
     // const parsedUrl = url.parse(requestDomain);
     // const domainName = parsedUrl.host;
     // const siteDomain = url.parse(site.domain).host;
-
     // if (domainName !== siteDomain) {
     //   throw new ForbiddenException(`Access denied from domain: ${domainName}`);
     // }

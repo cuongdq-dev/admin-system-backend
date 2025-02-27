@@ -1,22 +1,25 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Migrations1739789115267 implements MigrationInterface {
-    name = 'Migrations1739789115267'
+export class Migrations1740383088755 implements MigrationInterface {
+    name = 'Migrations1740383088755'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE TABLE "product_variant_media" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "media_id" uuid, "variant_id" uuid, "rank" integer NOT NULL DEFAULT '1', CONSTRAINT "PK_040a733daa3050662023dc66797" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_040a733daa3050662023dc6679" ON "product_variant_media" ("id") `);
+        await queryRunner.query(`CREATE TYPE "public"."user_tokens_type_enum" AS ENUM('REGISTER_VERIFY', 'RESET_PASSWORD')`);
         await queryRunner.query(`CREATE TABLE "user_tokens" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "token" character varying(100) NOT NULL, "is_used" boolean NOT NULL DEFAULT false, "type" "public"."user_tokens_type_enum" NOT NULL, "expires_at" TIMESTAMP NOT NULL, "user_id" uuid NOT NULL, CONSTRAINT "PK_63764db9d9aaa4af33e07b2f4bf" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_63764db9d9aaa4af33e07b2f4b" ON "user_tokens" ("id") `);
         await queryRunner.query(`CREATE TABLE "users" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "name" character varying(200) NOT NULL, "email" character varying(255) NOT NULL, "password" character varying(255), "is_active" boolean NOT NULL DEFAULT false, "firebase_token" text, "avatar_id" uuid, CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "UQ_2d4a15c7f8b3864a5465fb687ee" UNIQUE ("name", "email"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_a3ffb1c0c8416b9fc6f907b743" ON "users" ("id") `);
-        await queryRunner.query(`CREATE TABLE "product_variant_media" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "media_id" uuid, "variant_id" uuid, "rank" integer NOT NULL DEFAULT '1', CONSTRAINT "PK_040a733daa3050662023dc66797" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_040a733daa3050662023dc6679" ON "product_variant_media" ("id") `);
-        await queryRunner.query(`CREATE TABLE "media" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "slug" character varying(500) NOT NULL, "filename" character varying(500), "url" character varying(500), "data" text, "mimetype" character varying(150) NOT NULL, "storage_type" "public"."media_storage_type_enum" NOT NULL DEFAULT 'LOCAL', "size" integer NOT NULL, CONSTRAINT "UQ_3cfd4afceb82a40bb84df8d7942" UNIQUE ("slug"), CONSTRAINT "PK_f4e0fcac36e050de337b670d8bd" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TYPE "public"."media_storage_type_enum" AS ENUM('LOCAL', 'S3', 'BASE64', 'URL')`);
+        await queryRunner.query(`CREATE TABLE "media" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "slug" character varying(500) NOT NULL, "filename" character varying(500), "url" character varying(500), "data" text, "mimetype" character varying(150), "storage_type" "public"."media_storage_type_enum" NOT NULL DEFAULT 'LOCAL', "size" integer, CONSTRAINT "UQ_3cfd4afceb82a40bb84df8d7942" UNIQUE ("slug"), CONSTRAINT "PK_f4e0fcac36e050de337b670d8bd" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_f4e0fcac36e050de337b670d8b" ON "media" ("id") `);
-        await queryRunner.query(`CREATE TABLE "sites" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "name" character varying(255) NOT NULL, "autoPost" boolean NOT NULL DEFAULT false, "domain" character varying(255) NOT NULL, "description" text, "token" text, CONSTRAINT "PK_4f5eccb1dfde10c9170502595a7" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "sites" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "name" character varying(255) NOT NULL, "autoPost" boolean NOT NULL DEFAULT false, "domain" character varying(255) NOT NULL, "description" text, "teleToken" text, "teleBotName" text, "teleChatName" text, "teleChatId" text, "token" text, CONSTRAINT "PK_4f5eccb1dfde10c9170502595a7" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_4f5eccb1dfde10c9170502595a" ON "sites" ("id") `);
         await queryRunner.query(`CREATE TABLE "categories" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "name" character varying(255) NOT NULL, "slug" character varying(255) NOT NULL, "description" text, CONSTRAINT "UQ_8b0be371d28245da6e4f4b61878" UNIQUE ("name"), CONSTRAINT "UQ_420d9f679d41281f282f5bc7d09" UNIQUE ("slug"), CONSTRAINT "PK_24dbc6126a28ff948da33e97d3b" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_24dbc6126a28ff948da33e97d3" ON "categories" ("id") `);
-        await queryRunner.query(`CREATE TABLE "posts" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "title" character varying(255) NOT NULL, "slug" character varying(255) NOT NULL, "content" text NOT NULL, "relatedQueries" jsonb, "meta_description" text NOT NULL, "is_published" boolean NOT NULL DEFAULT false, "status" "public"."posts_status_enum" NOT NULL DEFAULT 'NEW', "article_id" uuid, "thumbnail_id" uuid, "user_id" uuid, CONSTRAINT "UQ_2d82eb2bb2ddd7a6bfac8804d8a" UNIQUE ("title"), CONSTRAINT "UQ_54ddf9075260407dcfdd7248577" UNIQUE ("slug"), CONSTRAINT "PK_2829ac61eff60fcec60d7274b9e" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TYPE "public"."posts_status_enum" AS ENUM('NEW', 'DRAFT', 'PUBLISHED', 'DELETED')`);
+        await queryRunner.query(`CREATE TABLE "posts" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "title" character varying(255) NOT NULL, "slug" character varying(255) NOT NULL, "content" text NOT NULL, "relatedQueries" jsonb, "meta_description" text NOT NULL, "status" "public"."posts_status_enum" NOT NULL DEFAULT 'NEW', "article_id" uuid, "thumbnail_id" uuid, "user_id" uuid, CONSTRAINT "UQ_2d82eb2bb2ddd7a6bfac8804d8a" UNIQUE ("title"), CONSTRAINT "UQ_54ddf9075260407dcfdd7248577" UNIQUE ("slug"), CONSTRAINT "PK_2829ac61eff60fcec60d7274b9e" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_2829ac61eff60fcec60d7274b9" ON "posts" ("id") `);
         await queryRunner.query(`CREATE INDEX "IDX_54ddf9075260407dcfdd724857" ON "posts" ("slug") `);
         await queryRunner.query(`CREATE INDEX "IDX_a69d9e2ae78ef7d100f8317ae0" ON "posts" ("status") `);
@@ -35,16 +38,22 @@ export class Migrations1739789115267 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "customer_sessions" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "customer_id" uuid NOT NULL, CONSTRAINT "PK_c684ecbaa67a634723776229c4c" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_c684ecbaa67a634723776229c4" ON "customer_sessions" ("id") `);
         await queryRunner.query(`CREATE INDEX "IDX_db8c70768c3b1cd05287034995" ON "customer_sessions" ("customer_id") `);
+        await queryRunner.query(`CREATE TYPE "public"."customer_tokens_type_enum" AS ENUM('REGISTER_VERIFY', 'RESET_PASSWORD')`);
         await queryRunner.query(`CREATE TABLE "customer_tokens" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "token" character varying(100) NOT NULL, "is_used" boolean NOT NULL DEFAULT false, "type" "public"."customer_tokens_type_enum" NOT NULL, "expires_at" TIMESTAMP NOT NULL, "customer_id" uuid NOT NULL, CONSTRAINT "PK_82085a2a1850e02d40a965306ba" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_82085a2a1850e02d40a965306b" ON "customer_tokens" ("id") `);
         await queryRunner.query(`CREATE TABLE "langs" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "code" character varying(200) NOT NULL, "name" character varying(200) NOT NULL, "description" character varying(200) NOT NULL, CONSTRAINT "UQ_8684c361867d6fb2b8512680bcc" UNIQUE ("code"), CONSTRAINT "PK_e0bb7dc43457e44d0123fb3e52f" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_e0bb7dc43457e44d0123fb3e52" ON "langs" ("id") `);
         await queryRunner.query(`CREATE TABLE "lang_content" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "code" character varying(200) NOT NULL, "content" character varying NOT NULL, "lang_id" uuid NOT NULL, CONSTRAINT "UQ_e570887f8707bf2a23b7c286460" UNIQUE ("code", "lang_id"), CONSTRAINT "PK_f087782732bcc9ac09386b17bbb" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_f087782732bcc9ac09386b17bb" ON "lang_content" ("id") `);
+        await queryRunner.query(`CREATE TYPE "public"."notifications_status_enum" AS ENUM('NEW', 'RECEIVED', 'READED', 'PENDING', 'FAILED', 'ARCHIVED')`);
+        await queryRunner.query(`CREATE TYPE "public"."notifications_type_enum" AS ENUM('MESSAGE', 'SYSTEM', 'COMMENT', 'ORDER', 'DELIVERY', 'PROMOTION', 'PAYMENT', 'REFUND', 'FEEDBACK', 'REMINDER', 'ACCOUNT')`);
         await queryRunner.query(`CREATE TABLE "notifications" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "title" text, "message" text, "status" "public"."notifications_status_enum" NOT NULL DEFAULT 'NEW', "type" "public"."notifications_type_enum", "meta_data" text, "user_id" uuid NOT NULL, CONSTRAINT "PK_6a72c3c0f683f6462415e653c3a" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_6a72c3c0f683f6462415e653c3" ON "notifications" ("id") `);
+        await queryRunner.query(`CREATE TYPE "public"."orders_status_enum" AS ENUM('CREATED', 'SUCCEEDED', 'CANCELED')`);
         await queryRunner.query(`CREATE TABLE "orders" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "customer_id" uuid NOT NULL, "cart_id" uuid NOT NULL, "address_id" uuid NOT NULL, "static_address" jsonb, "success_payment_id" uuid, "status" "public"."orders_status_enum" NOT NULL DEFAULT 'CREATED', CONSTRAINT "PK_710e2d4957aa5878dfe94e4ac2f" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_710e2d4957aa5878dfe94e4ac2" ON "orders" ("id") `);
+        await queryRunner.query(`CREATE TYPE "public"."payments_provider_enum" AS ENUM('STRIPE', 'RAZORPAY')`);
+        await queryRunner.query(`CREATE TYPE "public"."payments_status_enum" AS ENUM('PENDING', 'DONE', 'FAILED', 'CANCELED')`);
         await queryRunner.query(`CREATE TABLE "payments" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "customer_id" uuid NOT NULL, "order_id" uuid NOT NULL, "transaction_id" character varying NOT NULL, "provider" "public"."payments_provider_enum" NOT NULL DEFAULT 'STRIPE', "status" "public"."payments_status_enum" NOT NULL DEFAULT 'PENDING', CONSTRAINT "PK_197ab7af18c93fbb0c9b28b4a59" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_197ab7af18c93fbb0c9b28b4a5" ON "payments" ("id") `);
         await queryRunner.query(`CREATE TABLE "products" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "title" character varying(255) NOT NULL, "description" text NOT NULL, CONSTRAINT "PK_0806c755e0aca124e67c0cf6d7d" PRIMARY KEY ("id"))`);
@@ -55,13 +64,14 @@ export class Migrations1739789115267 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_ef0c358c04b4f4d29b8ca68ddf" ON "repositories" ("id") `);
         await queryRunner.query(`CREATE TABLE "servers" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "name" character varying(200) NOT NULL, "host" character varying(200) NOT NULL, "port" character varying(200) NOT NULL, "user" character varying(200) NOT NULL, "password" character varying(255) NOT NULL, "is_active" boolean NOT NULL DEFAULT false, "is_connected" boolean NOT NULL DEFAULT false, "owner_id" uuid NOT NULL, CONSTRAINT "UQ_0a87d33ca4cd4b8ef5390225144" UNIQUE ("name", "host"), CONSTRAINT "PK_c0947efd9f3db2dcc010164d20b" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_c0947efd9f3db2dcc010164d20" ON "servers" ("id") `);
+        await queryRunner.query(`CREATE TABLE "services" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "name" character varying(100) NOT NULL, "icon" character varying(100) NOT NULL, "description" character varying(100) NOT NULL, "script" text, CONSTRAINT "UQ_019d74f7abcdcb5a0113010cb03" UNIQUE ("name"), CONSTRAINT "PK_ba2d347a3168a296416c6c5ccb2" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_ba2d347a3168a296416c6c5ccb" ON "services" ("id") `);
         await queryRunner.query(`CREATE TABLE "user_sessions" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "user_id" uuid NOT NULL, CONSTRAINT "PK_e93e031a5fed190d4789b6bfd83" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_e93e031a5fed190d4789b6bfd8" ON "user_sessions" ("id") `);
         await queryRunner.query(`CREATE INDEX "IDX_e9658e959c490b0a634dfc5478" ON "user_sessions" ("user_id") `);
+        await queryRunner.query(`CREATE TYPE "public"."server_services_installed_enum" AS ENUM('installed', 'installing', 'uninstalled', 'failed')`);
         await queryRunner.query(`CREATE TABLE "server_services" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "server_id" uuid NOT NULL, "service_id" uuid NOT NULL, "installed" "public"."server_services_installed_enum" NOT NULL DEFAULT 'uninstalled', CONSTRAINT "PK_a3fd6eef42016e7752c95c28e02" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_a3fd6eef42016e7752c95c28e0" ON "server_services" ("id") `);
-        await queryRunner.query(`CREATE TABLE "services" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "created_by" uuid, "updated_by" uuid, "deleted_by" uuid, "name" character varying(100) NOT NULL, "icon" character varying(100) NOT NULL, "description" character varying(100) NOT NULL, "script" text, CONSTRAINT "UQ_019d74f7abcdcb5a0113010cb03" UNIQUE ("name"), CONSTRAINT "PK_ba2d347a3168a296416c6c5ccb2" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_ba2d347a3168a296416c6c5ccb" ON "services" ("id") `);
         await queryRunner.query(`CREATE TABLE "site_posts" ("site_id" uuid NOT NULL, "post_id" uuid NOT NULL, CONSTRAINT "PK_832b72b267d88a1162c6c841cd8" PRIMARY KEY ("site_id", "post_id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_481b1aae291cca343b03d40e2f" ON "site_posts" ("site_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_5f66ee01767323760fd5a0fcd5" ON "site_posts" ("post_id") `);
@@ -71,10 +81,10 @@ export class Migrations1739789115267 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "category_posts" ("category_id" uuid NOT NULL, "post_id" uuid NOT NULL, CONSTRAINT "PK_a3d68736a4f0903ee1191f50ad9" PRIMARY KEY ("category_id", "post_id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_c58dbd4db3b9b8095e0f73fdef" ON "category_posts" ("category_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_4ac144f2d95d0b385b0742836a" ON "category_posts" ("post_id") `);
-        await queryRunner.query(`ALTER TABLE "user_tokens" ADD CONSTRAINT "FK_9e144a67be49e5bba91195ef5de" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "users" ADD CONSTRAINT "FK_c3401836efedec3bec459c8f818" FOREIGN KEY ("avatar_id") REFERENCES "media"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "product_variant_media" ADD CONSTRAINT "FK_f76f25b545adea9c54509995de0" FOREIGN KEY ("media_id") REFERENCES "media"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "product_variant_media" ADD CONSTRAINT "FK_68f8606d8be73e00cfb427ccf83" FOREIGN KEY ("variant_id") REFERENCES "product_variants"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "user_tokens" ADD CONSTRAINT "FK_9e144a67be49e5bba91195ef5de" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "users" ADD CONSTRAINT "FK_c3401836efedec3bec459c8f818" FOREIGN KEY ("avatar_id") REFERENCES "media"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "posts" ADD CONSTRAINT "FK_cb21ad2b1d8035eebda29b2f31f" FOREIGN KEY ("article_id") REFERENCES "trending_article"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "posts" ADD CONSTRAINT "FK_7afa448dd4430b2c5a4ff606f61" FOREIGN KEY ("thumbnail_id") REFERENCES "media"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "posts" ADD CONSTRAINT "FK_c4f9a7bd77b489e711277ee5986" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
@@ -142,10 +152,10 @@ export class Migrations1739789115267 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "posts" DROP CONSTRAINT "FK_c4f9a7bd77b489e711277ee5986"`);
         await queryRunner.query(`ALTER TABLE "posts" DROP CONSTRAINT "FK_7afa448dd4430b2c5a4ff606f61"`);
         await queryRunner.query(`ALTER TABLE "posts" DROP CONSTRAINT "FK_cb21ad2b1d8035eebda29b2f31f"`);
-        await queryRunner.query(`ALTER TABLE "product_variant_media" DROP CONSTRAINT "FK_68f8606d8be73e00cfb427ccf83"`);
-        await queryRunner.query(`ALTER TABLE "product_variant_media" DROP CONSTRAINT "FK_f76f25b545adea9c54509995de0"`);
         await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "FK_c3401836efedec3bec459c8f818"`);
         await queryRunner.query(`ALTER TABLE "user_tokens" DROP CONSTRAINT "FK_9e144a67be49e5bba91195ef5de"`);
+        await queryRunner.query(`ALTER TABLE "product_variant_media" DROP CONSTRAINT "FK_68f8606d8be73e00cfb427ccf83"`);
+        await queryRunner.query(`ALTER TABLE "product_variant_media" DROP CONSTRAINT "FK_f76f25b545adea9c54509995de0"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_4ac144f2d95d0b385b0742836a"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_c58dbd4db3b9b8095e0f73fdef"`);
         await queryRunner.query(`DROP TABLE "category_posts"`);
@@ -155,13 +165,14 @@ export class Migrations1739789115267 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."IDX_5f66ee01767323760fd5a0fcd5"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_481b1aae291cca343b03d40e2f"`);
         await queryRunner.query(`DROP TABLE "site_posts"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_ba2d347a3168a296416c6c5ccb"`);
-        await queryRunner.query(`DROP TABLE "services"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_a3fd6eef42016e7752c95c28e0"`);
         await queryRunner.query(`DROP TABLE "server_services"`);
+        await queryRunner.query(`DROP TYPE "public"."server_services_installed_enum"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_e9658e959c490b0a634dfc5478"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_e93e031a5fed190d4789b6bfd8"`);
         await queryRunner.query(`DROP TABLE "user_sessions"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_ba2d347a3168a296416c6c5ccb"`);
+        await queryRunner.query(`DROP TABLE "services"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_c0947efd9f3db2dcc010164d20"`);
         await queryRunner.query(`DROP TABLE "servers"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_ef0c358c04b4f4d29b8ca68ddf"`);
@@ -172,16 +183,22 @@ export class Migrations1739789115267 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE "products"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_197ab7af18c93fbb0c9b28b4a5"`);
         await queryRunner.query(`DROP TABLE "payments"`);
+        await queryRunner.query(`DROP TYPE "public"."payments_status_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."payments_provider_enum"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_710e2d4957aa5878dfe94e4ac2"`);
         await queryRunner.query(`DROP TABLE "orders"`);
+        await queryRunner.query(`DROP TYPE "public"."orders_status_enum"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_6a72c3c0f683f6462415e653c3"`);
         await queryRunner.query(`DROP TABLE "notifications"`);
+        await queryRunner.query(`DROP TYPE "public"."notifications_type_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."notifications_status_enum"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_f087782732bcc9ac09386b17bb"`);
         await queryRunner.query(`DROP TABLE "lang_content"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_e0bb7dc43457e44d0123fb3e52"`);
         await queryRunner.query(`DROP TABLE "langs"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_82085a2a1850e02d40a965306b"`);
         await queryRunner.query(`DROP TABLE "customer_tokens"`);
+        await queryRunner.query(`DROP TYPE "public"."customer_tokens_type_enum"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_db8c70768c3b1cd05287034995"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_c684ecbaa67a634723776229c4"`);
         await queryRunner.query(`DROP TABLE "customer_sessions"`);
@@ -201,18 +218,21 @@ export class Migrations1739789115267 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."IDX_54ddf9075260407dcfdd724857"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_2829ac61eff60fcec60d7274b9"`);
         await queryRunner.query(`DROP TABLE "posts"`);
+        await queryRunner.query(`DROP TYPE "public"."posts_status_enum"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_24dbc6126a28ff948da33e97d3"`);
         await queryRunner.query(`DROP TABLE "categories"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_4f5eccb1dfde10c9170502595a"`);
         await queryRunner.query(`DROP TABLE "sites"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_f4e0fcac36e050de337b670d8b"`);
         await queryRunner.query(`DROP TABLE "media"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_040a733daa3050662023dc6679"`);
-        await queryRunner.query(`DROP TABLE "product_variant_media"`);
+        await queryRunner.query(`DROP TYPE "public"."media_storage_type_enum"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_a3ffb1c0c8416b9fc6f907b743"`);
         await queryRunner.query(`DROP TABLE "users"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_63764db9d9aaa4af33e07b2f4b"`);
         await queryRunner.query(`DROP TABLE "user_tokens"`);
+        await queryRunner.query(`DROP TYPE "public"."user_tokens_type_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_040a733daa3050662023dc6679"`);
+        await queryRunner.query(`DROP TABLE "product_variant_media"`);
     }
 
 }

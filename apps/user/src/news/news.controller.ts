@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
 import { NewsTokenGuard } from './guards/news-token.guard';
@@ -12,8 +12,18 @@ export class NewsController {
   constructor(private readonly newsService: NewsService) {}
 
   @Get()
-  getHome(@Req() req, @Paginate() query: PaginateQuery) {
+  getHome(@Req() req) {
     return this.newsService.getHome(req?.site);
+  }
+
+  @Get('/relate')
+  getRelate(@Req() req, @Query() query: { post_slug: string }) {
+    return this.newsService.getPostRelates(req?.site, query.post_slug);
+  }
+
+  @Get('/recent')
+  getRecent(@Req() req) {
+    return this.newsService.getPostRecents(req?.site);
   }
 
   @Get('rss')

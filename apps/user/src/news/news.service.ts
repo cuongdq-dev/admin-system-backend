@@ -2,7 +2,7 @@ import { Category, Post, Site } from '@app/entities';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import { newsPaginateConfig } from './news.pagination';
 
 @Injectable()
@@ -95,6 +95,79 @@ export class NewsService {
     ]);
 
     return { categories, recentNews, featureNews, otherNews };
+  }
+
+  async getPostRelates(site: Site, post_slug: string) {
+    const currentPost = await this.postRepo.findOne({
+      where: { slug: post_slug },
+    });
+
+    if (!currentPost || !currentPost.relatedQueries) {
+      return [];
+    }
+
+    const relatedQueryStrings = currentPost.relatedQueries
+      .map((q) => q.query)
+      .filter(Boolean);
+
+    if (relatedQueryStrings.length === 0) {
+      return [];
+    }
+
+    const relatedPosts = await this.postRepo.find({
+      relations: ['thumbnail'],
+      where: {
+        sites: { id: site.id },
+        relatedQueries: Raw(
+          (alias) =>
+            `EXISTS (SELECT 1 FROM jsonb_array_elements(${alias}) elem WHERE elem->>'query' IN (:...queries))`,
+          { queries: relatedQueryStrings },
+        ),
+      },
+      select: {
+        id: true,
+        status: true,
+        meta_description: true,
+        created_at: true,
+        title: true,
+        slug: true,
+        thumbnail: {
+          id: true,
+          data: true,
+          url: true,
+          storage_type: true,
+          slug: true,
+          filename: true,
+        },
+      },
+      take: 3,
+    });
+
+    return relatedPosts;
+  }
+
+  async getPostRecents(site: Site) {
+    const recents = await this.postRepo
+      .createQueryBuilder('post')
+      .innerJoin('post.sites', 'site')
+      .innerJoin('post.thumbnail', 'thumbnail')
+      .leftJoin('post.categories', 'categories')
+      .where('site.id = :siteId', { siteId: site.id })
+      .select([
+        'post.id AS id',
+        'post.title AS title',
+        'post.meta_description AS meta_description',
+        'post.created_at AS created_at',
+        'post.slug AS slug',
+        'post.status AS status',
+        "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
+        `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`, // Gom nhóm categories
+      ])
+      .groupBy('post.id, thumbnail.data, thumbnail.url, thumbnail.slug')
+      .orderBy('created_at', 'DESC')
+      .limit(4)
+      .getRawMany();
+    return recents;
   }
 
   async getCategories(site: Site) {
