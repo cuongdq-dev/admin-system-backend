@@ -86,6 +86,8 @@ export class NewsController {
 
   //rss
   @Get('rss')
+  @ApiBearerAuth()
+  @UseGuards(NewsTokenGuard)
   getRss(@Req() req) {
     return this.newsService.getRss(req.site);
   }
