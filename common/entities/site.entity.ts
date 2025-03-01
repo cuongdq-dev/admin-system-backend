@@ -5,6 +5,7 @@ import {
   BeforeInsert,
   Column,
   Entity,
+  Index,
   JoinTable,
   ManyToMany,
   Relation,
@@ -22,6 +23,7 @@ export class Site extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   autoPost: boolean;
 
+  @Index()
   @Column({ type: 'varchar', length: 255 })
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   domain: string;

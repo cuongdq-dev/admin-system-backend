@@ -13,6 +13,7 @@ export abstract class BaseEntity extends _BaseEntity {
   @Index()
   id: string;
 
+  @Index()
   @CreateDateColumn()
   created_at: Date;
 

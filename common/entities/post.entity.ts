@@ -1,4 +1,3 @@
-import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   Column,
@@ -15,7 +14,6 @@ import { Media } from './media.entity';
 import { Site } from './site.entity';
 import { TrendingArticle } from './trending_articles.entity';
 import type { User } from './user.entity';
-
 export enum PostStatus {
   NEW = 'NEW',
   DRAFT = 'DRAFT',
@@ -35,7 +33,7 @@ export class Post extends BaseEntity {
   @Column({ type: 'text' })
   content: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
   relatedQueries: { query?: string }[];
 
   @Column({ type: 'text' })
@@ -45,7 +43,6 @@ export class Post extends BaseEntity {
   @Index()
   status: PostStatus;
 
-  // Quan hệ với bài báo trending (nullable)
   @ManyToOne(() => TrendingArticle, (article) => article.posts, {
     nullable: true,
   })
@@ -55,15 +52,13 @@ export class Post extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   article_id: string;
 
-  // Quan hệ với thumbnail
-  @ManyToOne(() => Media, { nullable: true })
+  @ManyToOne(() => Media, { nullable: true, eager: true })
   @JoinColumn({ name: 'thumbnail_id' })
   thumbnail: Relation<Media>;
 
   @Column({ type: 'uuid', nullable: true })
   thumbnail_id: string;
 
-  // Quan hệ với người tạo bài viết
   @ManyToOne('User', 'posts')
   @JoinColumn({ name: 'user_id' })
   user: Relation<User>;
@@ -72,11 +67,9 @@ export class Post extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   user_id: string;
 
-  // Quan hệ với categories
   @ManyToMany(() => Category, (category) => category.posts)
   categories: Relation<Category[]>;
 
-  // Quan hệ với sites
   @ManyToMany(() => Site, (site) => site.posts)
   sites: Relation<Site[]>;
 }

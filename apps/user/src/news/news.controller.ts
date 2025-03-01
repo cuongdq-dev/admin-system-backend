@@ -22,8 +22,8 @@ export class NewsController {
   }
 
   @Get('/recent')
-  getRecent(@Req() req) {
-    return this.newsService.getPostRecents(req?.site);
+  getRecent(@Req() req, @Query() query: { post_slug: string }) {
+    return this.newsService.getPostRecents(req?.site, query.post_slug);
   }
 
   @Get('rss')
