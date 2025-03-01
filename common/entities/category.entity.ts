@@ -16,9 +16,7 @@ export class Category extends BaseEntity {
   description: string;
 
   // Một category có thể có nhiều bài viết
-  @ManyToMany(() => Post, (post) => post.categories, {
-    cascade: true,
-  })
+  @ManyToMany(() => Post, (post) => post.categories, { cascade: true })
   @JoinTable({
     name: 'category_posts',
     joinColumn: { name: 'category_id', referencedColumnName: 'id' },

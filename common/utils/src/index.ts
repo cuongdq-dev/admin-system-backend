@@ -272,15 +272,6 @@ function getHtml(
       return { content };
     },
 
-    'afamily.vn': () => {
-      $('.bottom-info').remove();
-      $('.afcbc-relate-link, .afcbc-relate, .afcbc-leftmenu').remove();
-
-      const title = $('.afcb-title').prop('outerHTML');
-      const content = $('.afcbc-body').prop('outerHTML');
-      return { content: title + content };
-    },
-
     'bongda24h.vn': () => {
       $('.muc-luc').remove();
       const title = $('.the-article-title').prop('outerHTML');
@@ -300,6 +291,7 @@ function getHtml(
       const content = $('.singular-container').prop('outerHTML');
       return { content: content };
     },
+
     'vietnamnet.vn': () => {
       $(
         '.article-author-multiple-wrapper,.article-author-multiple,.share-social,.articles-edit',
@@ -322,14 +314,6 @@ function getHtml(
         '.art-info, .google-news, .tin-lien-quan, .m-bottom-20, .art-footer, .box-binh-luan',
       ).remove();
       const content = $('.article-detail').prop('outerHTML');
-      return { content };
-    },
-
-    'eva.vn': () => {
-      $(
-        '.eva-breadcrumb, .eva-author-time-art, .eva-link-cate-art, .evtBox',
-      ).remove();
-      const content = $('#baiviet-container').prop('outerHTML');
       return { content };
     },
 
@@ -357,6 +341,7 @@ function getHtml(
       const content = $('.rightdetail');
       return { content: title + content };
     },
+
     'kinhtechungkhoan.vn': () => {
       $('.link-content-footer, zone, script').remove();
       const title = $('.detail-title').prop('outerHTML');
@@ -365,11 +350,6 @@ function getHtml(
       return { content: title + content };
     },
 
-    'webthethao.vn': () => {
-      const title = $('h1').prop('outerHTML');
-      const content = $('#abody');
-      return { content: title + content };
-    },
     'viettimes.vn': () => {
       $('.article__relate__thumb, .article__relate__heading').remove();
       const title = $('.article__title').prop('outerHTML');
@@ -397,41 +377,33 @@ function getHtml(
       const content = $('.detail-content.afcbc-body');
       return { content: title + content };
     },
-    'oneesports.vn': () => {
-      const titleElement = $('*').filter(function () {
-        return $(this).text().trim() === title;
-      });
-      const titleParents = titleElement.parents();
-      titleParents.find('.post-meta').remove();
-      titleParents.find('.post-share').remove();
-      return { content: titleParents.prop('outerHTML') };
-    },
 
     default: () => {
-      const titleElement = $('*').filter(function () {
-        return $(this).text().trim() === title;
-      });
+      return { content: undefined };
+      // const titleElement = $('*').filter(function () {
+      //   return $(this).text().trim() === title;
+      // });
 
-      const descriptionElement = $('*').filter(function () {
-        return $(this).text().trim() === description;
-      });
+      // const descriptionElement = $('*').filter(function () {
+      //   return $(this).text().trim() === description;
+      // });
 
-      if (!titleElement.length || !descriptionElement.length) {
-        return undefined;
-      }
+      // if (!titleElement.length || !descriptionElement.length) {
+      //   return undefined;
+      // }
 
-      const titleParents = titleElement.parents();
-      const descriptionParents = descriptionElement.parents();
+      // const titleParents = titleElement.parents();
+      // const descriptionParents = descriptionElement.parents();
 
-      let commonParent = null;
-      titleParents.each((_, el) => {
-        if (descriptionParents.is(el)) {
-          commonParent = el;
-          return false;
-        }
-      });
+      // let commonParent = null;
+      // titleParents.each((_, el) => {
+      //   if (descriptionParents.is(el)) {
+      //     commonParent = el;
+      //     return false;
+      //   }
+      // });
 
-      return { content: commonParent ? $(commonParent).html() || '' : '' };
+      // return { content: commonParent ? $(commonParent).html() || '' : '' };
     },
   };
 
