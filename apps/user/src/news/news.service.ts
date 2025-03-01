@@ -1,7 +1,8 @@
 import { Category, Post, Site } from '@app/entities';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
+import { SitemapStream, streamToPromise } from 'sitemap';
 import { Like, Not, Raw, Repository } from 'typeorm';
 import { newsPaginateConfig } from './news.pagination';
 
@@ -259,8 +260,37 @@ export class NewsService {
       },
       relations: ['thumbnail', 'categories', 'article'],
     });
-    const categoryIds = post?.categories?.map((cat) => cat.id);
 
     return { data: post };
+  }
+
+  async getSitemap(domain: string) {
+    const site = await this.siteRepo.findOne({
+      where: { domain: `https://${domain}` },
+    });
+
+    if (!site) {
+      throw new NotFoundException(`No site found for domain ${domain}`);
+    }
+
+    const posts = await this.postRepo.find({
+      where: { sites: { id: site.id } },
+      select: ['slug', 'updated_at'],
+      order: { updated_at: 'DESC' },
+    });
+
+    const sitemap = new SitemapStream({ hostname: site.domain });
+
+    posts.forEach((post) => {
+      sitemap.write({
+        url: `/bai-viet/${post.slug}`,
+        changefreq: 'daily',
+        lastmodISO: post.updated_at.toISOString(),
+        priority: 0.8,
+      });
+    });
+
+    sitemap.end();
+    return streamToPromise(sitemap).then((data) => data.toString());
   }
 }
