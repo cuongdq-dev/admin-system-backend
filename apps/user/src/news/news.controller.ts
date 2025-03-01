@@ -93,7 +93,7 @@ export class NewsController {
   }
 
   //site map
-  @Get('site-map')
+  @Get('sitemap')
   async getSitemap(@Query('domain') domain: string, @Res() res: Response) {
     if (!domain) throw new NotFoundException('Domain is required');
     const sitemap = await this.newsService.getSitemap(domain);
