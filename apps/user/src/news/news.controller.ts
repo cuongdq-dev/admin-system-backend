@@ -26,6 +26,13 @@ export class NewsController {
     return this.newsService.getHome(req?.site);
   }
 
+  @Get('/adsense')
+  @ApiBearerAuth()
+  @UseGuards(NewsTokenGuard)
+  getAdsense(@Req() req) {
+    return this.newsService.getAdsense(req?.site);
+  }
+
   @Get('/relate')
   @ApiBearerAuth()
   @UseGuards(NewsTokenGuard)

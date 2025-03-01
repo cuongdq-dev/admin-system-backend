@@ -22,6 +22,8 @@ export const newsPaginateConfig: PaginateConfig<Post> = {
     'categories.name',
     'categories.slug',
     'categories.id',
+    'sites.adsense_client',
+    'sites.adsense_slots',
   ],
   filterableColumns: { title: [FilterOperator.EQ] },
 };

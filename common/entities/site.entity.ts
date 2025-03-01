@@ -14,6 +14,8 @@ import { BaseEntity } from './base';
 import { Category } from './category.entity';
 import { Post } from './post.entity';
 
+export type AdSlotType = 'horizontal' | 'vertical' | 'square';
+
 @Entity({ name: 'sites' })
 export class Site extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
@@ -67,6 +69,19 @@ export class Site extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   token: string;
 
+  // 🔹 Google AdSense Client ID
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  adsense_client: string; // ca-pub-xxxxxxxxxxxxx
+
+  // 🔹 Lưu nhiều Slot Quảng Cáo với TypeORM JSONB (PostgreSQL) hoặc JSON (MySQL)
+  @Column({ type: 'jsonb', nullable: true }) // Đổi thành 'json' nếu dùng MySQL
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  adsense_slots: {
+    slot_name: string;
+    slot_id: string;
+    slot_type: AdSlotType;
+  }[]; // Danh sách slot quảng cáo
   @BeforeInsert()
   generateToken() {
     this.token = randomBytes(32).toString('hex'); // 64 ký tự hex

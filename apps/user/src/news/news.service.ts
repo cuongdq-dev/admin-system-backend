@@ -101,6 +101,12 @@ export class NewsService {
 
     return { recentNews, featureNews, otherNews };
   }
+  async getAdsense(site: Site) {
+    return {
+      adsense_client: site.adsense_client,
+      adsense_slots: site.adsense_slots,
+    };
+  }
 
   async getPostRelates(site: Site, post_slug?: string) {
     const currentPost = await this.postRepo.findOne({
@@ -137,6 +143,7 @@ export class NewsService {
         created_at: true,
         title: true,
         slug: true,
+        sites: { adsense_client: true, adsense_slots: true, id: true },
         thumbnail: {
           id: true,
           data: true,
@@ -169,11 +176,13 @@ export class NewsService {
         'post.status AS status',
         "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
         `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`,
+        `COALESCE(json_agg(DISTINCT jsonb_build_object('id', site.id, 'adsense_client', site.adsense_client, 'adsense_slots', site.adsense_slots)) FILTER (WHERE site.id IS NOT NULL), '[]') AS sites`,
       ])
       .groupBy('post.id, thumbnail.data, thumbnail.url, thumbnail.slug')
       .orderBy('created_at', 'DESC')
       .limit(4)
       .getRawMany();
+    console.log(recents);
     return recents;
   }
 
@@ -257,8 +266,9 @@ export class NewsService {
         updated_at: true,
         meta_description: true,
         article: { source: true, url: true },
+        sites: { adsense_client: true, adsense_slots: true },
       },
-      relations: ['thumbnail', 'categories', 'article'],
+      relations: ['thumbnail', 'categories', 'article', 'sites'],
     });
 
     return { data: post };
