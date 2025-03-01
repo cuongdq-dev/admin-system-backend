@@ -275,8 +275,8 @@ export class NewsService {
 
     const posts = await this.postRepo.find({
       where: { sites: { id: site.id } },
-      select: ['slug', 'updated_at'],
-      order: { updated_at: 'DESC' },
+      select: ['slug', 'created_at'],
+      order: { created_at: 'DESC' },
     });
 
     const sitemap = new SitemapStream({ hostname: site.domain });
@@ -285,7 +285,7 @@ export class NewsService {
       sitemap.write({
         url: `/bai-viet/${post.slug}`,
         changefreq: 'daily',
-        lastmodISO: post.updated_at.toISOString(),
+        lastmodISO: post.created_at.toISOString(),
         priority: 0.8,
       });
     });
