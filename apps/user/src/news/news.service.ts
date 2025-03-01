@@ -126,7 +126,7 @@ export class NewsService {
     }
 
     const relatedPosts = await this.postRepo.find({
-      relations: ['thumbnail'],
+      relations: ['thumbnail', 'sites'],
       where: {
         slug: Not(Like(post_slug)),
         sites: { id: site.id },
@@ -182,7 +182,6 @@ export class NewsService {
       .orderBy('created_at', 'DESC')
       .limit(4)
       .getRawMany();
-    console.log(recents);
     return recents;
   }
 
