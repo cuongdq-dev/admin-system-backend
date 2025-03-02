@@ -5,6 +5,7 @@ import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { SitemapStream, streamToPromise } from 'sitemap';
 import { Like, Not, Raw, Repository } from 'typeorm';
 import { newsPaginateConfig } from './news.pagination';
+import { PostStatus } from '@app/entities/post.entity';
 
 @Injectable()
 export class NewsService {
@@ -278,24 +279,57 @@ export class NewsService {
       where: { domain: `https://${domain}` },
     });
 
-    if (!site) {
-      throw new NotFoundException(`No site found for domain ${domain}`);
-    }
+    if (!site) throw new Error(`No site found for domain ${domain}`);
 
-    const posts = await this.postRepo.find({
-      where: { sites: { id: site.id } },
-      select: ['slug', 'created_at'],
-      order: { created_at: 'DESC' },
-    });
+    const [posts, categories] = await Promise.all([
+      this.postRepo.find({
+        select: ['id', 'slug', 'created_at'],
+        where: { sites: { id: site.id }, status: PostStatus.PUBLISHED },
+        order: { created_at: 'DESC' },
+        take: 50,
+      }),
+      await this.categoryRepo.find({
+        select: ['slug'],
+        where: { sites: { id: site.id } },
+      }),
+    ]);
 
     const sitemap = new SitemapStream({ hostname: site.domain });
 
+    sitemap.write({
+      url: `/`,
+      changefreq: 'daily',
+      priority: 1.0,
+    });
+
+    categories.forEach((category) => {
+      sitemap.write({
+        url: `/danh-muc/${category.slug}`,
+        changefreq: 'daily',
+        priority: 0.8,
+      });
+    });
+
+    sitemap.write({
+      url: `/bai-viet`,
+      changefreq: 'daily',
+      priority: 0.9,
+    });
+
     posts.forEach((post) => {
+      const postAgeInDays =
+        (Date.now() - new Date(post.created_at).getTime()) /
+        (1000 * 60 * 60 * 24);
+
+      let changefreq = 'daily';
+      if (postAgeInDays > 30) changefreq = 'weekly';
+      if (postAgeInDays > 180) changefreq = 'monthly';
+
       sitemap.write({
         url: `/bai-viet/${post.slug}`,
-        changefreq: 'daily',
+        changefreq,
         lastmodISO: post.created_at.toISOString(),
-        priority: 0.8,
+        priority: postAgeInDays < 30 ? 0.8 : 0.6,
       });
     });
 
