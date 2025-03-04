@@ -223,6 +223,7 @@ export class NewsService {
         slug: true,
         id: true,
       },
+      take: 50,
     });
     return data;
   }

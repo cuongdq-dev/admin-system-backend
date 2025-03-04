@@ -328,6 +328,7 @@ function getHtml(
       $('#comment_area, .expNoEditj').remove();
       $('.article__author').remove();
       $('.ads_middle').remove();
+      $('.cms-relate').remove();
       $('.banner group-fyi-wrap ').remove();
       const title = $('.article__title').prop('outerHTML');
       const content = $('.article-content');
