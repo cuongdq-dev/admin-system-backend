@@ -300,6 +300,7 @@ export class NewsService {
     if (!site) throw new Error(`No site found for domain ${domain}`);
 
     const posts = await this.postRepo.find({
+      where: { sites: { id: site.id } },
       select: ['id', 'created_at', 'slug'],
       order: { created_at: 'DESC' },
       skip: (page - 1) * perpage,
