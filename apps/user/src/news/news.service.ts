@@ -1,12 +1,10 @@
 import { Category, Post, Site } from '@app/entities';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { PostStatus } from '@app/entities/post.entity';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { SitemapStream, streamToPromise } from 'sitemap';
 import { Like, Not, Raw, Repository } from 'typeorm';
 import { newsPaginateConfig } from './news.pagination';
-import { PostStatus } from '@app/entities/post.entity';
-
 @Injectable()
 export class NewsService {
   constructor(
@@ -194,6 +192,7 @@ export class NewsService {
       .leftJoin('categories.posts', 'post')
       .leftJoin('post.sites', 'postSite')
       .where('site.id = :siteId', { siteId })
+      .select(['categories.id', 'categories.slug', 'categories.name'])
       .loadRelationCountAndMap(
         'categories.postCount',
         'categories.posts',
@@ -211,21 +210,6 @@ export class NewsService {
     });
 
     return categories;
-  }
-
-  async getRss(site: Site) {
-    const data = await this.postRepo.find({
-      where: { sites: { id: site.id } },
-      select: {
-        created_at: true,
-        meta_description: true,
-        title: true,
-        slug: true,
-        id: true,
-      },
-      take: 50,
-    });
-    return data;
   }
 
   async getPostsByCategory(site: Site, slug: string, query: PaginateQuery) {
@@ -275,66 +259,67 @@ export class NewsService {
     return { data: post };
   }
 
-  async getSitemap(domain: string) {
+  async getSitemapPosts(domain: string) {
+    if (!domain) throw new Error('Domain is required');
+
     const site = await this.siteRepo.findOne({
       where: { domain: `https://${domain}` },
     });
-
     if (!site) throw new Error(`No site found for domain ${domain}`);
 
-    const [posts, categories] = await Promise.all([
-      this.postRepo.find({
-        select: ['id', 'slug', 'created_at'],
+    return {
+      total: await this.postRepo.count({
         where: { sites: { id: site.id }, status: PostStatus.PUBLISHED },
-        order: { created_at: 'DESC' },
-        take: 50,
       }),
-      await this.categoryRepo.find({
-        select: ['slug'],
-        where: { sites: { id: site.id } },
-      }),
-    ]);
+      perpage: 100,
+    };
+  }
 
-    const sitemap = new SitemapStream({ hostname: site.domain });
+  async getSitemapCategories(domain: string) {
+    if (!domain) throw new Error('Domain is required');
 
-    sitemap.write({
-      url: `/`,
-      changefreq: 'daily',
-      priority: 1.0,
+    const site = await this.siteRepo.findOne({
+      where: { domain: `https://${domain}` },
     });
+    if (!site) throw new Error(`No site found for domain ${domain}`);
 
-    categories.forEach((category) => {
-      sitemap.write({
-        url: `/danh-muc/${category.slug}`,
-        changefreq: 'daily',
-        priority: 0.8,
-      });
+    return await this.categoryRepo.find({
+      where: { sites: { id: site.id } },
+      select: ['created_at', 'slug', 'id', 'name'],
     });
+  }
 
-    sitemap.write({
-      url: `/bai-viet`,
-      changefreq: 'daily',
-      priority: 0.9,
+  async getSitemapPostsByPage(domain: string, page: number) {
+    const perpage = 100;
+    if (!domain) throw new Error('Domain is required');
+    if (page < 1) throw new Error('Invalid page number');
+
+    const site = await this.siteRepo.findOne({
+      where: { domain: `https://${domain}` },
     });
+    if (!site) throw new Error(`No site found for domain ${domain}`);
 
-    posts.forEach((post) => {
-      const postAgeInDays =
-        (Date.now() - new Date(post.created_at).getTime()) /
-        (1000 * 60 * 60 * 24);
-
-      let changefreq = 'daily';
-      if (postAgeInDays > 30) changefreq = 'weekly';
-      if (postAgeInDays > 180) changefreq = 'monthly';
-
-      sitemap.write({
-        url: `/bai-viet/${post.slug}`,
-        changefreq,
-        lastmodISO: post.created_at.toISOString(),
-        priority: postAgeInDays < 30 ? 0.8 : 0.6,
-      });
+    const posts = await this.postRepo.find({
+      select: ['id', 'created_at', 'slug'],
+      order: { created_at: 'DESC' },
+      skip: (page - 1) * perpage,
+      take: perpage,
     });
+    return posts;
+  }
 
-    sitemap.end();
-    return streamToPromise(sitemap).then((data) => data.toString());
+  async getRss(site: Site) {
+    const data = await this.postRepo.find({
+      where: { sites: { id: site.id } },
+      select: {
+        created_at: true,
+        meta_description: true,
+        title: true,
+        slug: true,
+        id: true,
+      },
+      take: 50,
+    });
+    return data;
   }
 }

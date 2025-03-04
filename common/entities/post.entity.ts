@@ -53,7 +53,11 @@ export class Post extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   article_id: string;
 
-  @ManyToOne(() => Media, { nullable: true, eager: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Media, {
+    nullable: true,
+    eager: false,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'thumbnail_id' })
   thumbnail: Relation<Media>;
 

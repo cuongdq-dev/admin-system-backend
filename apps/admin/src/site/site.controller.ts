@@ -70,6 +70,7 @@ export class SiteController {
     site: Site,
     @Body() updateDto: SiteBodyDto,
   ) {
+    console.log(updateDto);
     return this.siteService.update(site, updateDto);
   }
 

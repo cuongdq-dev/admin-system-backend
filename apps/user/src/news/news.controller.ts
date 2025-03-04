@@ -93,11 +93,23 @@ export class NewsController {
   }
 
   //site map
-  @Get('sitemap')
-  async getSitemap(@Query('domain') domain: string, @Res() res: Response) {
+  @Get('sitemap-categories')
+  async getSitemapCategories(@Query('domain') domain: string) {
     if (!domain) throw new NotFoundException('Domain is required');
-    const sitemap = await this.newsService.getSitemap(domain);
-    res.setHeader('Content-Type', 'application/xml');
-    return res.send(sitemap);
+    return await this.newsService.getSitemapCategories(domain);
+  }
+  @Get('sitemap-total-posts')
+  async getSitemapPosts(@Query('domain') domain: string) {
+    if (!domain) throw new NotFoundException('Domain is required');
+    return await this.newsService.getSitemapPosts(domain);
+  }
+
+  @Get('sitemap-posts')
+  async getSitemapPostsByPage(
+    @Query('domain') domain: string,
+    @Query('page') page: number,
+  ) {
+    if (!domain) throw new NotFoundException('Domain is required');
+    return await this.newsService.getSitemapPostsByPage(domain, page);
   }
 }
