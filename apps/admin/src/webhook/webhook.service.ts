@@ -1,4 +1,4 @@
-import { Category, Post, Site } from '@app/entities';
+import { Category, Post } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
 import { TelegramService } from '@app/modules/telegram/telegram.service';
 import { Injectable } from '@nestjs/common';
@@ -7,14 +7,11 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class WebhookService {
-  private readonly botToken = process.env.TELE_BOT_TOKEN;
-
   constructor(
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
-    @InjectRepository(Site)
     private readonly telegramService: TelegramService,
   ) {}
 
