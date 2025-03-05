@@ -30,14 +30,19 @@ export class WebhookService {
       select: ['id', 'categories', 'teleBotName', 'teleChatId', 'teleToken'],
     });
 
-    const categories =
-      site?.categories || (await this.categoryRepository.find());
+    const categories = site?.id
+      ? await this.categoryRepository.find({
+          where: { sites: { id: site?.id } },
+          relations: ['sites'],
+        })
+      : await this.categoryRepository.find();
+
     const chatId = site?.teleChatId || this.chatId;
     const botToken = site?.teleToken || this.botToken;
 
     const messageId = callback_query.message.message_id;
     const data = callback_query.data;
-
+    console.log(categories);
     console.log(`📥 Received Telegram callback: ${data}`);
 
     if (data.startsWith('cat_')) {
