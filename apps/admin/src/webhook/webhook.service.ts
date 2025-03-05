@@ -42,7 +42,7 @@ export class WebhookService {
 
     const messageId = callback_query.message.message_id;
     const data = callback_query.data;
-    console.log(categories);
+
     console.log(`📥 Received Telegram callback: ${data}`);
 
     if (data.startsWith('cat_')) {
@@ -97,6 +97,16 @@ export class WebhookService {
       return;
     }
 
+    if (!!post.categories.find((cate) => cate.id == category.id)) {
+      await this.telegramService.editMessageWithPost(
+        chatId,
+        messageId,
+        chatBotToken,
+        post,
+        categories,
+      );
+      return;
+    }
     post.categories = [category]; // Cập nhật danh mục
     const savePost = await this.postRepository.save(post);
 
