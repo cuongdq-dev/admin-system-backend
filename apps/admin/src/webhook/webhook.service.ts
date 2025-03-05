@@ -27,7 +27,7 @@ export class WebhookService {
     const site = await this.siteRepository.findOne({
       where: { teleChatId: callback_query.message.chat_id },
       relations: ['categories'],
-      select: ['categories', 'teleBotName', 'teleChatId', 'teleToken'],
+      select: ['id', 'categories', 'teleBotName', 'teleChatId', 'teleToken'],
     });
 
     const categories =
