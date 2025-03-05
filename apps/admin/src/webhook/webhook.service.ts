@@ -23,12 +23,15 @@ export class WebhookService {
   async processCallback(callbackData: any) {
     const { callback_query } = callbackData;
     if (!callback_query) return;
-    const categories = await this.categoryRepository.find();
 
     const site = await this.siteRepository.findOne({
       where: { teleChatId: callback_query.message.chat_id },
+      relations: ['categories'],
+      select: ['categories', 'teleBotName', 'teleChatId', 'teleToken'],
     });
 
+    const categories =
+      site?.categories || (await this.categoryRepository.find());
     const chatId = site?.teleChatId || this.chatId;
     const botToken = site?.teleToken || this.botToken;
 
