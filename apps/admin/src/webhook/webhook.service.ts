@@ -1,9 +1,9 @@
+import { Category, Post, Site } from '@app/entities';
+import { PostStatus } from '@app/entities/post.entity';
+import { TelegramService } from '@app/modules/telegram/telegram.service';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Post, Category } from '@app/entities';
-import { TelegramService } from '@app/modules/telegram/telegram.service';
-import { PostStatus } from '@app/entities/post.entity';
 
 @Injectable()
 export class WebhookService {
@@ -14,6 +14,7 @@ export class WebhookService {
     private readonly postRepository: Repository<Post>,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Site)
     private readonly telegramService: TelegramService,
   ) {}
 
@@ -22,35 +23,34 @@ export class WebhookService {
     if (!callback_query) return;
     const categories = await this.categoryRepository.find();
 
-    const chatId = callback_query.message.chat.id;
     const messageId = callback_query.message.message_id;
     const data = callback_query.data;
 
     console.log(`📥 Received Telegram callback: ${data}`);
 
     if (data.startsWith('cat_')) {
-      await this.handleCategorySelection(chatId, messageId, data, categories);
+      await this.handleCategorySelection(messageId, data, categories);
     } else if (data.startsWith('public_')) {
-      await this.handlePublishPost(chatId, messageId, data, categories);
+      await this.handlePublishPost(messageId, data, categories);
     } else if (data.startsWith('delete_')) {
-      await this.handleDeletePost(chatId, messageId, data, categories);
+      await this.handleDeletePost(messageId, data, categories);
     } else if (data.startsWith('draft_')) {
-      await this.handleDraftPost(chatId, messageId, data, categories);
+      await this.handleDraftPost(messageId, data, categories);
     }
   }
 
   private async handleCategorySelection(
-    chatId: number,
     messageId: number,
     data: string,
     categories: Category[],
   ) {
-    const [_, postId, categorySlug] = data.split('_');
+    const [_, postId, categorySlug, chatId, chatBotToken] = data.split('_');
 
     const post = await this.postRepository.findOne({
       where: { id: postId },
       relations: ['categories'],
     });
+
     const category = await this.categoryRepository.findOne({
       where: { slug: categorySlug },
     });
@@ -66,19 +66,18 @@ export class WebhookService {
     await this.telegramService.editMessageWithPost(
       chatId,
       messageId,
-      this.botToken,
+      chatBotToken,
       savePost,
       categories,
     );
   }
 
   private async handlePublishPost(
-    chatId: number,
     messageId: number,
     data: string,
     categories: Category[],
   ) {
-    const [_, postId] = data.split('_');
+    const [_, postId, chatId, chatBotToken] = data.split('_');
     const post = await this.postRepository.findOne({
       where: { id: postId },
       relations: ['categories'],
@@ -95,19 +94,18 @@ export class WebhookService {
     await this.telegramService.editMessageWithPost(
       chatId,
       messageId,
-      this.botToken,
+      chatBotToken,
       savedPost,
       categories,
     );
   }
 
   private async handleDeletePost(
-    chatId: number,
     messageId: number,
     data: string,
     categories: Category[],
   ) {
-    const [_, postId] = data.split('_');
+    const [_, postId, chatId, chatBotToken] = data.split('_');
     const post = await this.postRepository.findOne({
       where: { id: postId },
       relations: ['categories'],
@@ -127,19 +125,18 @@ export class WebhookService {
     await this.telegramService.editMessageWithPost(
       chatId,
       messageId,
-      this.botToken,
+      chatBotToken,
       savedPost,
       categories,
     );
   }
 
   private async handleDraftPost(
-    chatId: number,
     messageId: number,
     data: string,
     categories: Category[],
   ) {
-    const [_, postId] = data.split('_');
+    const [_, postId, chatId, chatBotToken] = data.split('_');
     const post = await this.postRepository.findOne({
       where: { id: postId },
       relations: ['categories'],
@@ -154,7 +151,7 @@ export class WebhookService {
     await this.telegramService.editMessageWithPost(
       chatId,
       messageId,
-      this.botToken,
+      chatBotToken,
       savedPost,
       categories,
     );

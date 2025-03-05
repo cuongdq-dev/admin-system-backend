@@ -61,7 +61,12 @@ export class TelegramService {
       return;
     }
 
-    const { buttons, message } = this.generateTelegramMessage(post, categories);
+    const { buttons, message } = this.generateTelegramMessage(
+      post,
+      categories,
+      chatId,
+      botToken,
+    );
 
     try {
       const payload: any = {
@@ -98,7 +103,7 @@ export class TelegramService {
   }
 
   async editMessageWithPost(
-    chatId: number,
+    chatId: string,
     messageId: number,
     botToken: string,
     post: Post,
@@ -107,6 +112,8 @@ export class TelegramService {
     const { buttons, message: newText } = this.generateTelegramMessage(
       post,
       categories,
+      chatId,
+      botToken,
     );
     const payload: any = {
       chat_id: chatId,
@@ -207,16 +214,18 @@ export class TelegramService {
   generateTelegramMessage(
     savedPost: Post,
     categories: { name: string; slug: string }[],
+    chatId: string,
+    chatBotToken: string,
   ) {
     const categoryButtons = [];
-    const chunkSize = 3; // Số nút mỗi hàng (có thể chỉnh về 2 nếu cần)
+    const chunkSize = 3;
 
     const selectedCategories = savedPost.categories?.map((c) => c.slug) || [];
 
     for (let i = 0; i < categories.length; i += chunkSize) {
       const row = categories.slice(i, i + chunkSize).map((cat) => ({
         text: `${selectedCategories.includes(cat.slug) ? '✅' : ''} ${cat.name}`,
-        callback_data: `cat_${savedPost.id}_${cat.slug}`,
+        callback_data: `cat_${savedPost.id}_${cat.slug}_${chatId}_${chatBotToken}`,
       }));
       categoryButtons.push(row);
     }
@@ -239,7 +248,7 @@ export class TelegramService {
         [
           {
             text: '✏️ Draft',
-            callback_data: `draft_${savedPost.id}`,
+            callback_data: `draft_${savedPost.id}_${chatId}_${chatBotToken}`,
           },
         ],
         [
@@ -257,7 +266,7 @@ export class TelegramService {
         [
           {
             text: '🌍 Public',
-            callback_data: `public_${savedPost.id}`,
+            callback_data: `public_${savedPost.id}_${chatId}_${chatBotToken}`,
           },
         ],
         [
