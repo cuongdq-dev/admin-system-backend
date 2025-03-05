@@ -20,6 +20,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
+import { LessThan } from 'typeorm';
 
 @Injectable()
 export class TaskService {
@@ -50,6 +51,106 @@ export class TaskService {
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
     await this.handleCrawlerArticles();
+    // await this.handleCleanupOldPosts();
+    await this.handleCleanupOrphanTrending();
+  }
+
+  // @Cron('0 1 * * *')
+  // async handleCleanupOldPosts() {
+  //   this.logger.debug('START - Cleanup Old Posts.');
+
+  //   const fiveDaysAgo = new Date();
+  //   fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4);
+
+  //   const oldPosts = await this.postRepository.find({
+  //     where: { created_at: LessThan(fiveDaysAgo) },
+  //     relations: ['categories', 'article', 'sites', 'thumbnail'],
+  //   });
+
+  //   if (oldPosts.length === 0) {
+  //     this.logger.log('No old posts to delete.');
+  //     return;
+  //   }
+
+  //   const postIds = oldPosts.map((post) => post.id);
+  //   this.logger.log(`Deleting ${postIds.length} old posts...`);
+
+  //   for (const post of oldPosts) {
+  //     await this.siteRepository
+  //       .createQueryBuilder()
+  //       .relation(Site, 'posts')
+  //       .of(post.sites.map((site) => site.id))
+  //       .remove(post.id);
+
+  //     await this.postRepository
+  //       .createQueryBuilder()
+  //       .relation(Post, 'categories')
+  //       .of(post.id)
+  //       .remove(post.categories.map((category) => category.id));
+
+  //     if (post.article) {
+  //       await this.trendingArticleRepository.delete({ id: post.article.id });
+  //     }
+
+  //     await this.postRepository.delete(post.id);
+
+  //     if (post.thumbnail) {
+  //       const isThumbnailUsed = await this.postRepository.count({
+  //         where: { thumbnail_id: post.thumbnail.id },
+  //       });
+
+  //       if (isThumbnailUsed === 0) {
+  //         await this.mediaRepository.delete(post.thumbnail.id);
+  //       }
+  //     }
+
+  //     this.logger.log(`Deleted Post ID: ${post.id}`);
+  //   }
+
+  //   this.logger.debug('END - Cleanup Old Posts.');
+  // }
+
+  @Cron('0 2 * * *')
+  async handleCleanupOrphanTrending() {
+    this.logger.debug('START - Cleanup Orphan Trending.');
+
+    const orphanTrendings = await this.trendingRepository
+      .createQueryBuilder('trending')
+      .leftJoin(
+        'trending_article',
+        'article',
+        'trending.id = article.trending_id',
+      )
+      .where('article.id IS NULL')
+      .select(['trending.id', 'trending.thumbnail_id'])
+      .getMany();
+
+    if (orphanTrendings.length === 0) {
+      this.logger.log('No orphan trendings to delete.');
+      return;
+    }
+
+    const trendingIds = orphanTrendings.map((t) => t.id);
+    const thumbnailIds = orphanTrendings
+      .map((t) => t.thumbnail_id)
+      .filter((id) => id !== null);
+
+    this.logger.log(`Deleting ${trendingIds.length} orphan trendings...`);
+
+    await this.trendingRepository.delete(trendingIds);
+
+    for (const thumbnailId of thumbnailIds) {
+      const isStillUsed = await this.trendingRepository.count({
+        where: { thumbnail_id: thumbnailId },
+      });
+
+      if (isStillUsed === 0) {
+        await this.mediaRepository.delete(thumbnailId);
+        this.logger.log(`Deleted unused thumbnail ID: ${thumbnailId}`);
+      }
+    }
+
+    this.logger.debug('END - Cleanup Orphan Trending.');
   }
 
   @Cron('*/10 * * * *')
