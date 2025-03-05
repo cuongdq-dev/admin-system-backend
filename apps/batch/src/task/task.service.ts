@@ -50,8 +50,8 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
+    await this.handleCleanupOldPosts();
     await this.handleCrawlerArticles();
-    // await this.handleCleanupOldPosts();
     // await this.handleCleanupOrphanTrending();
   }
 

@@ -1,12 +1,12 @@
-import { Category, Post } from '@app/entities';
+import { Category, Post, Site } from '@app/entities';
 import { TelegramService } from '@app/modules/telegram/telegram.service';
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { WebhookController } from './webhook.controller';
 import { WebhookService } from './webhook.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Post, Category])],
+  imports: [TypeOrmModule.forFeature([Post, Category, Site])],
   controllers: [WebhookController],
   providers: [WebhookService, TelegramService],
 })

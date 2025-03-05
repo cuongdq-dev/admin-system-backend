@@ -61,12 +61,7 @@ export class TelegramService {
       return;
     }
 
-    const { buttons, message } = this.generateTelegramMessage(
-      post,
-      categories,
-      chatId,
-      botToken,
-    );
+    const { buttons, message } = this.generateTelegramMessage(post, categories);
 
     try {
       const payload: any = {
@@ -112,8 +107,6 @@ export class TelegramService {
     const { buttons, message: newText } = this.generateTelegramMessage(
       post,
       categories,
-      chatId,
-      botToken,
     );
     const payload: any = {
       chat_id: chatId,
@@ -214,8 +207,6 @@ export class TelegramService {
   generateTelegramMessage(
     savedPost: Post,
     categories: { name: string; slug: string }[],
-    chatId: string,
-    chatBotToken: string,
   ) {
     const categoryButtons = [];
     const chunkSize = 3;
@@ -225,7 +216,7 @@ export class TelegramService {
     for (let i = 0; i < categories.length; i += chunkSize) {
       const row = categories.slice(i, i + chunkSize).map((cat) => ({
         text: `${selectedCategories.includes(cat.slug) ? '✅' : ''} ${cat.name}`,
-        callback_data: `cat_${savedPost.id}_${cat.slug}_${chatId}_${chatBotToken}`,
+        callback_data: `cat_${savedPost.id}_${cat.slug}`,
       }));
       categoryButtons.push(row);
     }
@@ -248,7 +239,7 @@ export class TelegramService {
         [
           {
             text: '✏️ Draft',
-            callback_data: `draft_${savedPost.id}_${chatId}_${chatBotToken}`,
+            callback_data: `draft_${savedPost.id}`,
           },
         ],
         [
@@ -266,7 +257,7 @@ export class TelegramService {
         [
           {
             text: '🌍 Public',
-            callback_data: `public_${savedPost.id}_${chatId}_${chatBotToken}`,
+            callback_data: `public_${savedPost.id}`,
           },
         ],
         [
