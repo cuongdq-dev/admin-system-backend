@@ -33,6 +33,26 @@ export class NewsController {
     return this.newsService.getAdsense(req?.site);
   }
 
+  @Get('/tags')
+  @ApiBearerAuth()
+  @UseGuards(NewsTokenGuard)
+  getListTags(@Req() req) {
+    return this.newsService.getRelateQuery(req?.site);
+  }
+
+  @Get('tags/:slug')
+  @ApiBearerAuth()
+  @UseGuards(NewsTokenGuard)
+  @ApiParam({ name: 'slug', type: 'varchar' })
+  @ApiPaginationQuery(newsPaginateConfig)
+  getPostsByTag(
+    @Req() req,
+    @Paginate() query: PaginateQuery,
+    @Param() { slug }: { slug: string },
+  ) {
+    return this.newsService.getPostsByTag(req.site, slug, query);
+  }
+
   @Get('/relate')
   @ApiBearerAuth()
   @UseGuards(NewsTokenGuard)

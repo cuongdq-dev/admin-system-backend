@@ -51,64 +51,65 @@ export class TaskService {
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
     // await this.handleCleanupOldPosts();
-    await this.handleCrawlerArticles();
     // await this.handleCleanupOrphanTrending();
+    await this.handleCrawlerArticles();
   }
 
-  // @Cron('0 1 * * *')
-  // async handleCleanupOldPosts() {
-  //   this.logger.debug('START - Cleanup Old Posts.');
+  @Cron('0 1 * * *')
+  async handleCleanupOldPosts() {
+    this.logger.debug('START - Cleanup Old Posts.');
 
-  //   const fiveDaysAgo = new Date();
-  //   fiveDaysAgo.setDate(fiveDaysAgo.getDate());
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate());
 
-  //   const oldPosts = await this.postRepository.find({
-  //     where: { created_at: LessThan(fiveDaysAgo) },
-  //     relations: ['categories', 'article', 'sites', 'thumbnail'],
-  //   });
+    const oldPosts = await this.postRepository.find({
+      where: { created_at: LessThan(fiveDaysAgo) },
+      relations: ['categories', 'article', 'sites', 'thumbnail'],
+    });
 
-  //   if (oldPosts.length === 0) {
-  //     this.logger.log('No old posts to delete.');
-  //     return;
-  //   }
+    if (oldPosts.length === 0) {
+      this.logger.log('No old posts to delete.');
+      return;
+    }
 
-  //   const postIds = oldPosts.map((post) => post.id);
-  //   this.logger.log(`Deleting ${postIds.length} old posts...`);
+    const postIds = oldPosts.map((post) => post.id);
+    this.logger.log(`Deleting ${postIds.length} old posts...`);
 
-  //   for (const post of oldPosts) {
-  //     await this.siteRepository
-  //       .createQueryBuilder()
-  //       .relation(Site, 'posts')
-  //       .of(post.sites.map((site) => site.id))
-  //       .remove(post.id);
+    for (const post of oldPosts) {
+      await this.siteRepository
+        .createQueryBuilder()
+        .relation(Site, 'posts')
+        .of(post.sites.map((site) => site.id))
+        .remove(post.id);
 
-  //     await this.postRepository
-  //       .createQueryBuilder()
-  //       .relation(Post, 'categories')
-  //       .of(post.id)
-  //       .remove(post.categories.map((category) => category.id));
+      await this.postRepository
+        .createQueryBuilder()
+        .relation(Post, 'categories')
+        .of(post.id)
+        .remove(post.categories.map((category) => category.id));
 
-  //     if (post.article) {
-  //       await this.trendingArticleRepository.delete({ id: post.article.id });
-  //     }
+      if (post.article) {
+        await this.trendingArticleRepository.delete({ id: post.article_id });
+        await this.mediaRepository.delete({ id: post.article.thumbnail_id });
+      }
 
-  //     await this.postRepository.delete(post.id);
+      await this.postRepository.delete(post.id);
 
-  //     if (post.thumbnail) {
-  //       const isThumbnailUsed = await this.postRepository.count({
-  //         where: { thumbnail_id: post.thumbnail.id },
-  //       });
+      if (post.thumbnail) {
+        const isThumbnailUsed = await this.postRepository.count({
+          where: { thumbnail_id: post.thumbnail.id },
+        });
 
-  //       if (isThumbnailUsed === 0) {
-  //         await this.mediaRepository.delete(post.thumbnail.id);
-  //       }
-  //     }
+        if (isThumbnailUsed === 0) {
+          await this.mediaRepository.delete(post.thumbnail.id);
+        }
+      }
 
-  //     this.logger.log(`Deleted Post ID: ${post.id}`);
-  //   }
+      this.logger.log(`Deleted Post ID: ${post.id}`);
+    }
 
-  //   this.logger.debug('END - Cleanup Old Posts.');
-  // }
+    this.logger.debug('END - Cleanup Old Posts.');
+  }
 
   @Cron('0 2 * * *')
   async handleCleanupOrphanTrending() {
@@ -316,7 +317,9 @@ export class TaskService {
       {
         ...articleData,
         meta_description: postContent.description,
-        relatedQueries: postContent.keywords,
+        relatedQueries: postContent?.keywords?.map((keyword) => {
+          return { query: keyword.query, slug: generateSlug(keyword.query) };
+        }),
         slug: generateSlug(articleData.title),
       },
       { conflictPaths: ['url', 'title'] },
@@ -363,7 +366,9 @@ export class TaskService {
       thumbnail_id: thumbnailUpsert?.generatedMaps[0]?.id,
       slug,
       meta_description: postContent.description,
-      relatedQueries: postContent.keywords,
+      relatedQueries: postContent?.keywords?.map((keyword) => {
+        return { query: keyword.query, slug: generateSlug(keyword.query) };
+      }),
       status: postContent.contentStatus,
       article_id: articleId,
     });

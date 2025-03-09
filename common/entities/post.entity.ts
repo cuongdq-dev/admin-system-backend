@@ -34,7 +34,7 @@ export class Post extends BaseEntity {
   content: string;
 
   @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
-  relatedQueries: { query?: string }[];
+  relatedQueries: { query?: string; slug?: string }[];
 
   @Column({ type: 'text' })
   meta_description: string;

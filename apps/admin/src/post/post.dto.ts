@@ -30,7 +30,7 @@ interface ITrending {
   id?: string;
   title: { query: string; exploreLink: string };
   formattedTraffic: string;
-  relatedQueries: { query?: string }[];
+  relatedQueries: { query?: string; slug?: string }[];
   image?: ITrendingImage;
   articles: ITrendingArticle[];
 }

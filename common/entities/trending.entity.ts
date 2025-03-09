@@ -21,7 +21,7 @@ export class Trending extends BaseEntity {
   formattedTraffic: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  relatedQueries: { query?: string }[];
+  relatedQueries: { query?: string; slug?: string }[];
 
   @ManyToOne(() => Media, { nullable: true })
   @JoinColumn({ name: 'thumbnail_id' })

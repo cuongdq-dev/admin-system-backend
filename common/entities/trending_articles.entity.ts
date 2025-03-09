@@ -44,7 +44,7 @@ export class TrendingArticle extends BaseEntity {
   thumbnail_id: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  relatedQueries: { query?: string }[];
+  relatedQueries: { query?: string; slug?: string }[];
 
   @Column({ type: 'text', nullable: true })
   meta_description: string;

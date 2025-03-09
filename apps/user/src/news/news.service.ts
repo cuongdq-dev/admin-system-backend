@@ -1,5 +1,6 @@
 import { Category, Post, Site } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
+import { generateSlug } from '@app/utils';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
@@ -27,6 +28,7 @@ export class NewsService {
           'post.id AS id',
           'post.title AS title',
           'post.meta_description AS meta_description',
+          'post.relatedQueries AS "relatedQueries"',
           'post.created_at AS created_at',
           'post.slug AS slug',
           'post.status AS status',
@@ -54,6 +56,7 @@ export class NewsService {
           'post.id AS post_id',
           'post.title AS title',
           'post.meta_description AS meta_description',
+          'post.relatedQueries AS "relatedQueries"',
           'post.created_at AS created_at',
           'post.slug AS slug',
           'post.status AS status',
@@ -81,6 +84,7 @@ export class NewsService {
           'post.id AS post_id',
           'post.title AS title',
           'post.meta_description AS meta_description',
+          'post.relatedQueries AS "relatedQueries"',
           'post.created_at AS created_at',
           'post.slug AS slug',
           'post.status AS status',
@@ -139,6 +143,7 @@ export class NewsService {
         id: true,
         status: true,
         meta_description: true,
+        relatedQueries: true,
         created_at: true,
         title: true,
         slug: true,
@@ -170,6 +175,7 @@ export class NewsService {
         'post.id AS id',
         'post.title AS title',
         'post.meta_description AS meta_description',
+        'post.relatedQueries AS "relatedQueries"',
         'post.created_at AS created_at',
         'post.slug AS slug',
         'post.status AS status',
@@ -322,5 +328,132 @@ export class NewsService {
       take: 50,
     });
     return data;
+  }
+
+  async getRelateQuery(site: Site) {
+    const posts = await this.postRepo
+      .createQueryBuilder('post')
+      .select(['post.relatedQueries'])
+      .innerJoin('post.sites', 'site')
+      .where('site.id = :siteId', { siteId: site.id })
+      .getMany();
+
+    // Lấy tất cả relatedQueries từ các bài viết
+    const allQueries = posts
+      .flatMap((post) => post.relatedQueries || [])
+      .map((item) => ({
+        query: item.query,
+        slug: generateSlug(item.query),
+      }))
+      .filter((item) => item.query); // Loại bỏ query rỗng
+
+    // Đếm số lần xuất hiện của từng relatedQuery
+    const queryCountMap = allQueries.reduce(
+      (acc, { query, slug }) => {
+        if (!acc[query]) {
+          acc[query] = { query, slug, count: 0 };
+        }
+        acc[query].count += 1;
+        return acc;
+      },
+      {} as Record<string, { query: string; slug: string; count: number }>,
+    );
+
+    // Chuyển đổi thành mảng và sắp xếp theo số lần xuất hiện
+    const sortedQueries = Object.values(queryCountMap).sort(
+      (a, b) => b.count - a.count,
+    );
+
+    return sortedQueries;
+  }
+
+  async getPostByRelatedQuery(site: Site, slug: string) {
+    const post = await this.postRepo
+      .createQueryBuilder('post')
+      .leftJoin('post.sites', 'site')
+      .where('site.id = :siteId', { siteId: site.id })
+      .andWhere(`post.relatedQueries @> :query`, {
+        query: JSON.stringify([{ slug }]),
+      }) // 🔥 Kiểm tra slug trong JSONB
+      .orderBy('post.created_at', 'DESC') // Lấy bài mới nhất
+      .getOne();
+
+    return post;
+  }
+
+  async getPostsByTag(site: Site, slug: string, query: PaginateQuery) {
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const offset = (page - 1) * limit;
+
+    const totalItems = await this.postRepo
+      .createQueryBuilder('post')
+      .innerJoin('post.sites', 'site')
+      .where('site.id = :siteId', { siteId: site.id })
+      .andWhere(
+        `
+            EXISTS (
+                SELECT 1 FROM jsonb_array_elements(post.relatedQueries) AS elem
+                WHERE elem->>'slug' = :slug
+            )
+        `,
+        { slug },
+      )
+      .getCount();
+
+    // 🔥 Lấy danh sách bài viết có phân trang
+    const data = await this.postRepo
+      .createQueryBuilder('post')
+      .select([
+        'post.id AS id',
+        'post.title AS title',
+        'post.relatedQueries as "relatedQueries"',
+        'post.meta_description AS meta_description',
+        'post.created_at AS created_at',
+        'post.slug AS slug',
+        'post.status AS status',
+        `jsonb_build_object(
+                'id', thumbnail.id, 
+                'data', thumbnail.data, 
+                'url', thumbnail.url, 
+                'slug', thumbnail.slug
+            ) AS thumbnail`,
+        `COALESCE(
+                jsonb_agg(
+                    jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)
+                ) FILTER (WHERE categories.id IS NOT NULL), '[]'
+            ) AS categories`,
+      ])
+      .innerJoin('post.sites', 'site')
+      .leftJoin('post.thumbnail', 'thumbnail')
+      .leftJoin('post.categories', 'categories')
+      .where('site.id = :siteId', { siteId: site.id })
+      .andWhere(
+        `
+            EXISTS (
+                SELECT 1 FROM jsonb_array_elements(post.relatedQueries) AS elem
+                WHERE elem->>'slug' = :slug
+            )
+        `,
+        { slug },
+      )
+      .groupBy('post.id, thumbnail.id')
+      .orderBy('post.created_at', 'DESC')
+      .offset(offset)
+      .limit(limit)
+      .getRawMany();
+
+    const totalPages = Math.ceil(totalItems / limit);
+    const tag = data[0].relatedQueries.find((query) => query.slug == slug);
+    return {
+      data,
+      tag: tag,
+      meta: {
+        itemsPerPage: limit,
+        totalItems,
+        currentPage: page,
+        totalPages,
+      },
+    };
   }
 }
