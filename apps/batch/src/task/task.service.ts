@@ -55,7 +55,7 @@ export class TaskService {
     await this.handleCrawlerArticles();
   }
 
-  @Cron('0 1 * * *')
+  // @Cron('0 1 * * *')
   async handleCleanupOldPosts() {
     this.logger.debug('START - Cleanup Old Posts.');
 
