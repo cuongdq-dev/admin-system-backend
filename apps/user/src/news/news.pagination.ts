@@ -7,7 +7,7 @@ export const newsPaginateConfig: PaginateConfig<Post> = {
   defaultSortBy: [['created_at', 'DESC']],
   searchableColumns: ['title', 'content'],
   maxLimit: 50,
-  defaultLimit: 10,
+  defaultLimit: 12,
   select: [
     'id',
     'title',
