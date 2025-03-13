@@ -33,6 +33,7 @@ export class NewsService {
           'post.slug AS slug',
           'post.status AS status',
           "jsonb_build_object('id', thumbnail.id, 'data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
+          `COALESCE(json_agg(DISTINCT jsonb_build_object('id', site.id, 'adsense_client', site.adsense_client, 'adsense_slots', site.adsense_slots)) FILTER (WHERE site.id IS NOT NULL), '[]') AS sites`,
           `COALESCE(
           jsonb_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) 
           FILTER (WHERE categories.id IS NOT NULL), '[]'
@@ -61,6 +62,7 @@ export class NewsService {
           'post.slug AS slug',
           'post.status AS status',
           "jsonb_build_object('id', thumbnail.id, 'data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
+          `COALESCE(json_agg(DISTINCT jsonb_build_object('id', site.id, 'adsense_client', site.adsense_client, 'adsense_slots', site.adsense_slots)) FILTER (WHERE site.id IS NOT NULL), '[]') AS sites`,
           `COALESCE(
           jsonb_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) 
           FILTER (WHERE categories.id IS NOT NULL), '[]'
@@ -89,6 +91,7 @@ export class NewsService {
           'post.slug AS slug',
           'post.status AS status',
           "jsonb_build_object('id', thumbnail.id, 'data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
+          `COALESCE(json_agg(DISTINCT jsonb_build_object('id', site.id, 'adsense_client', site.adsense_client, 'adsense_slots', site.adsense_slots)) FILTER (WHERE site.id IS NOT NULL), '[]') AS sites`,
           `COALESCE(
           jsonb_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) 
           FILTER (WHERE categories.id IS NOT NULL), '[]'
