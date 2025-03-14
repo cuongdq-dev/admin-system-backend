@@ -38,4 +38,14 @@ export class DropdownService {
       .select(['category.id AS id', 'category.name AS title'])
       .getRawMany();
   }
+
+  async getCategoriesBySite(siteId: string) {
+    const categories = await this.categoryRepository
+      .createQueryBuilder('categories')
+      .leftJoinAndSelect('categories.sites', 'site')
+      .where('site.id = :siteId', { siteId })
+      .select(['categories.id AS id', 'categories.name AS title'])
+      .getRawMany();
+    return categories;
+  }
 }

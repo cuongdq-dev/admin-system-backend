@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DropdownService } from './dropdown.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -23,5 +23,10 @@ export class DropdownController {
   @Get('/categories')
   getCategories() {
     return this.dropdownService.getCategories();
+  }
+
+  @Get('/categories/:siteId')
+  getCategoriesBySite(@Param('siteId') siteId: string) {
+    return this.dropdownService.getCategoriesBySite(siteId);
   }
 }
