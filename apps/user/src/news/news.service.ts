@@ -415,6 +415,7 @@ export class NewsService {
         'post.created_at AS created_at',
         'post.slug AS slug',
         'post.status AS status',
+        `COALESCE(json_agg(DISTINCT jsonb_build_object('id', site.id, 'adsense_client', site.adsense_client, 'adsense_slots', site.adsense_slots)) FILTER (WHERE site.id IS NOT NULL), '[]') AS sites`,
         `jsonb_build_object(
                 'id', thumbnail.id, 
                 'data', thumbnail.data, 
