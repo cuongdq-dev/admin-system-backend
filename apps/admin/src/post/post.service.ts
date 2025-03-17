@@ -1,11 +1,11 @@
-import { Post, Trending, User } from '@app/entities';
+import { Post, SitePost, Trending, User } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { Repository } from 'typeorm';
-import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
+import { In, Repository } from 'typeorm';
 import { PostBodyDto } from './post.dto';
+import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
 
 @Injectable()
 export class PostService {
@@ -13,6 +13,8 @@ export class PostService {
 
   constructor(
     @InjectRepository(Post) private postRepository: Repository<Post>,
+    @InjectRepository(SitePost)
+    private sitePostRepository: Repository<SitePost>,
 
     @InjectRepository(Trending)
     private trendingRepository: Repository<Trending>,
@@ -44,6 +46,9 @@ export class PostService {
     return {
       ...post,
       status: !!result.affected ? PostStatus.DRAFT : post.status,
+      sites: post.sitePosts.map((st) => {
+        return st.site;
+      }),
     };
   }
 
@@ -55,8 +60,39 @@ export class PostService {
 
   async update(post: Post, updateDto: Post & PostBodyDto) {
     await this.postRepository.save({ ...post, ...updateDto });
-    if (updateDto.status == PostStatus.DELETED)
+
+    if (updateDto.sites) {
+      const siteIds = updateDto.sites.map((site) => site.id);
+
+      const existingSitePosts = await this.sitePostRepository.find({
+        where: { post_id: post.id },
+      });
+
+      const existingSiteIds = existingSitePosts.map((sp) => sp.site_id);
+
+      const sitesToRemove = existingSiteIds.filter(
+        (id) => !siteIds.includes(id),
+      );
+      if (sitesToRemove.length > 0) {
+        await this.sitePostRepository.delete({
+          post_id: post.id,
+          site_id: In(sitesToRemove),
+        });
+      }
+
+      const sitesToAdd = siteIds.filter((id) => !existingSiteIds.includes(id));
+      if (sitesToAdd.length > 0) {
+        const newSitePosts = sitesToAdd.map((siteId) => ({
+          post_id: post.id,
+          site_id: siteId,
+        }));
+        await this.sitePostRepository.insert(newSitePosts);
+      }
+    }
+
+    if (updateDto.status == PostStatus.DELETED) {
       await this.postRepository.softDelete({ id: post.id });
+    }
 
     return { ...post, ...updateDto };
   }

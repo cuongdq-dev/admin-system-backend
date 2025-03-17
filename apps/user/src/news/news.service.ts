@@ -1,4 +1,4 @@
-import { Category, Post, Site } from '@app/entities';
+import { Category, Post, Site, SitePost } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
 import { generateSlug } from '@app/utils';
 import { Injectable } from '@nestjs/common';
@@ -11,102 +11,62 @@ export class NewsService {
   constructor(
     @InjectRepository(Site) private readonly siteRepo: Repository<Site>,
     @InjectRepository(Post) private readonly postRepo: Repository<Post>,
+    @InjectRepository(SitePost)
+    private readonly sitePostRepo: Repository<SitePost>,
     @InjectRepository(Category)
     private readonly categoryRepo: Repository<Category>,
   ) {}
 
   async getHome(site: Site) {
-    const [recentNews, featureNews, otherNews] = await Promise.all([
-      this.postRepo
-        .createQueryBuilder('post')
-        .innerJoin('post.sites', 'site')
+    const getNewsList = (limit: number) =>
+      this.sitePostRepo
+        .createQueryBuilder('sitePost')
+        .leftJoin('sitePost.post', 'post')
+        .leftJoin('sitePost.site', 'site')
         .leftJoin('post.thumbnail', 'thumbnail')
         .leftJoin('post.categories', 'categories')
         .where('site.id = :siteId', { siteId: site.id })
-        .andWhere('post.status = :status', { status: 'PUBLISHED' }) // Lọc PUBLISHED
+        .andWhere('post.status = :status', { status: 'PUBLISHED' })
         .select([
           'post.id AS id',
           'post.title AS title',
-          'post.meta_description AS meta_description',
-          'post.relatedQueries AS "relatedQueries"',
-          'post.created_at AS created_at',
           'post.slug AS slug',
+          'post.meta_description AS meta_description',
+          'post.relatedQueries AS relatedQueries',
           'post.status AS status',
-          "jsonb_build_object('id', thumbnail.id, 'data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
-          `COALESCE(json_agg(DISTINCT jsonb_build_object('id', site.id, 'adsense_client', site.adsense_client, 'adsense_slots', site.adsense_slots)) FILTER (WHERE site.id IS NOT NULL), '[]') AS sites`,
+          'sitePost.created_at as created_at',
+          "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
           `COALESCE(
-          jsonb_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) 
-          FILTER (WHERE categories.id IS NOT NULL), '[]'
-        ) AS categories`,
+              jsonb_agg(DISTINCT jsonb_build_object(
+                'id', categories.id, 
+                'name', categories.name, 
+                'slug', categories.slug
+              )) FILTER (WHERE categories.id IS NOT NULL), '[]'
+            ) AS categories`,
+          `COALESCE(
+              jsonb_agg(DISTINCT jsonb_build_object(
+                'id', site.id, 
+                'adsense_client', site.adsense_client, 
+                'adsense_slots', site.adsense_slots
+              )) FILTER (WHERE site.id IS NOT NULL), '[]'
+            ) AS sites`,
         ])
         .groupBy(
-          'post.id, thumbnail.id, thumbnail.data, thumbnail.url, thumbnail.slug',
+          'post.id, thumbnail.id, thumbnail.data, thumbnail.url, thumbnail.slug, sitePost.created_at',
         )
-        .orderBy('post.created_at', 'DESC')
-        .limit(4)
-        .getRawMany(),
+        .orderBy('created_at', 'DESC')
+        .limit(limit)
+        .getRawMany();
 
-      this.postRepo
-        .createQueryBuilder('post')
-        .innerJoin('post.sites', 'site')
-        .leftJoin('post.thumbnail', 'thumbnail')
-        .leftJoin('post.categories', 'categories')
-        .where('site.id = :siteId', { siteId: site.id })
-        .andWhere('post.status = :status', { status: 'PUBLISHED' }) // Lọc PUBLISHED
-        .select([
-          'post.id AS post_id',
-          'post.title AS title',
-          'post.meta_description AS meta_description',
-          'post.relatedQueries AS "relatedQueries"',
-          'post.created_at AS created_at',
-          'post.slug AS slug',
-          'post.status AS status',
-          "jsonb_build_object('id', thumbnail.id, 'data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
-          `COALESCE(json_agg(DISTINCT jsonb_build_object('id', site.id, 'adsense_client', site.adsense_client, 'adsense_slots', site.adsense_slots)) FILTER (WHERE site.id IS NOT NULL), '[]') AS sites`,
-          `COALESCE(
-          jsonb_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) 
-          FILTER (WHERE categories.id IS NOT NULL), '[]'
-        ) AS categories`,
-        ])
-        .groupBy(
-          'post.id, thumbnail.id, thumbnail.data, thumbnail.url, thumbnail.slug',
-        )
-        .orderBy('post.created_at', 'DESC')
-        .limit(9)
-        .getRawMany(),
-
-      this.postRepo
-        .createQueryBuilder('post')
-        .innerJoin('post.sites', 'site')
-        .leftJoin('post.thumbnail', 'thumbnail')
-        .leftJoin('post.categories', 'categories')
-        .where('site.id = :siteId', { siteId: site.id })
-        .andWhere('post.status = :status', { status: 'PUBLISHED' }) // Lọc PUBLISHED
-        .select([
-          'post.id AS post_id',
-          'post.title AS title',
-          'post.meta_description AS meta_description',
-          'post.relatedQueries AS "relatedQueries"',
-          'post.created_at AS created_at',
-          'post.slug AS slug',
-          'post.status AS status',
-          "jsonb_build_object('id', thumbnail.id, 'data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
-          `COALESCE(json_agg(DISTINCT jsonb_build_object('id', site.id, 'adsense_client', site.adsense_client, 'adsense_slots', site.adsense_slots)) FILTER (WHERE site.id IS NOT NULL), '[]') AS sites`,
-          `COALESCE(
-          jsonb_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) 
-          FILTER (WHERE categories.id IS NOT NULL), '[]'
-        ) AS categories`,
-        ])
-        .groupBy(
-          'post.id, thumbnail.id, thumbnail.data, thumbnail.url, thumbnail.slug',
-        )
-        .orderBy('post.created_at', 'DESC')
-        .limit(6)
-        .getRawMany(),
+    const [recentNews, featureNews, otherNews] = await Promise.all([
+      getNewsList(4), // 🔥 4 bài viết mới nhất
+      getNewsList(9), // 🔥 9 bài viết nổi bật
+      getNewsList(6), // 🔥 6 bài viết khác
     ]);
 
     return { recentNews, featureNews, otherNews };
   }
+
   async getAdsense(site: Site) {
     return {
       adsense_client: site.adsense_client,
@@ -132,10 +92,10 @@ export class NewsService {
     }
 
     const relatedPosts = await this.postRepo.find({
-      relations: ['thumbnail', 'sites'],
+      relations: ['thumbnail', 'sitePosts'],
       where: {
         slug: Not(Like(post_slug)),
-        sites: { id: site.id },
+        sitePosts: { site_id: site.id },
         relatedQueries: Raw(
           (alias) =>
             `EXISTS (SELECT 1 FROM jsonb_array_elements(${alias}) elem WHERE elem->>'query' IN (:...queries))`,
@@ -150,7 +110,6 @@ export class NewsService {
         created_at: true,
         title: true,
         slug: true,
-        sites: { adsense_client: true, adsense_slots: true, id: true },
         thumbnail: {
           id: true,
           data: true,
@@ -169,10 +128,10 @@ export class NewsService {
   async getPostRecents(site: Site, post_slug?: string) {
     const recents = await this.postRepo
       .createQueryBuilder('post')
-      .innerJoin('post.sites', 'site')
+      .innerJoin('post.sitePosts', 'sitePosts')
       .innerJoin('post.thumbnail', 'thumbnail')
       .leftJoin('post.categories', 'categories')
-      .where('site.id = :siteId', { siteId: site.id })
+      .where('sitePosts.site_id = :siteId', { siteId: site.id })
       .andWhere('post.slug != :postSlug', { postSlug: post_slug || '' })
       .select([
         'post.id AS id',
@@ -184,7 +143,6 @@ export class NewsService {
         'post.status AS status',
         "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
         `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`,
-        `COALESCE(json_agg(DISTINCT jsonb_build_object('id', site.id, 'adsense_client', site.adsense_client, 'adsense_slots', site.adsense_slots)) FILTER (WHERE site.id IS NOT NULL), '[]') AS sites`,
       ])
       .groupBy('post.id, thumbnail.data, thumbnail.url, thumbnail.slug')
       .orderBy('created_at', 'DESC')
@@ -197,10 +155,9 @@ export class NewsService {
     const siteId = site.id;
     const categories = await this.categoryRepo
       .createQueryBuilder('categories')
-      .leftJoinAndSelect('categories.sites', 'site')
       .leftJoin('categories.posts', 'post')
-      .leftJoin('post.sites', 'postSite')
-      .where('site.id = :siteId', { siteId })
+      .leftJoin('post.sitePosts', 'sitePosts')
+      .where('sitePosts.site_id = :siteId', { siteId })
       .select(['categories.id', 'categories.slug', 'categories.name'])
       .loadRelationCountAndMap(
         'categories.postCount',
@@ -208,8 +165,8 @@ export class NewsService {
         'post',
         (qb) => {
           return qb
-            .leftJoin('post.sites', 'filteredSite')
-            .where('filteredSite.id = :siteId', { siteId });
+            .leftJoin('post.sitePosts', 'filteredSite')
+            .where('filteredSite.site_id = :siteId', { siteId });
         },
       )
       .getMany();
@@ -229,24 +186,51 @@ export class NewsService {
       this.postRepo,
       {
         ...newsPaginateConfig,
-        where: { sites: { id: site.id }, categories: { slug: category.slug } },
+        where: {
+          sitePosts: { site_id: site.id },
+          categories: { slug: category.slug },
+        },
       },
     );
     return { ...data, category: category };
   }
 
   async getAllNews(site: Site, query: PaginateQuery) {
-    const data = await paginate(
-      { ...query, filter: { ...query.filter } },
-      this.postRepo,
-      { ...newsPaginateConfig, where: { sites: { id: site.id } } },
-    );
-    return data;
+    const qb = this.postRepo
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('post.categories', 'categories')
+      .innerJoinAndSelect('post.sitePosts', 'sitePosts')
+      .where('sitePosts.site_id = :siteId', { siteId: site.id })
+      .select([
+        'post.id',
+        'post.title',
+        'post.relatedQueries',
+        'post.meta_description',
+        'post.created_at',
+        'post.slug',
+        'post.status',
+        'thumbnail.id',
+        'thumbnail.data',
+        'thumbnail.url',
+        'thumbnail.slug',
+      ])
+      .groupBy('post.id, thumbnail.id')
+      .orderBy('post.created_at', 'DESC');
+
+    const paginatedData = await paginate(query, qb, {
+      sortableColumns: ['created_at'],
+      defaultSortBy: [['created_at', 'DESC']],
+      maxLimit: 50,
+      defaultLimit: 23,
+    });
+
+    return { ...paginatedData };
   }
 
   async getNewsBySlug(site: Site, slug: string) {
     const post = await this.postRepo.findOne({
-      where: { sites: { id: site.id }, slug: slug },
+      where: { sitePosts: { site_id: site.id }, slug: slug },
 
       select: {
         id: true,
@@ -260,9 +244,8 @@ export class NewsService {
         updated_at: true,
         meta_description: true,
         article: { source: true, url: true },
-        sites: { adsense_client: true, adsense_slots: true },
       },
-      relations: ['thumbnail', 'categories', 'article', 'sites'],
+      relations: ['thumbnail', 'categories', 'article', 'sitePosts'],
     });
 
     return { data: post };
@@ -278,7 +261,10 @@ export class NewsService {
 
     return {
       total: await this.postRepo.count({
-        where: { sites: { id: site.id }, status: PostStatus.PUBLISHED },
+        where: {
+          sitePosts: { site_id: site.id },
+          status: PostStatus.PUBLISHED,
+        },
       }),
       perpage: 100,
     };
@@ -309,7 +295,7 @@ export class NewsService {
     if (!site) throw new Error(`No site found for domain ${domain}`);
 
     const posts = await this.postRepo.find({
-      where: { sites: { id: site.id } },
+      where: { sitePosts: { site_id: site.id } },
       select: ['id', 'created_at', 'slug'],
       order: { created_at: 'DESC' },
       skip: (page - 1) * perpage,
@@ -319,8 +305,9 @@ export class NewsService {
   }
 
   async getRss(site: Site) {
+    console.log(site);
     const data = await this.postRepo.find({
-      where: { sites: { id: site.id } },
+      where: { sitePosts: { site_id: site.id } },
       select: {
         created_at: true,
         meta_description: true,
@@ -337,20 +324,18 @@ export class NewsService {
     const posts = await this.postRepo
       .createQueryBuilder('post')
       .select(['post.relatedQueries'])
-      .innerJoin('post.sites', 'site')
-      .where('site.id = :siteId', { siteId: site.id })
+      .innerJoin('post.sitePosts', 'sitePosts')
+      .where('sitePosts.site_id = :siteId', { siteId: site.id })
       .getMany();
 
-    // Lấy tất cả relatedQueries từ các bài viết
     const allQueries = posts
       .flatMap((post) => post.relatedQueries || [])
       .map((item) => ({
         query: item.query,
         slug: generateSlug(item.query),
       }))
-      .filter((item) => item.query); // Loại bỏ query rỗng
+      .filter((item) => item.query);
 
-    // Đếm số lần xuất hiện của từng relatedQuery
     const queryCountMap = allQueries.reduce(
       (acc, { query, slug }) => {
         if (!acc[query]) {
@@ -362,7 +347,6 @@ export class NewsService {
       {} as Record<string, { query: string; slug: string; count: number }>,
     );
 
-    // Chuyển đổi thành mảng và sắp xếp theo số lần xuất hiện
     const sortedQueries = Object.values(queryCountMap).sort(
       (a, b) => b.count - a.count,
     );
@@ -385,79 +369,45 @@ export class NewsService {
   }
 
   async getPostsByTag(site: Site, slug: string, query: PaginateQuery) {
-    const page = query.page || 1;
-    const limit = query.limit || 20;
-    const offset = (page - 1) * limit;
-
-    const totalItems = await this.postRepo
+    const qb = this.postRepo
       .createQueryBuilder('post')
-      .innerJoin('post.sites', 'site')
-      .where('site.id = :siteId', { siteId: site.id })
+      .leftJoinAndSelect('post.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('post.categories', 'categories')
+      .innerJoinAndSelect('post.sitePosts', 'sitePosts')
+      .where('sitePosts.site_id = :siteId', { siteId: site.id })
       .andWhere(
-        `
-            EXISTS (
-                SELECT 1 FROM jsonb_array_elements(post.relatedQueries) AS elem
-                WHERE elem->>'slug' = :slug
-            )
-        `,
+        `EXISTS (
+            SELECT 1 FROM jsonb_array_elements(post.relatedQueries) AS elem
+            WHERE elem->>'slug' = :slug
+        )`,
         { slug },
       )
-      .getCount();
-
-    // 🔥 Lấy danh sách bài viết có phân trang
-    const data = await this.postRepo
-      .createQueryBuilder('post')
       .select([
-        'post.id AS id',
-        'post.title AS title',
-        'post.relatedQueries as "relatedQueries"',
-        'post.meta_description AS meta_description',
-        'post.created_at AS created_at',
-        'post.slug AS slug',
-        'post.status AS status',
-        `COALESCE(json_agg(DISTINCT jsonb_build_object('id', site.id, 'adsense_client', site.adsense_client, 'adsense_slots', site.adsense_slots)) FILTER (WHERE site.id IS NOT NULL), '[]') AS sites`,
-        `jsonb_build_object(
-                'id', thumbnail.id, 
-                'data', thumbnail.data, 
-                'url', thumbnail.url, 
-                'slug', thumbnail.slug
-            ) AS thumbnail`,
-        `COALESCE(
-                jsonb_agg(
-                    jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)
-                ) FILTER (WHERE categories.id IS NOT NULL), '[]'
-            ) AS categories`,
+        'post.id',
+        'post.title',
+        'post.relatedQueries',
+        'post.meta_description',
+        'post.created_at',
+        'post.slug',
+        'post.status',
+        'thumbnail.id',
+        'thumbnail.data',
+        'thumbnail.url',
+        'thumbnail.slug',
       ])
-      .innerJoin('post.sites', 'site')
-      .leftJoin('post.thumbnail', 'thumbnail')
-      .leftJoin('post.categories', 'categories')
-      .where('site.id = :siteId', { siteId: site.id })
-      .andWhere(
-        `
-            EXISTS (
-                SELECT 1 FROM jsonb_array_elements(post.relatedQueries) AS elem
-                WHERE elem->>'slug' = :slug
-            )
-        `,
-        { slug },
-      )
       .groupBy('post.id, thumbnail.id')
-      .orderBy('post.created_at', 'DESC')
-      .offset(offset)
-      .limit(limit)
-      .getRawMany();
+      .orderBy('post.created_at', 'DESC');
 
-    const totalPages = Math.ceil(totalItems / limit);
-    const tag = data[0].relatedQueries.find((query) => query.slug == slug);
-    return {
-      data,
-      tag: tag,
-      meta: {
-        itemsPerPage: limit,
-        totalItems,
-        currentPage: page,
-        totalPages,
-      },
-    };
+    const paginatedData = await paginate(query, qb, {
+      sortableColumns: ['created_at'],
+      defaultSortBy: [['created_at', 'DESC']],
+      maxLimit: 50,
+      defaultLimit: 18,
+    });
+    const tag = paginatedData.data[0].relatedQueries.find(
+      (query) => query.slug == slug,
+    );
+
+    return { ...paginatedData, tag: tag };
   }
 }

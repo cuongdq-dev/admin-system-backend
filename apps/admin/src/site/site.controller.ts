@@ -64,7 +64,7 @@ export class SiteController {
       IsIDExistPipe({
         entity: Site,
         filterField: 'id',
-        relations: ['posts', 'categories'],
+        relations: ['sitePosts', 'categories'],
       }),
     )
     site: Site,
@@ -83,7 +83,7 @@ export class SiteController {
       IsIDExistPipe({
         entity: Site,
         filterField: 'id',
-        relations: ['posts'],
+        relations: ['sitePosts'],
       }),
     )
     site: Site,

@@ -70,7 +70,6 @@ export class NewsController {
   @Get('categories')
   @ApiBearerAuth()
   @UseGuards(NewsTokenGuard)
-  @ApiPaginationQuery(newsPaginateConfig)
   getCategories(@Req() req) {
     return this.newsService.getCategories(req.site);
   }

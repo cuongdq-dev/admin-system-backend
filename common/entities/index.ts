@@ -23,6 +23,7 @@ import { Server } from './server.entity';
 import { Service } from './service.entity';
 import { ServerService } from './service_service.entity';
 import { Site } from './site.entity';
+import { SitePost } from './site_posts.entity';
 import { Trending } from './trending.entity';
 import { TrendingArticle } from './trending_articles.entity';
 import { User } from './user.entity';
@@ -44,6 +45,7 @@ export {
   Notification,
   Order,
   OrderStatus,
+  SitePost,
   Payment,
   PaymentProvider,
   PaymentStatus,
@@ -81,6 +83,7 @@ export const loadEntities = [
   ProductVariant,
   ProductVariantMedia,
   Cart,
+  SitePost,
   CartItem,
   Order,
   Payment,

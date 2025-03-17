@@ -2,7 +2,7 @@ import { Category, Post } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const newsPaginateConfig: PaginateConfig<Post> = {
-  relations: ['thumbnail', 'categories'],
+  relations: ['thumbnail', 'categories', 'sitePosts', 'sitePosts.site'],
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
   searchableColumns: ['title', 'content'],
@@ -22,8 +22,10 @@ export const newsPaginateConfig: PaginateConfig<Post> = {
     'categories.name',
     'categories.slug',
     'categories.id',
-    'sites.adsense_client',
-    'sites.adsense_slots',
+    'sitePosts.site.id AS site_id',
+    'sitePosts.site.adsense_client',
+    'sitePosts.site.adsense_slots',
+    'sitePosts.id',
   ],
   filterableColumns: { title: [FilterOperator.EQ] },
 };

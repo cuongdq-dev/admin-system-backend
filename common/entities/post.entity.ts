@@ -4,8 +4,10 @@ import {
   Entity,
   Index,
   JoinColumn,
+  JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   Relation,
 } from 'typeorm';
 import { BaseEntity } from './base';
@@ -14,6 +16,7 @@ import { Media } from './media.entity';
 import { Site } from './site.entity';
 import { TrendingArticle } from './trending_articles.entity';
 import type { User } from './user.entity';
+import { SitePost } from './site_posts.entity';
 export enum PostStatus {
   NEW = 'NEW',
   DRAFT = 'DRAFT',
@@ -75,6 +78,6 @@ export class Post extends BaseEntity {
   @ManyToMany(() => Category, (category) => category.posts)
   categories: Relation<Category[]>;
 
-  @ManyToMany(() => Site, (site) => site.posts)
-  sites: Relation<Site[]>;
+  @OneToMany(() => SitePost, (sitePost) => sitePost.post)
+  sitePosts: Relation<SitePost[]>;
 }

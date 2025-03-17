@@ -4,6 +4,7 @@ import {
   Notification,
   Post,
   Site,
+  SitePost,
   StorageType,
   Trending,
   TrendingArticle,
@@ -19,8 +20,8 @@ import { fetchTrendings, generatePostFromHtml, generateSlug } from '@app/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Not, Repository } from 'typeorm';
-import { LessThan } from 'typeorm';
+import { IsNull, LessThan, Not, Repository } from 'typeorm';
+import * as googleAuth from 'google-auth-library';
 
 @Injectable()
 export class TaskService {
@@ -45,14 +46,92 @@ export class TaskService {
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
 
+    @InjectRepository(SitePost)
+    private readonly sitePostRepository: Repository<SitePost>,
+
     private readonly telegramService: TelegramService,
   ) {}
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
     // await this.handleCleanupOldPosts();
-    // await this.handleCleanupOrphanTrending();
     await this.handleCrawlerArticles();
+
+    // await this.googleIndex();
+  }
+
+  async googleIndex() {
+    // TODO IF sitePosts.indexing == false --> index
+    const unindexedPosts = await this.sitePostRepository.find({
+      where: { indexing: true }, // Chỉ lấy những bài chưa được index
+      relations: ['post', 'site'],
+      select: {
+        id: true,
+        post_id: true,
+        site_id: true,
+        post: { slug: true, id: true },
+        site: { domain: true, id: true },
+        indexing: true,
+      },
+      take: 10,
+    });
+    for (const sitePost of unindexedPosts) {
+      const { post, site } = sitePost;
+      if (!post || !site) continue;
+
+      const postUrl = `${site.domain}/bai-viet/${post.slug}`;
+      this.logger.log(`🔍 Indexing: ${postUrl}`);
+
+      const success = await this.submitToGoogleIndex(postUrl);
+      if (success) {
+        sitePost.indexing = true; // Đánh dấu đã index
+        await this.sitePostRepository.save(sitePost);
+      }
+    }
+  }
+
+  async submitToGoogleIndex(url?: string) {
+    const serviceAccountBase64 = process.env.GOOGLE_CREDENTIALS_BASE64;
+    if (!serviceAccountBase64) {
+      this.logger.error('❌ GOOGLE_SERVICE_ACCOUNT_BASE64 is missing in .env');
+      return false;
+    }
+    try {
+      // 🔹 Decode Base64 về JSON
+      const serviceAccountJson = Buffer.from(
+        serviceAccountBase64,
+        'base64',
+      ).toString('utf-8');
+      const credentials = JSON.parse(serviceAccountJson);
+
+      // 🔹 Khởi tạo Google Auth Client
+      const auth = new googleAuth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/indexing'],
+      });
+
+      const client = await auth.getClient();
+      // 🔹 Gửi yêu cầu đến Google Indexing API
+      console.log(await client.getAccessToken());
+      const response = await client.request({
+        url: 'https://indexing.googleapis.com/v3/urlNotifications:publish',
+        method: 'POST',
+        data: {
+          url,
+          type: 'URL_UPDATED',
+        },
+      });
+      if (response.status === 200) {
+        this.logger.log(`✅ Successfully indexed: ${url}`);
+        return true;
+      } else {
+        this.logger.warn(`⚠️ Failed to index: ${url}`);
+        return false;
+      }
+    } catch (error) {
+      this.logger.error(`❌ Google Indexing Error: ${error.message}`);
+      return false;
+    }
   }
 
   // @Cron('0 1 * * *')
@@ -76,11 +155,9 @@ export class TaskService {
     this.logger.log(`Deleting ${postIds.length} old posts...`);
 
     for (const post of oldPosts) {
-      await this.siteRepository
-        .createQueryBuilder()
-        .relation(Site, 'posts')
-        .of(post.sites.map((site) => site.id))
-        .remove(post.id);
+      await this.sitePostRepository.delete({
+        post_id: post.id,
+      });
 
       await this.postRepository
         .createQueryBuilder()
@@ -211,8 +288,8 @@ export class TaskService {
     if (trending?.image?.imageUrl) {
       const thumbnail = await this.mediaRepository.upsert(
         {
-          filename: trending.title.query,
-          slug: generateSlug(`thumbnail trending ${trending.title.query}`),
+          filename: trendingData.titleQuery,
+          slug: generateSlug(`thumbnail trending ${trendingData.titleQuery}`),
           storage_type: StorageType.URL,
           url: trending.image.imageUrl,
           mimetype: 'url',
@@ -227,7 +304,7 @@ export class TaskService {
       trendingData.thumbnail_id = thumbnailId;
 
       this.logger.debug(
-        `Trending Thumbnail Saved | ID: ${thumbnailId} | Query: "${trending.title.query}"`,
+        `Trending Thumbnail Saved | ID: ${thumbnailId} | Query: "${trendingData.titleQuery}"`,
       );
     }
 
@@ -238,7 +315,7 @@ export class TaskService {
     const savedTrending = resultTrending.generatedMaps[0];
 
     this.logger.debug(
-      `Trending Data Saved | ID: ${savedTrending?.id} | Query: "${trending.title.query}"`,
+      `Trending Data Saved | ID: ${savedTrending?.id} | Query: "${trendingData.titleQuery}"`,
     );
 
     return savedTrending;
@@ -351,7 +428,7 @@ export class TaskService {
     const slug = generateSlug(articleData.title);
 
     const existingPost = await this.postRepository.findOne({
-      where: { slug, article_id: articleId },
+      where: { slug },
     });
 
     if (existingPost) return existingPost;
@@ -385,15 +462,27 @@ export class TaskService {
       const autoPostSites = await this.siteRepository.find({
         where: { autoPost: true },
         relations: ['categories'],
-        select: ['categories', 'autoPost', 'teleChatId', 'teleToken', 'id'],
+        select: [
+          'categories',
+          'autoPost',
+          'teleChatId',
+          'teleToken',
+          'id',
+          'domain',
+        ],
       });
 
       for (const site of autoPostSites) {
-        await this.siteRepository
-          .createQueryBuilder()
-          .relation(Site, 'posts')
-          .of(site.id)
-          .add(savedPost.id);
+        const success = await this.submitToGoogleIndex(
+          `${site.domain}/bai-viet/${savedPost.slug}`,
+        );
+
+        await this.sitePostRepository.insert({
+          site_id: site.id,
+          post_id: savedPost.id,
+          indexing: !!success,
+        });
+
         await this.telegramService.sendMessageWithPost(
           site.teleChatId,
           site.teleToken,

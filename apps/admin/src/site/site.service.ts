@@ -1,23 +1,27 @@
-import { Category, Post, Site } from '@app/entities';
+import { Category, Post, Site, SitePost } from '@app/entities';
+import { TelegramService } from '@app/modules/telegram/telegram.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { In, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { SiteBodyDto } from './site.dto';
 import { postSitePaginateConfig, sitePaginateConfig } from './site.pagination';
-import { TelegramService } from '@app/modules/telegram/telegram.service';
 
 @Injectable()
 export class SiteService {
   constructor(
     @InjectRepository(Site) private siteRepository: Repository<Site>,
     @InjectRepository(Post) private postRepository: Repository<Post>,
+    @InjectRepository(SitePost)
+    private sitePostRepository: Repository<SitePost>,
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
-
     private readonly telegramService: TelegramService,
   ) {}
 
+  /**
+   * Lấy danh sách tất cả các site có phân trang
+   */
   async getAll(query: PaginateQuery) {
     return paginate(
       { ...query, filter: { ...query.filter } },
@@ -25,6 +29,10 @@ export class SiteService {
       sitePaginateConfig,
     );
   }
+
+  /**
+   * Lấy danh sách bài viết của site dựa trên siteId
+   */
   async getPostBySiteId(
     query: PaginateQuery,
     siteId: string,
@@ -32,107 +40,106 @@ export class SiteService {
   ) {
     const qb = this.postRepository
       .createQueryBuilder('post')
-      .leftJoinAndSelect('post.sites', 'site')
-      .leftJoin('post.categories', 'category') // Không dùng Select ở đây để kiểm soát category
-      .leftJoin('post.thumbnail', 'thumbnail') // Không dùng Select ở đây để kiểm soát category
-      .leftJoin('category.sites', 'categorySite') // Đảm bảo category chỉ thuộc site đang query
-      .where(
-        '(site.id = :siteId) AND (categorySite.id = :siteId OR category.id IS NULL)',
-        { siteId },
-      )
+      .leftJoinAndSelect('post.sitePosts', 'sitePost')
+      .leftJoinAndSelect('post.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('post.categories', 'category')
+      .where('sitePost.site_id = :siteId', { siteId });
 
-      .select([
+    // 🟠 Lọc theo category nếu có categorySlug
+    if (categorySlug && categorySlug !== 'all') {
+      if (categorySlug === 'uncategorized') {
+        qb.andWhere('category.id IS NULL'); // Lọc bài viết không có category
+      } else {
+        qb.andWhere('category.slug = :categorySlug', { categorySlug });
+      }
+    }
+
+    return paginate(query, qb, {
+      sortableColumns: ['created_at'],
+      defaultSortBy: [['created_at', 'DESC']],
+      maxLimit: 50,
+      defaultLimit: 23,
+      select: [
         'post.id',
+        'post.slug',
         'post.title',
+        'post.status',
         'post.meta_description',
         'post.created_at',
-        'thumbnail',
+        'thumbnail.id',
         'thumbnail.data',
         'category.id',
         'category.name',
-        'post.slug',
-        'post.status',
-      ])
-      .orderBy('post.created_at', 'DESC'); // Thêm sắp xếp nếu cần
-
-    if (categorySlug === 'uncategorized') {
-      qb.andWhere('category.id IS NULL'); // Lấy bài viết không có category
-    } else if (categorySlug !== 'all') {
-      qb.andWhere('category.slug = :categorySlug', { categorySlug });
-    }
-
-    return paginate(query, qb, postSitePaginateConfig);
+      ],
+    });
   }
 
+  /**
+   * Lấy danh sách danh mục của site
+   */
   async getCategoriesBySiteId(siteId: string) {
-    // 📌 **Lấy danh sách categories + đếm bài viết thuộc site**
     const categories = await this.categoryRepository
-      .createQueryBuilder('categories')
-      .leftJoinAndSelect('categories.sites', 'site')
-      .leftJoin('categories.posts', 'post')
-      .leftJoin('post.sites', 'postSite')
+      .createQueryBuilder('category')
+      .leftJoin('category.posts', 'post')
+      .leftJoin('category.sites', 'site')
       .where('site.id = :siteId', { siteId })
       .loadRelationCountAndMap(
-        'categories.postCount',
-        'categories.posts',
+        'category.postCount',
+        'category.posts',
         'post',
-        (qb) => {
-          return qb
-            .leftJoin('post.sites', 'filteredSite')
-            .where('filteredSite.id = :siteId', { siteId });
-        },
+        (qb) =>
+          qb
+            .innerJoin('post.sitePosts', 'sp')
+            .where('sp.site_id = :siteId', { siteId }),
       )
       .getMany();
 
-    // 📌 **Tìm bài viết không có category hợp lệ trong site**
+    // 🟠 2. Đếm số bài viết **không có category nào**
     const uncategorizedPostCount = await this.postRepository
       .createQueryBuilder('post')
       .leftJoin('post.categories', 'category')
-      .leftJoin('post.sites', 'site')
-      .leftJoin('category.sites', 'categorySite')
-      .where(
-        '(site.id = :siteId) AND (categorySite.id = :siteId OR category.id IS NULL)',
-        { siteId },
-      )
-      .andWhere(
-        `NOT EXISTS (
-        SELECT 1 FROM site_categories sc
-        WHERE sc.category_id = category.id AND sc.site_id = :siteId
-      )`,
-        { siteId },
-      ) // Loại trừ bài viết có ít nhất 1 category thuộc site
+      .leftJoin('post.sitePosts', 'sp')
+      .where('sp.site_id = :siteId', { siteId })
+      .andWhere('category.id IS NULL') // Lọc bài viết không có category
       .getCount();
 
-    categories.forEach((category: any) => {
-      if (!category.postCount) category.postCount = 0;
-    });
-
+    // 🔵 3. Nếu có bài viết uncategorized, thêm vào danh sách categories
     if (uncategorizedPostCount > 0) {
       categories.unshift({
         id: 'uncategorized',
-        name: 'Other',
+        slug: 'uncategorized',
+        name: 'Chưa phân loại',
         postCount: uncategorizedPostCount,
       } as any);
     }
 
+    // 🏆 4. Trả về danh sách categories, sắp xếp theo số lượng bài viết
     return categories.sort((a: any, b: any) => b.postCount - a.postCount);
   }
 
+  /**
+   * Lấy thông tin chi tiết của site
+   */
   async getById(site: Site) {
     return site;
   }
 
+  /**
+   * Tạo site mới
+   */
   async create(createDto: SiteBodyDto) {
     const result = await this.siteRepository.create(createDto).save();
     return this.siteRepository.findOne({
       where: { id: result.id },
-      relations: ['posts', 'categories'],
+      relations: ['categories'],
     });
   }
 
+  /**
+   * Kết nối và cập nhật Telegram Bot cho site
+   */
   async getTelegram(token: string, site: Site) {
     try {
-      // 🔍 Lấy thông tin từ Telegram bot
       const data = await this.telegramService.getChatInfo(token);
       if (!data || !data.chatId) {
         throw new NotFoundException('Not found Telegram BOT.');
@@ -169,6 +176,9 @@ export class SiteService {
     }
   }
 
+  /**
+   * Cập nhật thông tin site
+   */
   async update(site: Site, dto: SiteBodyDto) {
     if (!site) throw new NotFoundException('Site not found.');
 
@@ -186,11 +196,15 @@ export class SiteService {
       const newPosts = await this.postRepository.findBy({ id: In(postIds) });
       dto.posts = newPosts;
     }
+
     const resultSite = await this.siteRepository.save({ id: site.id, ...dto });
     const resultCategory = await this.getCategoriesBySiteId(site.id);
     return { ...resultSite, categories: resultCategory };
   }
 
+  /**
+   * Xóa site (soft delete)
+   */
   async delete(site: Site) {
     await this.siteRepository.softDelete(site.id);
   }

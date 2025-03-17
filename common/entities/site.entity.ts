@@ -8,13 +8,20 @@ import {
   Index,
   JoinTable,
   ManyToMany,
+  OneToMany,
   Relation,
 } from 'typeorm';
 import { BaseEntity } from './base';
 import { Category } from './category.entity';
 import { Post } from './post.entity';
+import { SitePost } from './site_posts.entity';
 
-export type AdSlotType = 'horizontal' | 'vertical' | 'square';
+export type AdSlotType =
+  | 'horizontal'
+  | 'vertical'
+  | 'square'
+  | 'detail'
+  | 'mutiplex';
 
 @Entity({ name: 'sites' })
 export class Site extends BaseEntity {
@@ -50,13 +57,8 @@ export class Site extends BaseEntity {
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   teleChatId: string;
 
-  @ManyToMany(() => Post, (post) => post.sites, { cascade: true })
-  @JoinTable({
-    name: 'site_posts',
-    joinColumn: { name: 'site_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'post_id', referencedColumnName: 'id' },
-  })
-  posts: Relation<Post[]>;
+  @OneToMany(() => SitePost, (sitePost) => sitePost.site)
+  sitePosts: Relation<SitePost[]>; // Quan hệ với bảng trung gian SitePost
 
   @ManyToMany(() => Category, (category) => category.sites, { cascade: true })
   @JoinTable({

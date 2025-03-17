@@ -1,17 +1,18 @@
 import {
+  Category,
   Media,
+  Notification,
   Post,
+  Site,
+  SitePost,
   Trending,
   TrendingArticle,
   User,
-  Notification,
-  Category,
-  Site,
 } from '@app/entities';
+import { TelegramModule } from '@app/modules/telegram/telegram.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskService } from './task.service';
-import { TelegramModule } from '@app/modules/telegram/telegram.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TelegramModule } from '@app/modules/telegram/telegram.module';
       Media,
       Category,
       Post,
+      SitePost,
       Site,
       Notification,
     ]),
