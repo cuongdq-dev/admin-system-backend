@@ -28,7 +28,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as googleAuth from 'google-auth-library';
-import { IsNull, LessThan, Not, Repository } from 'typeorm';
+import { In, IsNull, LessThan, MoreThan, Not, Repository } from 'typeorm';
 
 @Injectable()
 export class TaskService {
@@ -64,12 +64,18 @@ export class TaskService {
     // await this.handleCleanupOldPosts();
     // await this.handleCrawlerArticles();
     // await this.googleIndex();
-    await this.googleMetaData();
+    // await this.googleMetaData();
   }
-
+  @Cron('10 * * * *')
   async googleIndex() {
+    const sixHoursAgo = new Date();
+    sixHoursAgo.setHours(sixHoursAgo.getHours() - 6);
+
     const unindexedPosts = await this.sitePostRepository.find({
-      where: { indexStatus: IndexStatus.NEW },
+      where: {
+        indexStatus: IndexStatus.NEW,
+        created_at: MoreThan(sixHoursAgo),
+      },
       relations: ['post', 'site'],
       select: {
         id: true,
@@ -88,14 +94,24 @@ export class TaskService {
 
       const success = await submitToGoogleIndex(postUrl);
       if (success) {
-        await this.sitePostRepository.save(sitePost);
+        await this.sitePostRepository.save({
+          ...sitePost,
+          indexStatus: IndexStatus.INDEXING,
+        });
       }
     }
   }
 
+  @Cron('30 * * * *')
   async googleMetaData() {
     const indexedPosts = await this.sitePostRepository.find({
-      where: { indexStatus: IndexStatus.NEW },
+      where: {
+        indexStatus: In([
+          IndexStatus.NEW,
+          IndexStatus.INDEXING,
+          IndexStatus.VERDICT_UNSPECIFIED,
+        ]),
+      },
       relations: ['post', 'site'],
       select: {
         id: true,
