@@ -122,7 +122,6 @@ export class TaskService {
         },
       });
 
-      console.log(response.data);
       if (response.status === 200) {
         this.logger.log(`✅ Successfully indexed: ${url}`);
         return true;
@@ -233,7 +232,7 @@ export class TaskService {
     this.logger.debug('END - Cleanup Orphan Trending.');
   }
 
-  @Cron('*/10 * * * *')
+  @Cron('0 * * * *')
   async handleCrawlerArticles() {
     this.logger.debug('START - Crawler Articles.');
 
