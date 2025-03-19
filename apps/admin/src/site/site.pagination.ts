@@ -25,14 +25,27 @@ export const sitePaginateConfig: PaginateConfig<Site> = {
   filterableColumns: { title: [FilterOperator.EQ] },
 };
 
-export const postSitePaginateConfig: PaginateConfig<SitePost> = {
-  sortableColumns: ['created_at', 'post.status'],
+export const sitePostsPaginateConfig: PaginateConfig<SitePost> = {
+  sortableColumns: ['indexing', 'created_at'],
   defaultSortBy: [
-    ['post.status', 'DESC'],
+    ['indexing', 'DESC'],
     ['created_at', 'DESC'],
   ],
-  searchableColumns: ['post.title', 'post.content'],
-  maxLimit: 50,
-  defaultLimit: 23,
+  relations: ['post', 'site'],
+  select: [
+    'post.slug',
+    'post.title',
+    'post.id',
+    'site.id',
+    'site.name',
+    'site.domain',
+    'indexStatus',
+    'indexing',
+    'id',
+    'updated_at',
+    'created_at',
+  ],
+  maxLimit: 500,
+  defaultLimit: 10,
   filterableColumns: { title: [FilterOperator.EQ] },
 };

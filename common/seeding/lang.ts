@@ -76,6 +76,11 @@ export const languages = [
       site_tele_chat_id: 'Telegram Chat Id',
       site_tele_verify: 'Verified',
 
+      site_post_title: 'Post',
+      site_request_index: 'Request Index',
+      site_indexing: 'Indexing',
+      site_created_at_item: 'Created At',
+
       product_nav: 'Product',
       product_list_page: 'Product List',
       product_detail_page: 'Product Detail',
@@ -351,6 +356,11 @@ export const languages = [
       site_tele_chat_name: 'Telegram Chat Name',
       site_tele_chat_id: 'Telegram Chat Id',
       site_tele_verify: 'Verified',
+
+      site_post_title: 'Post',
+      site_request_index: 'Request Index',
+      site_indexing: 'Indexing',
+      site_created_at_item: 'Created At',
 
       product_nav: 'Sản phẩm',
       product_list_page: 'Danh sách sản phẩm',

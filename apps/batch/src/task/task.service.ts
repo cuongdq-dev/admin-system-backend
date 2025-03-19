@@ -22,6 +22,7 @@ import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, LessThan, Not, Repository } from 'typeorm';
 import * as googleAuth from 'google-auth-library';
+import { IndexStatus } from '@app/entities/site_posts.entity';
 
 @Injectable()
 export class TaskService {
@@ -112,7 +113,6 @@ export class TaskService {
 
       const client = await auth.getClient();
       // 🔹 Gửi yêu cầu đến Google Indexing API
-      console.log(await client.getAccessToken());
       const response = await client.request({
         url: 'https://indexing.googleapis.com/v3/urlNotifications:publish',
         method: 'POST',
@@ -121,6 +121,8 @@ export class TaskService {
           type: 'URL_UPDATED',
         },
       });
+
+      console.log(response.data);
       if (response.status === 200) {
         this.logger.log(`✅ Successfully indexed: ${url}`);
         return true;
@@ -477,10 +479,13 @@ export class TaskService {
           `${site.domain}/bai-viet/${savedPost.slug}`,
         );
 
+        console.log(success);
+
         await this.sitePostRepository.insert({
           site_id: site.id,
           post_id: savedPost.id,
           indexing: !!success,
+          indexStatus: !!success ? IndexStatus.INDEXING : IndexStatus.ERROR,
         });
 
         await this.telegramService.sendMessageWithPost(

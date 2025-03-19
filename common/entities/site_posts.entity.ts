@@ -1,5 +1,6 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -10,6 +11,14 @@ import {
 import { BaseEntity } from './base';
 import { Post } from './post.entity';
 import { Site } from './site.entity';
+
+export enum IndexStatus {
+  NEW = 'NEW',
+  INDEXING = 'INDEXING',
+  INDEXED = 'INDEXED',
+  ERROR = 'ERROR',
+  DELETED = 'DELETED',
+}
 
 @Entity({ name: 'site_posts' })
 @Index(['site_id', 'post_id'], { unique: true }) // Đảm bảo không có trùng lặp
@@ -30,4 +39,8 @@ export class SitePost extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   indexing: boolean; // Trường thêm để đánh dấu indexing
+
+  @Column({ type: 'enum', enum: IndexStatus, default: IndexStatus.NEW })
+  @Index()
+  indexStatus: IndexStatus;
 }

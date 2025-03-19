@@ -3,9 +3,9 @@ import { TelegramService } from '@app/modules/telegram/telegram.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { In, IsNull, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { SiteBodyDto } from './site.dto';
-import { postSitePaginateConfig, sitePaginateConfig } from './site.pagination';
+import { sitePaginateConfig, sitePostsPaginateConfig } from './site.pagination';
 
 @Injectable()
 export class SiteService {
@@ -174,6 +174,34 @@ export class SiteService {
       console.error('🚨 Telegram Integration Error:', error);
       throw new Error('System error! Please try again later.');
     }
+  }
+
+  /**
+   * Get Site Indexing
+   */
+  async getSiteIndexing(id: string, query: PaginateQuery) {
+    const data = await paginate(
+      { ...query, filter: { ...query.filter, site_id: id } },
+      this.sitePostRepository,
+      sitePostsPaginateConfig,
+    );
+    return {
+      ...data,
+      data: data.data.map((d) => {
+        return {
+          indexing: d.indexing,
+          site_id: d.site.id,
+          site_name: d.site.name,
+          site_domain: d.site.domain,
+          post_slug: d.post.slug,
+          post_title: d.post.title,
+          post_id: d.post.id,
+          indexStatus: d.indexStatus,
+          created_at: d.created_at,
+          updated_at: d.updated_at,
+        };
+      }),
+    };
   }
 
   /**

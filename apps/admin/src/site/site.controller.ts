@@ -1,4 +1,4 @@
-import { Site } from '@app/entities';
+import { Site, SitePost } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
 import {
   Body,
@@ -18,7 +18,7 @@ import {
   PaginateQuery,
 } from 'nestjs-paginate';
 import { SiteBodyDto } from './site.dto';
-import { sitePaginateConfig } from './site.pagination';
+import { sitePostsPaginateConfig, sitePaginateConfig } from './site.pagination';
 import { SiteService } from './site.service';
 
 @ApiTags('site')
@@ -56,6 +56,17 @@ export class SiteController {
     return this.siteService.getTelegram(body.token, site);
   }
 
+  @Get('/indexing/:id/list')
+  @ApiOkPaginatedResponse(SitePost, sitePostsPaginateConfig)
+  @ApiPaginationQuery(sitePostsPaginateConfig)
+  getSiteIndexing(
+    @Paginate() query: PaginateQuery,
+
+    @Param('id') id: string,
+  ) {
+    return this.siteService.getSiteIndexing(id, query);
+  }
+
   @Patch('update/:id')
   partialUpdate(
     @Param(
@@ -70,7 +81,6 @@ export class SiteController {
     site: Site,
     @Body() updateDto: SiteBodyDto,
   ) {
-    console.log(updateDto);
     return this.siteService.update(site, updateDto);
   }
 
