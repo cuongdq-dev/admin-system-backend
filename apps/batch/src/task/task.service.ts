@@ -56,15 +56,13 @@ export class TaskService {
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
     // await this.handleCleanupOldPosts();
-    await this.handleCrawlerArticles();
-
+    // await this.handleCrawlerArticles();
     // await this.googleIndex();
   }
 
   async googleIndex() {
-    // TODO IF sitePosts.indexing == false --> index
     const unindexedPosts = await this.sitePostRepository.find({
-      where: { indexing: true }, // Chỉ lấy những bài chưa được index
+      where: { indexing: true },
       relations: ['post', 'site'],
       select: {
         id: true,
