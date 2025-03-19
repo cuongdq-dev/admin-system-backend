@@ -508,7 +508,7 @@ export async function submitToGoogleIndex(url?: string) {
         type: 'URL_UPDATED',
       },
     });
-    console.log(response);
+
     if (response.status === 200) {
       console.log(`✅ Successfully indexed: ${url}`);
       return true;
@@ -522,23 +522,46 @@ export async function submitToGoogleIndex(url?: string) {
   }
 }
 
-export async function getMetaDataGoogleIndex(url: string) {
+export async function getMetaDataGoogleConsole(url?: string, domain?: string) {
+  const serviceAccountBase64 = process.env.GOOGLE_CREDENTIALS_BASE64;
+  if (!serviceAccountBase64) {
+    console.error('❌ GOOGLE_SERVICE_ACCOUNT_BASE64 is missing in .env');
+    return false;
+  }
   try {
-    // 🔹 Gửi yêu cầu đến Google Indexing API
-    const response = await fetch(
-      `https://app.zenserp.com/landing_demo?q=site:${url}&token=03AFcWeA5vvddD82O2wRLwyYWQiDRI5j7s1IsleL-sSGs4BSP1cOojngV2Tt42Jeoqec1yQFb6TXUkKNlwp_EMpisErFvJ205P-yjjfK_HvL-uYTboq1Bpz9QthH0l9LKkcHeursEh7LyLJP7bd_UOVpZ9zHG8b0uSnM_geiE79uQ5tmF9t_CIYSqmMTnzH25w5uZeUYf4ennriIm25_4zke98rQ5QjmZeeCaWcg5R6Q0x4IqZ-8ld1kOvmjfD1ulUdmonxRWBzZRsStRE710AuEFMSQH4jVwoYotoqlmXWGc0sq3-QuU6UkZwaAQB5wC2sFXIuHrRftlbu5jUN-k9yTViAWQt7Sd0tX3YmcAWlydAnxlw-Wz7XwwFf4gbbfx3U55_FC5fxgFOAWfq7hXoaxON4PzOsCaIK4KM_dZwAW2xcJlT02qknVX4GrTUBiRZGKGTe6GY-DDNhN3zRh9YX1BJOQRm0X4Itvd5dahV-2S22R2f8ChCAd59OwvyMbVX7mALlnLR8RPaPR8enAIoiXaW3iJwn53CukXlNlx5LTFdqZpCcha2AWire8JnMhAlcWoVgQxvsf2_BWrLEEfUQn-3GEW3jzYoQKwRyqn7VYzxRAai0TBZy5R6JuRBR-gb7Csp-99W6bnKVarn6VdgkQwfXWLJG0O4L9iglPBQWJ1MjVGQZ8NZ3DN1jHE3JiqCzmIHFV2n42pi5smBwa94f4pClj5GLqfbi-KV2Mh-qQGmyIT335Oe2rvxZnyLbnEp8-2AdWV1y-IphBpYbLHDoiODQOSKgqbD7r1mz51ZxVAsLdouY9JP9_SspWxWDr5IfTa2C33xVG55vnR3GuZ73Wv6-maNa-YpkxGfR3bmSpRrgHPy1Agg-nkBeuQRRIy16qYTnYuSxeHQ1aKwD245dC-8I3T-dBOjsAZmR5bB_M586rYU2x8f-wc`,
-    );
+    // 🔹 Decode Base64 về JSON
+    const serviceAccountJson = Buffer.from(
+      serviceAccountBase64,
+      'base64',
+    ).toString('utf-8');
+    const credentials = JSON.parse(serviceAccountJson);
 
+    // 🔹 Khởi tạo Google Auth Client
+    const auth = new googleAuth.GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
+    });
+
+    const client = await auth.getClient();
+    // 🔹 Gửi yêu cầu đến Google Indexing API
+    const response = await client.request({
+      url: 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+      method: 'POST',
+      data: {
+        inspectionUrl: url,
+        siteUrl: domain,
+        languageCode: 'en-US',
+      },
+    });
     if (response.status === 200) {
       console.log(`✅ Successfully indexed: ${url}`);
-      return response;
+      return response.data as Record<string, any>;
     } else {
-      console.log(await response.json());
       console.warn(`⚠️ Failed to index: ${url}`);
-      return false;
+      return undefined;
     }
   } catch (error) {
     console.error(`❌ Google Indexing Error: ${error.message}`);
-    return false;
+    return undefined;
   }
 }

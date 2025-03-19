@@ -15,14 +15,20 @@ import {
   NotificationType,
 } from '@app/entities/notification.entity';
 import { PostStatus } from '@app/entities/post.entity';
+import { IndexStatus } from '@app/entities/site_posts.entity';
 import { TelegramService } from '@app/modules/telegram/telegram.service';
-import { fetchTrendings, generatePostFromHtml, generateSlug } from '@app/utils';
+import {
+  fetchTrendings,
+  generatePostFromHtml,
+  generateSlug,
+  getMetaDataGoogleConsole,
+  submitToGoogleIndex,
+} from '@app/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, LessThan, Not, Repository } from 'typeorm';
 import * as googleAuth from 'google-auth-library';
-import { IndexStatus } from '@app/entities/site_posts.entity';
+import { IsNull, LessThan, Not, Repository } from 'typeorm';
 
 @Injectable()
 export class TaskService {
@@ -58,11 +64,12 @@ export class TaskService {
     // await this.handleCleanupOldPosts();
     // await this.handleCrawlerArticles();
     // await this.googleIndex();
+    await this.googleMetaData();
   }
 
   async googleIndex() {
     const unindexedPosts = await this.sitePostRepository.find({
-      where: { indexing: true },
+      where: { indexStatus: IndexStatus.NEW },
       relations: ['post', 'site'],
       select: {
         id: true,
@@ -70,9 +77,7 @@ export class TaskService {
         site_id: true,
         post: { slug: true, id: true },
         site: { domain: true, id: true },
-        indexing: true,
       },
-      take: 10,
     });
     for (const sitePost of unindexedPosts) {
       const { post, site } = sitePost;
@@ -81,55 +86,44 @@ export class TaskService {
       const postUrl = `${site.domain}/bai-viet/${post.slug}`;
       this.logger.log(`🔍 Indexing: ${postUrl}`);
 
-      const success = await this.submitToGoogleIndex(postUrl);
+      const success = await submitToGoogleIndex(postUrl);
       if (success) {
-        sitePost.indexing = true; // Đánh dấu đã index
         await this.sitePostRepository.save(sitePost);
       }
     }
   }
 
-  async submitToGoogleIndex(url?: string) {
-    const serviceAccountBase64 = process.env.GOOGLE_CREDENTIALS_BASE64;
-    if (!serviceAccountBase64) {
-      this.logger.error('❌ GOOGLE_SERVICE_ACCOUNT_BASE64 is missing in .env');
-      return false;
-    }
-    try {
-      // 🔹 Decode Base64 về JSON
-      const serviceAccountJson = Buffer.from(
-        serviceAccountBase64,
-        'base64',
-      ).toString('utf-8');
-      const credentials = JSON.parse(serviceAccountJson);
+  async googleMetaData() {
+    const indexedPosts = await this.sitePostRepository.find({
+      where: { indexStatus: IndexStatus.NEW },
+      relations: ['post', 'site'],
+      select: {
+        id: true,
+        post_id: true,
+        site_id: true,
+        post: { slug: true, id: true },
+        site: { domain: true, id: true },
+      },
+    });
+    for (const sitePost of indexedPosts) {
+      const { post, site } = sitePost;
+      if (!post || !site) continue;
 
-      // 🔹 Khởi tạo Google Auth Client
-      const auth = new googleAuth.GoogleAuth({
-        credentials,
-        scopes: ['https://www.googleapis.com/auth/indexing'],
-      });
+      const postUrl = `${site.domain}/bai-viet/${post.slug}`;
 
-      const client = await auth.getClient();
-      // 🔹 Gửi yêu cầu đến Google Indexing API
-      const response = await client.request({
-        url: 'https://indexing.googleapis.com/v3/urlNotifications:publish',
-        method: 'POST',
-        data: {
-          url,
-          type: 'URL_UPDATED',
-        },
-      });
-
-      if (response.status === 200) {
-        this.logger.log(`✅ Successfully indexed: ${url}`);
-        return true;
-      } else {
-        this.logger.warn(`⚠️ Failed to index: ${url}`);
-        return false;
+      const success = await getMetaDataGoogleConsole(
+        postUrl,
+        site.domain + '/',
+      );
+      if (success) {
+        const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
+        if (!!verdict) {
+          sitePost.indexStatus = verdict;
+          sitePost.indexState = success;
+        }
+        await this.sitePostRepository.save(sitePost);
       }
-    } catch (error) {
-      this.logger.error(`❌ Google Indexing Error: ${error.message}`);
-      return false;
+      this.logger.log(`🔍 Indexing: ${postUrl}`);
     }
   }
 
@@ -472,17 +466,14 @@ export class TaskService {
       });
 
       for (const site of autoPostSites) {
-        const success = await this.submitToGoogleIndex(
+        const success = await submitToGoogleIndex(
           `${site.domain}/bai-viet/${savedPost.slug}`,
         );
-
-        console.log(success);
 
         await this.sitePostRepository.insert({
           site_id: site.id,
           post_id: savedPost.id,
-          indexing: !!success,
-          indexStatus: !!success ? IndexStatus.INDEXING : IndexStatus.ERROR,
+          indexStatus: !!success ? IndexStatus.INDEXING : IndexStatus.NEW,
         });
 
         await this.telegramService.sendMessageWithPost(

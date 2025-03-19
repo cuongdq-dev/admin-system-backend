@@ -179,17 +179,30 @@ export class SiteService {
   /**
    * Get Site Indexing
    */
-  async getSiteIndexing(id: string, query: PaginateQuery) {
-    const data = await paginate(
-      { ...query, filter: { ...query.filter, site_id: id } },
-      this.sitePostRepository,
-      sitePostsPaginateConfig,
-    );
+  async getSiteIndexing(
+    id: string,
+    paginateQuery: PaginateQuery,
+    query: { indexStatus?: string[] },
+  ) {
+    const indexStatuses = Array.isArray(query?.indexStatus)
+      ? query?.indexStatus
+      : query?.indexStatus
+        ? [query?.indexStatus]
+        : undefined; // Nếu không có giá trị, đặt undefined
+    console.log(indexStatuses);
+    const data = await paginate(paginateQuery, this.sitePostRepository, {
+      ...sitePostsPaginateConfig,
+      where: {
+        ...sitePostsPaginateConfig.where,
+        site_id: id,
+        ...(indexStatuses && { indexStatus: In(indexStatuses) }),
+      },
+    });
+
     return {
       ...data,
       data: data.data.map((d) => {
         return {
-          indexing: d.indexing,
           site_id: d.site.id,
           site_name: d.site.name,
           site_domain: d.site.domain,

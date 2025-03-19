@@ -1,11 +1,9 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   Index,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
 import { BaseEntity } from './base';
@@ -15,9 +13,13 @@ import { Site } from './site.entity';
 export enum IndexStatus {
   NEW = 'NEW',
   INDEXING = 'INDEXING',
-  INDEXED = 'INDEXED',
-  ERROR = 'ERROR',
   DELETED = 'DELETED',
+  // FROM DOCUMENT
+  VERDICT_UNSPECIFIED = 'VERDICT_UNSPECIFIED',
+  PASS = 'PASS',
+  PARTIAL = 'PARTIAL',
+  FAIL = 'FAIL',
+  NEUTRAL = 'NEUTRAL',
 }
 
 @Entity({ name: 'site_posts' })
@@ -37,10 +39,10 @@ export class SitePost extends BaseEntity {
   @JoinColumn({ name: 'post_id' })
   post: Relation<Post>;
 
-  @Column({ type: 'boolean', default: false })
-  indexing: boolean; // Trường thêm để đánh dấu indexing
-
   @Column({ type: 'enum', enum: IndexStatus, default: IndexStatus.NEW })
   @Index()
   indexStatus: IndexStatus;
+
+  @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
+  indexState: Record<string, any>;
 }

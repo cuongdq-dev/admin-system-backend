@@ -26,11 +26,9 @@ export const sitePaginateConfig: PaginateConfig<Site> = {
 };
 
 export const sitePostsPaginateConfig: PaginateConfig<SitePost> = {
-  sortableColumns: ['indexing', 'created_at'],
-  defaultSortBy: [
-    ['indexing', 'DESC'],
-    ['created_at', 'DESC'],
-  ],
+  sortableColumns: ['created_at'],
+
+  defaultSortBy: [['created_at', 'DESC']],
   relations: ['post', 'site'],
   select: [
     'post.slug',
@@ -40,12 +38,14 @@ export const sitePostsPaginateConfig: PaginateConfig<SitePost> = {
     'site.name',
     'site.domain',
     'indexStatus',
-    'indexing',
     'id',
     'updated_at',
     'created_at',
   ],
   maxLimit: 500,
   defaultLimit: 10,
-  filterableColumns: { title: [FilterOperator.EQ] },
+  filterableColumns: {
+    title: [FilterOperator.EQ],
+    indexStatus: [FilterOperator.IN],
+  },
 };

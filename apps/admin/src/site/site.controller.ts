@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiCreatedResponse, ApiParam, ApiTags } from '@nestjs/swagger';
 import {
@@ -60,11 +61,14 @@ export class SiteController {
   @ApiOkPaginatedResponse(SitePost, sitePostsPaginateConfig)
   @ApiPaginationQuery(sitePostsPaginateConfig)
   getSiteIndexing(
-    @Paginate() query: PaginateQuery,
-
+    @Paginate() paginateQuery: PaginateQuery,
+    @Query() query: { indexStatus?: string; site_id: string },
     @Param('id') id: string,
   ) {
-    return this.siteService.getSiteIndexing(id, query);
+    return this.siteService.getSiteIndexing(id, paginateQuery, {
+      ...query,
+      indexStatus: query?.indexStatus?.split(','),
+    });
   }
 
   @Patch('update/:id')
