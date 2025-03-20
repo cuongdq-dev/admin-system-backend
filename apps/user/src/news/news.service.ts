@@ -58,10 +58,11 @@ export class NewsService {
         .limit(limit)
         .getRawMany();
 
+    const data = await getNewsList(20);
     const [recentNews, featureNews, otherNews] = await Promise.all([
-      getNewsList(4), // 🔥 4 bài viết mới nhất
-      getNewsList(9), // 🔥 9 bài viết nổi bật
-      getNewsList(6), // 🔥 6 bài viết khác
+      data.slice(0, 3),
+      data.slice(4, 12),
+      data.slice(13, 19),
     ]);
 
     return { recentNews, featureNews, otherNews };
