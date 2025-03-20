@@ -127,7 +127,7 @@ export class TaskService {
     }
   }
 
-  @Cron('30 */2 * * *')
+  // @Cron('30 */2 * * *')
   async googleMetaData() {
     const indexedPosts = await this.sitePostRepository.find({
       where: {

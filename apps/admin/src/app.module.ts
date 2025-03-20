@@ -19,6 +19,7 @@ import { SettingModule } from './setting/setting.module';
 import { SiteModule } from './site/site.module';
 import { UserModule } from './user/user.module';
 import { WebhookModule } from './webhook/webhook.module';
+import { GoogleModule } from './google-console/google.module';
 
 const modules = [
   AuthModule,
@@ -26,6 +27,7 @@ const modules = [
   PostModule,
   EmailAuthModule,
   I18nModule,
+  GoogleModule,
   ServerModule,
   DockerModule,
   SiteModule,
