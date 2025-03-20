@@ -69,11 +69,11 @@ export class TaskService {
   @Cron('10 * * * *')
   async googleIndex() {
     const sixHoursAgo = new Date();
-    sixHoursAgo.setHours(sixHoursAgo.getHours() - 6);
+    sixHoursAgo.setHours(sixHoursAgo.getHours() - 4);
 
     const unindexedPosts = await this.sitePostRepository.find({
       where: {
-        indexStatus: IndexStatus.NEW,
+        indexStatus: In([IndexStatus.NEW, IndexStatus.NEUTRAL]),
         created_at: MoreThan(sixHoursAgo),
       },
       relations: ['post', 'site'],
