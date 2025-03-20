@@ -76,7 +76,7 @@ export class TaskService {
     // await this.googleIndex();
     // await this.googleMetaData();
   }
-  @Cron('10 * * * *')
+  @Cron('10 */2 * * *')
   async googleIndex() {
     const sixHoursAgo = new Date();
     sixHoursAgo.setHours(sixHoursAgo.getHours() - 4);
@@ -103,18 +103,21 @@ export class TaskService {
       this.logger.log(`🔍 Indexing: ${postUrl}`);
 
       const success = await submitToGoogleIndex(postUrl);
-      await this.googleIndexRequestRepository.insert({
-        post_id: sitePost.post_id,
-        site_id: sitePost.site_id,
-        post_slug: sitePost.post.slug,
-        site_domain: sitePost.site.domain,
-        url: postUrl,
-        googleUrl:
-          'https://indexing.googleapis.com/v3/urlNotifications:publish',
-        type: 'URL_UPDATED',
-        response: success,
-        requested_at: new Date(),
-      });
+      await this.googleIndexRequestRepository.upsert(
+        {
+          post_id: sitePost.post_id,
+          site_id: sitePost.site_id,
+          post_slug: sitePost.post.slug,
+          site_domain: sitePost.site.domain,
+          url: postUrl,
+          googleUrl:
+            'https://indexing.googleapis.com/v3/urlNotifications:publish',
+          type: 'URL_UPDATED',
+          response: success,
+          requested_at: new Date(),
+        },
+        { conflictPaths: ['type', 'post_slug'] },
+      );
       if (success) {
         await this.sitePostRepository.save({
           ...sitePost,
@@ -124,7 +127,7 @@ export class TaskService {
     }
   }
 
-  @Cron('30 * * * *')
+  @Cron('30 */2 * * *')
   async googleMetaData() {
     const indexedPosts = await this.sitePostRepository.find({
       where: {
@@ -154,18 +157,21 @@ export class TaskService {
         postUrl,
         site.domain + '/',
       );
-      await this.googleIndexRequestRepository.insert({
-        post_id: sitePost.post_id,
-        site_id: sitePost.site_id,
-        post_slug: sitePost.post.slug,
-        site_domain: sitePost.site.domain,
-        url: postUrl,
-        googleUrl:
-          'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
-        type: 'URL_METADATAA',
-        response: success,
-        requested_at: new Date(),
-      });
+      await this.googleIndexRequestRepository.upsert(
+        {
+          post_id: sitePost.post_id,
+          site_id: sitePost.site_id,
+          post_slug: sitePost.post.slug,
+          site_domain: sitePost.site.domain,
+          url: postUrl,
+          googleUrl:
+            'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+          type: 'URL_METADATAA',
+          response: success,
+          requested_at: new Date(),
+        },
+        { conflictPaths: ['type', 'post_slug'] },
+      );
       if (success) {
         const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
         if (!!verdict) {
@@ -232,7 +238,7 @@ export class TaskService {
     this.logger.debug('END - Cleanup Old Posts.');
   }
 
-  @Cron('0 2 * * *')
+  @Cron('0 3 * * *')
   async handleCleanupOrphanTrending() {
     this.logger.debug('START - Cleanup Orphan Trending.');
 
@@ -275,7 +281,7 @@ export class TaskService {
     this.logger.debug('END - Cleanup Orphan Trending.');
   }
 
-  @Cron('0 * * * *')
+  @Cron('0 */2 * * *')
   async handleCrawlerArticles() {
     this.logger.debug('START - Crawler Articles.');
 
