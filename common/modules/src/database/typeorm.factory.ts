@@ -10,6 +10,10 @@ export class TypeORMConfigFactory implements TypeOrmOptionsFactory {
       ...ORMConfig.options,
       entities: loadEntities,
       autoLoadEntities: true,
+      synchronize: true,
+      keepConnectionAlive: true,
+      retryAttempts: 5,
+      retryDelay: 5000,
     };
   }
 }
