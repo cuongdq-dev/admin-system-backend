@@ -60,10 +60,11 @@ export class NewsService {
 
     const data = await getNewsList(20);
     const [recentNews, featureNews, otherNews] = await Promise.all([
-      data.slice(0, 3),
-      data.slice(4, 12),
-      data.slice(13, 19),
+      data.slice(0, 4),
+      data.slice(4, 13),
+      data.slice(14, 20),
     ]);
+    console.log(recentNews.length, featureNews.length, otherNews.length);
 
     return { recentNews, featureNews, otherNews };
   }
