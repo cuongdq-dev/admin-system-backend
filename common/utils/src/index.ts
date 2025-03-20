@@ -511,14 +511,14 @@ export async function submitToGoogleIndex(url?: string) {
 
     if (response.status === 200) {
       console.log(`✅ Successfully indexed: ${url}`);
-      return true;
+      return response.data;
     } else {
       console.warn(`⚠️ Failed to index: ${url}`);
-      return false;
+      return response;
     }
   } catch (error) {
     console.error(`❌ Google Indexing Error: ${error.message}`);
-    return false;
+    return error?.message || 'Google Indexing Error';
   }
 }
 
@@ -554,14 +554,14 @@ export async function getMetaDataGoogleConsole(url?: string, domain?: string) {
       },
     });
     if (response.status === 200) {
-      console.log(`✅ Successfully indexed: ${url}`);
+      console.log(`✅ Successfully Get Metadata: ${url}`);
       return response.data as Record<string, any>;
     } else {
       console.warn(`⚠️ Failed to index: ${url}`);
-      return undefined;
+      return response;
     }
   } catch (error) {
-    console.error(`❌ Google Indexing Error: ${error.message}`);
-    return undefined;
+    console.error(`❌ Google Get Metadata Error: ${error.message}`);
+    return error?.message || 'Google Get Metadata Error';
   }
 }

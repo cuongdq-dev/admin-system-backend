@@ -1,5 +1,6 @@
 import {
   Category,
+  GoogleIndexRequest,
   Media,
   Notification,
   Post,
@@ -27,6 +28,7 @@ import { TaskService } from './task.service';
       SitePost,
       Site,
       Notification,
+      GoogleIndexRequest,
     ]),
   ],
   providers: [TaskService],

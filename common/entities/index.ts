@@ -8,6 +8,7 @@ import {
   CustomerToken,
   TokenType as CustomerTokenType,
 } from './customer_token.entity';
+import { GoogleIndexRequest } from './google_index_request.entity';
 import { Lang } from './lang.entity';
 import { LangContent } from './lang_content.entity';
 import { Media, StorageType } from './media.entity';
@@ -64,6 +65,7 @@ export {
   Token,
   Trending,
   TrendingArticle,
+  GoogleIndexRequest,
   User,
   UserTokenType,
 };
@@ -82,6 +84,7 @@ export const loadEntities = [
   Product,
   ProductVariant,
   ProductVariantMedia,
+  GoogleIndexRequest,
   Cart,
   SitePost,
   CartItem,

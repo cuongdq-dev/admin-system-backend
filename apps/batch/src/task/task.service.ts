@@ -1,5 +1,6 @@
 import {
   Category,
+  GoogleIndexRequest,
   Media,
   Notification,
   Post,
@@ -27,7 +28,6 @@ import {
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as googleAuth from 'google-auth-library';
 import { In, IsNull, LessThan, MoreThan, Not, Repository } from 'typeorm';
 
 @Injectable()
@@ -38,23 +38,33 @@ export class TaskService {
   constructor(
     @InjectRepository(Trending)
     private readonly trendingRepository: Repository<Trending>,
+
     @InjectRepository(TrendingArticle)
     private readonly trendingArticleRepository: Repository<TrendingArticle>,
+
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+
     @InjectRepository(Site)
     private readonly siteRepository: Repository<Site>,
+
     @InjectRepository(Media)
     private readonly mediaRepository: Repository<Media>,
+
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
 
     @InjectRepository(SitePost)
     private readonly sitePostRepository: Repository<SitePost>,
+
+    @InjectRepository(GoogleIndexRequest)
+    private readonly googleIndexRequestRepository: Repository<GoogleIndexRequest>,
 
     private readonly telegramService: TelegramService,
   ) {}
@@ -93,6 +103,18 @@ export class TaskService {
       this.logger.log(`🔍 Indexing: ${postUrl}`);
 
       const success = await submitToGoogleIndex(postUrl);
+      await this.googleIndexRequestRepository.insert({
+        post_id: sitePost.post_id,
+        site_id: sitePost.site_id,
+        post_slug: sitePost.post.slug,
+        site_domain: sitePost.site.domain,
+        url: postUrl,
+        googleUrl:
+          'https://indexing.googleapis.com/v3/urlNotifications:publish',
+        type: 'URL_UPDATED',
+        response: success,
+        requested_at: new Date(),
+      });
       if (success) {
         await this.sitePostRepository.save({
           ...sitePost,
@@ -132,6 +154,18 @@ export class TaskService {
         postUrl,
         site.domain + '/',
       );
+      await this.googleIndexRequestRepository.insert({
+        post_id: sitePost.post_id,
+        site_id: sitePost.site_id,
+        post_slug: sitePost.post.slug,
+        site_domain: sitePost.site.domain,
+        url: postUrl,
+        googleUrl:
+          'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+        type: 'URL_METADATAA',
+        response: success,
+        requested_at: new Date(),
+      });
       if (success) {
         const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
         if (!!verdict) {
