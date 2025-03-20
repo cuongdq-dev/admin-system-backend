@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity('google_index_requests')
+@Unique(['post_slug', 'type'])
 export class GoogleIndexRequest {
   @PrimaryGeneratedColumn()
   id: number;
@@ -22,7 +24,7 @@ export class GoogleIndexRequest {
   @Column({ type: 'text' })
   post_slug: string;
 
-  @Column({ type: 'text', unique: true })
+  @Column({ type: 'text' })
   url: string;
 
   @Column({ type: 'text' })

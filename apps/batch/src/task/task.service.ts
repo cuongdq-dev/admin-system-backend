@@ -116,7 +116,10 @@ export class TaskService {
           response: success,
           requested_at: new Date(),
         },
-        { conflictPaths: ['type', 'post_slug'] },
+        {
+          conflictPaths: ['type', 'post_slug'],
+          skipUpdateIfNoValuesChanged: true,
+        },
       );
       if (success) {
         await this.sitePostRepository.save({
@@ -127,7 +130,7 @@ export class TaskService {
     }
   }
 
-  // @Cron('30 */2 * * *')
+  @Cron('30 */2 * * *')
   async googleMetaData() {
     const indexedPosts = await this.sitePostRepository.find({
       where: {
@@ -170,7 +173,10 @@ export class TaskService {
           response: success,
           requested_at: new Date(),
         },
-        { conflictPaths: ['type', 'post_slug'] },
+        {
+          conflictPaths: ['type', 'post_slug'],
+          skipUpdateIfNoValuesChanged: true,
+        },
       );
       if (success) {
         const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
@@ -549,7 +555,10 @@ export class TaskService {
             response: success,
             requested_at: new Date(),
           },
-          { conflictPaths: ['type', 'post_slug'] },
+          {
+            conflictPaths: ['type', 'post_slug'],
+            skipUpdateIfNoValuesChanged: true,
+          },
         );
 
         await this.telegramService.sendMessageWithPost(
