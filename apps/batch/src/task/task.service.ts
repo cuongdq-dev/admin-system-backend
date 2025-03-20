@@ -78,8 +78,10 @@ export class TaskService {
   }
   @Cron('10 */2 * * *')
   async googleIndex() {
+    this.logger.debug('START - Request Google Index.');
+
     const sixHoursAgo = new Date();
-    sixHoursAgo.setHours(sixHoursAgo.getHours() - 4);
+    sixHoursAgo.setHours(sixHoursAgo.getHours() - 18);
 
     const unindexedPosts = await this.sitePostRepository.find({
       where: {
@@ -128,10 +130,13 @@ export class TaskService {
         });
       }
     }
+    this.logger.debug('END - Request Google Index.');
   }
 
   @Cron('30 */2 * * *')
   async googleMetaData() {
+    this.logger.debug('START - Get Google Meta Data.');
+
     const indexedPosts = await this.sitePostRepository.find({
       where: {
         indexStatus: In([
@@ -188,6 +193,8 @@ export class TaskService {
       }
       this.logger.log(`🔍 Indexing: ${postUrl}`);
     }
+
+    this.logger.debug('END - Get Google Meta Data.');
   }
 
   // @Cron('0 1 * * *')
