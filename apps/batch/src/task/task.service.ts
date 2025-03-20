@@ -527,11 +527,30 @@ export class TaskService {
           `${site.domain}/bai-viet/${savedPost.slug}`,
         );
 
-        await this.sitePostRepository.insert({
-          site_id: site.id,
-          post_id: savedPost.id,
-          indexStatus: !!success ? IndexStatus.INDEXING : IndexStatus.NEW,
-        });
+        await this.sitePostRepository.upsert(
+          {
+            site_id: site.id,
+            post_id: savedPost.id,
+            indexStatus: !!success ? IndexStatus.INDEXING : IndexStatus.NEW,
+          },
+          { conflictPaths: ['site_id', 'post_id'] },
+        );
+
+        await this.googleIndexRequestRepository.upsert(
+          {
+            post_id: savedPost.id,
+            site_id: site.id,
+            post_slug: savedPost.slug,
+            site_domain: site.domain,
+            url: `${site.domain}/bai-viet/${savedPost.slug}`,
+            googleUrl:
+              'https://indexing.googleapis.com/v3/urlNotifications:publish',
+            type: 'URL_UPDATED',
+            response: success,
+            requested_at: new Date(),
+          },
+          { conflictPaths: ['type', 'post_slug'] },
+        );
 
         await this.telegramService.sendMessageWithPost(
           site.teleChatId,
