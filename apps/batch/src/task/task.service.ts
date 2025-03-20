@@ -110,6 +110,7 @@ export class TaskService {
           IndexStatus.NEW,
           IndexStatus.INDEXING,
           IndexStatus.VERDICT_UNSPECIFIED,
+          IndexStatus.NEUTRAL,
         ]),
       },
       relations: ['post', 'site'],
