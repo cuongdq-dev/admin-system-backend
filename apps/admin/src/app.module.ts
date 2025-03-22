@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { CategoryModule } from './category/category.module';
 import { DockerModule } from './docker/docker.module';
 import { DropdownModule } from './dropdown/dropdown.module';
+import { GoogleModule } from './google-console/google.module';
 import { I18nModule } from './i18n/i18n.module';
 import { NotificationModule } from './notification/notification.module';
 import { PostModule } from './post/post.module';
@@ -19,7 +20,6 @@ import { SettingModule } from './setting/setting.module';
 import { SiteModule } from './site/site.module';
 import { UserModule } from './user/user.module';
 import { WebhookModule } from './webhook/webhook.module';
-import { GoogleModule } from './google-console/google.module';
 
 const modules = [
   AuthModule,

@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Delete, Query } from '@nestjs/common';
+import { SitePost } from '@app/entities';
+import { Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkPaginatedResponse,
+  ApiPaginationQuery,
+  Paginate,
+  PaginateQuery,
+} from 'nestjs-paginate';
+import { googleIndexingPaginateConfig } from './google.pagination';
 import { GoogleService } from './google.service';
 
-@Controller('google')
+@Controller({ path: 'google', version: '1' })
+@ApiTags('google')
 export class GoogleController {
   constructor(private readonly googleService: GoogleService) {}
 
@@ -18,12 +28,12 @@ export class GoogleController {
     return this.googleService.getMetaDataGoogleConsole(url, domain);
   }
 
-  @Get('websites')
+  @Get('websites/list')
   async listWebsites() {
     return this.googleService.listWebsites();
   }
 
-  @Get('sitemaps')
+  @Get('sitemaps/list')
   async listSitemaps(@Query('siteUrl') siteUrl: string) {
     return this.googleService.listSitemaps(siteUrl);
   }
@@ -42,5 +52,19 @@ export class GoogleController {
     @Query('sitemapUrl') sitemapUrl: string,
   ) {
     return this.googleService.deleteSitemap(siteUrl, sitemapUrl);
+  }
+
+  //GET INDEXING STATUS BY SITE_ID
+  @Get('indexing/list')
+  @ApiOkPaginatedResponse(SitePost, googleIndexingPaginateConfig)
+  @ApiPaginationQuery(googleIndexingPaginateConfig)
+  getSiteIndexing(
+    @Paginate() paginateQuery: PaginateQuery,
+    @Query() query: { indexStatus?: string; site_id: string },
+  ) {
+    return this.googleService.getSiteIndexing(paginateQuery, {
+      ...query,
+      indexStatus: query?.indexStatus?.split(','),
+    });
   }
 }

@@ -73,7 +73,7 @@ export class TaskService {
     this.logger.log('✅ Module initialized, starting crawler...');
     // await this.handleCleanupOrphanTrending();
     // await this.handleCleanupOldPosts();
-    // await this.handleCrawlerArticles();
+    await this.handleCrawlerArticles();
     // await this.googleIndex();
     // await this.googleMetaData();
   }

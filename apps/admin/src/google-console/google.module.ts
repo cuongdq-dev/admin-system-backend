@@ -1,8 +1,31 @@
+import {
+  Category,
+  Media,
+  Post,
+  Site,
+  SitePost,
+  Trending,
+  TrendingArticle,
+  User,
+} from '@app/entities';
 import { Module } from '@nestjs/common';
-import { GoogleService } from './google.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { GoogleController } from './google.controller';
+import { GoogleService } from './google.service';
 
 @Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      Post,
+      User,
+      SitePost,
+      Category,
+      Site,
+      Media,
+      Trending,
+      TrendingArticle,
+    ]),
+  ],
   controllers: [GoogleController],
   providers: [GoogleService],
   exports: [GoogleService],

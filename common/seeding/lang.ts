@@ -277,6 +277,12 @@ export const languages = [
       trending_title_item: 'Title',
       trending_search_volume_item: 'Search Volume',
       trending_started_item: 'Started',
+
+      google_console_nav: 'Google Console',
+      google_sitemap_nav: 'Google Sitemap',
+      google_website_nav: 'Google Website',
+      google_indexing_nav: 'Google Indexing',
+      google_console_list_page: 'Google Console List',
     },
   },
   {
@@ -551,6 +557,12 @@ export const languages = [
       server_notify_fetching_data: 'The data is being updated...',
       server_notify_connecting: 'Re-connect to server...',
       server_notify_disconnected: 'Unable to connect to the server.',
+
+      google_console_nav: 'Google Console',
+      google_sitemap_nav: 'Google Sitemap',
+      google_website_nav: 'Google Website',
+      google_indexing_nav: 'Google Indexing',
+      google_console_list_page: 'Google Console List',
     },
   },
 ];

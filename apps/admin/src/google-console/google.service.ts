@@ -1,9 +1,19 @@
+import { Post, Site, SitePost } from '@app/entities';
 import { Injectable, Logger } from '@nestjs/common';
-import { google } from 'googleapis';
+import { InjectRepository } from '@nestjs/typeorm';
 import { GoogleAuth } from 'google-auth-library';
+import { paginate, PaginateQuery } from 'nestjs-paginate';
+import { In, Repository, Not, FindOptionsWhere, IsNull } from 'typeorm';
+import { googleIndexingPaginateConfig } from './google.pagination';
 
 @Injectable()
 export class GoogleService {
+  constructor(
+    @InjectRepository(Site) private siteRepository: Repository<Site>,
+    @InjectRepository(Post) private postRepository: Repository<Post>,
+    @InjectRepository(SitePost)
+    private sitePostRepository: Repository<SitePost>,
+  ) {}
   private readonly logger = new Logger(GoogleService.name);
 
   private async getAuthClient(scope: string) {
@@ -149,5 +159,47 @@ export class GoogleService {
       this.logger.error(`❌ Sitemap deletion error: ${error.message}`);
       throw error;
     }
+  }
+
+  async getSiteIndexing(
+    paginateQuery: PaginateQuery,
+    query: { indexStatus?: string[]; site_id?: string },
+  ) {
+    const where: FindOptionsWhere<SitePost> = {
+      deleted_at: IsNull(),
+    };
+
+    // Chỉ thêm `indexStatus` vào `where` nếu có giá trị hợp lệ
+    if (query?.indexStatus) {
+      const indexStatuses = Array.isArray(query.indexStatus)
+        ? query.indexStatus
+        : [query.indexStatus];
+      where.indexStatus = In(indexStatuses);
+    }
+
+    // Chỉ thêm `site_id` nếu có giá trị hợp lệ
+    if (query?.site_id) where.site_id = query.site_id;
+
+    const data = await paginate(paginateQuery, this.sitePostRepository, {
+      ...googleIndexingPaginateConfig,
+      where: where,
+    });
+
+    return {
+      ...data,
+      data: data.data.map((d) => {
+        return {
+          site_id: d.site?.id ?? null,
+          site_name: d.site?.name ?? null,
+          site_domain: d.site?.domain ?? null,
+          post_slug: d.post?.slug ?? null,
+          post_title: d.post?.title ?? null,
+          post_id: d.post?.id ?? null,
+          indexStatus: d.indexStatus ?? null,
+          created_at: d.created_at ?? null,
+          updated_at: d.updated_at ?? null,
+        };
+      }),
+    };
   }
 }

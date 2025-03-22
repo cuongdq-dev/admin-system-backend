@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { In, Repository } from 'typeorm';
 import { SiteBodyDto } from './site.dto';
-import { sitePaginateConfig, sitePostsPaginateConfig } from './site.pagination';
+import { sitePaginateConfig } from './site.pagination';
 
 @Injectable()
 export class SiteService {
@@ -174,47 +174,6 @@ export class SiteService {
       console.error('🚨 Telegram Integration Error:', error);
       throw new Error('System error! Please try again later.');
     }
-  }
-
-  /**
-   * Get Site Indexing
-   */
-  async getSiteIndexing(
-    id: string,
-    paginateQuery: PaginateQuery,
-    query: { indexStatus?: string[] },
-  ) {
-    const indexStatuses = Array.isArray(query?.indexStatus)
-      ? query?.indexStatus
-      : query?.indexStatus
-        ? [query?.indexStatus]
-        : undefined; // Nếu không có giá trị, đặt undefined
-    console.log(indexStatuses);
-    const data = await paginate(paginateQuery, this.sitePostRepository, {
-      ...sitePostsPaginateConfig,
-      where: {
-        ...sitePostsPaginateConfig.where,
-        site_id: id,
-        ...(indexStatuses && { indexStatus: In(indexStatuses) }),
-      },
-    });
-
-    return {
-      ...data,
-      data: data.data.map((d) => {
-        return {
-          site_id: d.site.id,
-          site_name: d.site.name,
-          site_domain: d.site.domain,
-          post_slug: d.post.slug,
-          post_title: d.post.title,
-          post_id: d.post.id,
-          indexStatus: d.indexStatus,
-          created_at: d.created_at,
-          updated_at: d.updated_at,
-        };
-      }),
-    };
   }
 
   /**

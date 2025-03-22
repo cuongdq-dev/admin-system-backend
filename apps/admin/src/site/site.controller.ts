@@ -57,20 +57,6 @@ export class SiteController {
     return this.siteService.getTelegram(body.token, site);
   }
 
-  @Get('/indexing/:id/list')
-  @ApiOkPaginatedResponse(SitePost, sitePostsPaginateConfig)
-  @ApiPaginationQuery(sitePostsPaginateConfig)
-  getSiteIndexing(
-    @Paginate() paginateQuery: PaginateQuery,
-    @Query() query: { indexStatus?: string; site_id: string },
-    @Param('id') id: string,
-  ) {
-    return this.siteService.getSiteIndexing(id, paginateQuery, {
-      ...query,
-      indexStatus: query?.indexStatus?.split(','),
-    });
-  }
-
   @Patch('update/:id')
   partialUpdate(
     @Param(

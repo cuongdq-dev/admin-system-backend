@@ -21,7 +21,7 @@ export class DropdownService {
   async getSites() {
     return await this.siteRepository
       .createQueryBuilder('site')
-      .select(['site.id AS id', 'site.domain AS title'])
+      .select(['site.id AS id', 'site.name AS title'])
       .getRawMany();
   }
 
