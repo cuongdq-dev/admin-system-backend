@@ -176,7 +176,6 @@ export async function generatePostFromHtml(body: {
   if (!contentHtml) {
     return { content: undefined, keywords, description, contentStatus };
   }
-  const { cleanContent, images } = extractImages(contentHtml);
 
   const requestBody = `Bạn là một hệ thống xử lý nội dung thông minh. 
   Dưới đây là dữ liệu đầu vào gồm tiêu đề, nội dung HTML (hãy sửa nội dung - text trong các thẻ html thôi nhé, không được phép sửa các class, style, cấu trúc các thẻ html), mô tả và từ khóa, hãy chọn 1 category phù hợp từ category ở dữ liệu nhập vào. 
@@ -191,7 +190,7 @@ export async function generatePostFromHtml(body: {
 
         Dữ liệu đầu vào:
         - Tiêu đề: "${body.title}"
-        - Nội dung: "${cleanContent}"
+        - Nội dung: "${contentHtml}"
         - Mô tả: "${description}"
         - Từ khóa: "${JSON.stringify(keywords)}"
         - List Category: ${JSON.stringify(body.categories)}
@@ -200,9 +199,6 @@ export async function generatePostFromHtml(body: {
   const geminiResponse = await callGeminiApi(requestBody);
 
   if (!geminiResponse) {
-    if (!contentHtml) {
-      return { content: undefined, keywords, description, contentStatus };
-    }
     const { content, thumbnail } = await processImages(contentHtml, body.title);
     return {
       title: body.title,
@@ -225,11 +221,7 @@ export async function generatePostFromHtml(body: {
       category: newCategory,
     } = JSON.parse(contentData.replace(/```json|```/g, ''));
 
-    const restoredContent = restoreImages(newContent, images);
-    const { content, thumbnail } = await processImages(
-      restoredContent,
-      newTitle,
-    );
+    const { content, thumbnail } = await processImages(newContent, newTitle);
 
     return {
       title: newTitle,
@@ -618,30 +610,4 @@ export async function getMetaDataGoogleConsole(url?: string, domain?: string) {
     console.error(`❌ Google Get Metadata Error: ${error.message}`);
     return error?.message || 'Google Get Metadata Error';
   }
-}
-
-function extractImages(html: string) {
-  const $ = cheerio.load(html);
-  const images: string[] = [];
-  $('img').each((index, img) => {
-    images.push($.html(img));
-    $(img).remove();
-  });
-  return { cleanContent: $.html(), images };
-}
-
-function restoreImages(html: string, images: string[]) {
-  const $ = cheerio.load(html);
-  let paragraphs = $('p');
-  let updatedHtml = $.html();
-
-  images.forEach((imgTag, index) => {
-    if (index < paragraphs.length) {
-      $(paragraphs[index]).after(imgTag);
-    } else {
-      updatedHtml += imgTag;
-    }
-  });
-
-  return $.html();
 }
