@@ -158,8 +158,10 @@ export class NewsService {
     const categories = await this.categoryRepo
       .createQueryBuilder('categories')
       .leftJoin('categories.posts', 'post')
+      .leftJoin('categories.sites', 'sites')
       .leftJoin('post.sitePosts', 'sitePosts')
-      .where('sitePosts.site_id = :siteId', { siteId })
+      .where('sites.id = :siteId', { siteId })
+      .andWhere('sitePosts.site_id = :siteId', { siteId })
       .select(['categories.id', 'categories.slug', 'categories.name'])
       .loadRelationCountAndMap(
         'categories.postCount',
@@ -172,7 +174,7 @@ export class NewsService {
         },
       )
       .getMany();
-
+    console.log(categories);
     categories.forEach((category: any) => {
       if (!category.postCount) category.postCount = 0;
     });
