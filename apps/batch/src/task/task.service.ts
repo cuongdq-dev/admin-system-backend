@@ -433,6 +433,7 @@ export class TaskService {
         const postContent = await generatePostFromHtml({
           title: article.title,
           url: article.url,
+          categories,
         });
 
         if (postContent?.content) {
@@ -445,7 +446,6 @@ export class TaskService {
           const savedPost = await this.savePost(
             savedArticle.id,
             postContent,
-            articleData,
             categories,
             postContent.thumbnail,
           );
@@ -477,13 +477,14 @@ export class TaskService {
   private async savePost(
     articleId: string,
     postContent: {
+      title?: string;
       content?: string;
       keywords?: { query: string }[];
       description?: string;
       contentStatus?: PostStatus;
+      category?: { id: string; name?: string; slug?: string };
     },
-    articleData: any,
-    categories: { name: string; slug: string }[],
+    categories?: { name: string; slug: string }[],
     thumbnail?: Media,
   ) {
     if (!postContent.content) {
@@ -494,7 +495,7 @@ export class TaskService {
       console.log('------------>   Thumbnail Post undefined');
       return;
     }
-    const slug = generateSlug(articleData.title);
+    const slug = generateSlug(postContent.title);
 
     const existingPost = await this.postRepository.findOne({
       where: { slug },
@@ -506,20 +507,26 @@ export class TaskService {
       conflictPaths: ['slug'],
     });
 
+    const category = await this.categoryRepository.findOne({
+      where: { slug: postContent.category.slug },
+    });
+
     const newPost = this.postRepository.create({
       content: postContent.content,
-      title: articleData.title,
+      title: postContent.title,
       thumbnail_id: thumbnailUpsert?.generatedMaps[0]?.id,
       slug,
       meta_description: postContent.description,
       relatedQueries: postContent?.keywords?.map((keyword) => {
         return { query: keyword.query, slug: generateSlug(keyword.query) };
       }),
+      categories: [category],
       status: postContent.contentStatus,
       article_id: articleId,
     });
 
     const savedPost = await this.postRepository.save(newPost);
+
     await this.telegramService.sendMessageWithPost(
       this.chatId,
       this.botToken,

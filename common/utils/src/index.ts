@@ -7,8 +7,8 @@ import { PostStatus } from '@app/entities/post.entity';
 import * as cheerio from 'cheerio';
 import * as googleAuth from 'google-auth-library';
 import slugify from 'slugify';
-import { Parser } from 'xml2js';
 
+import { Parser } from 'xml2js';
 export * from './bootstrap';
 export * from './call-api';
 export * from './enum';
@@ -154,6 +154,7 @@ export async function generatePostFromHtml(body: {
   url: string;
   title: string;
   index?: number;
+  categories?: { slug?: string; name?: string }[];
 }) {
   const response = await fetchWithRetry(body.url);
 
@@ -170,21 +171,79 @@ export async function generatePostFromHtml(body: {
   const { content: contentHtml, status: contentStatus } = getHtml(
     new URL(body.url).hostname,
     $,
-    body.title.trim(),
-    description,
   );
 
   if (!contentHtml) {
     return { content: undefined, keywords, description, contentStatus };
   }
-  const { content, thumbnail } = await processImages(contentHtml, body.title);
-  return {
-    content: content,
-    keywords,
-    description,
-    contentStatus,
-    thumbnail,
-  };
+  const { cleanContent, images } = extractImages(contentHtml);
+
+  const requestBody = `Bạn là một hệ thống xử lý nội dung thông minh. 
+  Dưới đây là dữ liệu đầu vào gồm tiêu đề, nội dung HTML đã được lọc bỏ ảnh base64, mô tả và từ khóa, hãy chọn 1 category phù hợp từ category ở dữ liệu nhập vào. 
+  Hãy tối ưu nội dung này để rõ ràng, hấp dẫn và chuyên nghiệp hơn, đồng thời giữ nguyên các từ khóa. Trả về một object JSON có dạng:
+        {
+          "title": "Tiêu đề mới đã tối ưu",
+          "content": "Nội dung HTML đã được cải thiện",
+          "description": "Mô tả mới đã được cải thiện",
+          "keywords": "${JSON.stringify(keywords)}",
+          "category": {name: 'category name', slug: 'category slug'} 
+        }
+
+        Dữ liệu đầu vào:
+        - Tiêu đề: "${body.title}"
+        - Nội dung: "${cleanContent}"
+        - Mô tả: "${description}"
+        - Từ khóa: "${JSON.stringify(keywords)}"
+        - List Category: ${JSON.stringify(body.categories)}
+      Hãy chỉ trả về JSON, không cần bất kỳ văn bản nào khác.`;
+
+  const geminiResponse = await callGeminiApi(requestBody);
+
+  if (!geminiResponse) {
+    if (!contentHtml) {
+      return { content: undefined, keywords, description, contentStatus };
+    }
+    const { content, thumbnail } = await processImages(contentHtml, body.title);
+    return {
+      title: body.title,
+      content: content,
+      keywords,
+      description,
+      contentStatus,
+      thumbnail,
+    };
+  }
+
+  try {
+    const contentData =
+      geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+    const {
+      title: newTitle,
+      content: newContent,
+      description: newDescription,
+      keywords: newKeyword,
+      category: newCategory,
+    } = JSON.parse(contentData.replace(/```json|```/g, ''));
+
+    const restoredContent = restoreImages(newContent, images);
+    const { content, thumbnail } = await processImages(
+      restoredContent,
+      newTitle,
+    );
+
+    return {
+      title: newTitle,
+      content: content,
+      keywords: JSON.parse(newKeyword),
+      description: newDescription,
+      contentStatus,
+      thumbnail,
+      category: newCategory,
+    };
+  } catch (error) {
+    console.error('Error parsing Gemini API response:', error);
+    return {};
+  }
 }
 
 async function fetchWithRetry(
@@ -224,8 +283,6 @@ function extractMetaKeywords($: cheerio.CheerioAPI): { query: string }[] {
 function getHtml(
   hostname: string,
   $: cheerio.CheerioAPI,
-  title: string,
-  description: string,
 ): { content: string; status: PostStatus } {
   $('script, video, source').remove();
   $('div')
@@ -382,30 +439,6 @@ function getHtml(
 
     default: () => {
       return { content: undefined };
-      // const titleElement = $('*').filter(function () {
-      //   return $(this).text().trim() === title;
-      // });
-
-      // const descriptionElement = $('*').filter(function () {
-      //   return $(this).text().trim() === description;
-      // });
-
-      // if (!titleElement.length || !descriptionElement.length) {
-      //   return undefined;
-      // }
-
-      // const titleParents = titleElement.parents();
-      // const descriptionParents = descriptionElement.parents();
-
-      // let commonParent = null;
-      // titleParents.each((_, el) => {
-      //   if (descriptionParents.is(el)) {
-      //     commonParent = el;
-      //     return false;
-      //   }
-      // });
-
-      // return { content: commonParent ? $(commonParent).html() || '' : '' };
     },
   };
 
@@ -466,6 +499,27 @@ async function processImages(
     content: $('body').length ? $('body').html() : $.html(),
     thumbnail: thumbnail,
   };
+}
+
+async function callGeminiApi(prompt: string) {
+  try {
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+
+    const raw = JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+    });
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      { method: 'POST', headers: myHeaders, body: raw, redirect: 'follow' },
+    );
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error calling Gemini API:', error);
+    return null;
+  }
 }
 
 export function generateSlug(text: string): string {
@@ -564,4 +618,30 @@ export async function getMetaDataGoogleConsole(url?: string, domain?: string) {
     console.error(`❌ Google Get Metadata Error: ${error.message}`);
     return error?.message || 'Google Get Metadata Error';
   }
+}
+
+function extractImages(html: string) {
+  const $ = cheerio.load(html);
+  const images: string[] = [];
+  $('img').each((index, img) => {
+    images.push($.html(img));
+    $(img).remove();
+  });
+  return { cleanContent: $.html(), images };
+}
+
+function restoreImages(html: string, images: string[]) {
+  const $ = cheerio.load(html);
+  let paragraphs = $('p');
+  let updatedHtml = $.html();
+
+  images.forEach((imgTag, index) => {
+    if (index < paragraphs.length) {
+      $(paragraphs[index]).after(imgTag);
+    } else {
+      updatedHtml += imgTag;
+    }
+  });
+
+  return $.html();
 }
