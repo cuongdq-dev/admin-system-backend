@@ -179,7 +179,7 @@ export async function generatePostFromHtml(body: {
   const { cleanContent, images } = extractImages(contentHtml);
 
   const requestBody = `Bạn là một hệ thống xử lý nội dung thông minh. 
-  Dưới đây là dữ liệu đầu vào gồm tiêu đề, nội dung HTML đã được lọc bỏ ảnh base64, mô tả và từ khóa, hãy chọn 1 category phù hợp từ category ở dữ liệu nhập vào. 
+  Dưới đây là dữ liệu đầu vào gồm tiêu đề, nội dung HTML (hãy sửa nội dung - text trong các thẻ html thôi nhé, không được phép sửa các class, style, cấu trúc các thẻ html), mô tả và từ khóa, hãy chọn 1 category phù hợp từ category ở dữ liệu nhập vào. 
   Hãy tối ưu nội dung này để rõ ràng, hấp dẫn và chuyên nghiệp hơn, đồng thời giữ nguyên các từ khóa. Trả về một object JSON có dạng:
         {
           "title": "Tiêu đề mới đã tối ưu",
