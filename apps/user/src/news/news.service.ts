@@ -174,7 +174,6 @@ export class NewsService {
         },
       )
       .getMany();
-    console.log(categories);
     categories.forEach((category: any) => {
       if (!category.postCount) category.postCount = 0;
     });
