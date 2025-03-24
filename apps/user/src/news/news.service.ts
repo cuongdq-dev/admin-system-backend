@@ -236,8 +236,11 @@ export class NewsService {
         'thumbnail.id',
         'thumbnail.url',
         'thumbnail.slug',
+        'categories.id',
+        'categories.slug',
+        'categories.name',
       ])
-      .groupBy('post.id, thumbnail.id')
+      .groupBy('post.id, thumbnail.id, categories.id')
       .orderBy('post.created_at', 'DESC');
 
     const paginatedData = await paginate(query, qb, {
@@ -414,8 +417,11 @@ export class NewsService {
         'thumbnail.id',
         'thumbnail.url',
         'thumbnail.slug',
+        'categories.id',
+        'categories.slug',
+        'categories.name',
       ])
-      .groupBy('post.id, thumbnail.id')
+      .groupBy('post.id, thumbnail.id, categories.id')
       .orderBy('post.created_at', 'DESC');
 
     const paginatedData = await paginate(query, qb, {
