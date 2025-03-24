@@ -35,7 +35,7 @@ export class NewsService {
           'post.relatedQueries AS relatedQueries',
           'post.status AS status',
           'sitePost.created_at as created_at',
-          "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
+          "jsonb_build_object('url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
           `COALESCE(
               jsonb_agg(DISTINCT jsonb_build_object(
                 'id', categories.id, 
@@ -45,7 +45,7 @@ export class NewsService {
             ) AS categories`,
         ])
         .groupBy(
-          'post.id, thumbnail.id, thumbnail.data, thumbnail.url, thumbnail.slug, sitePost.created_at',
+          'post.id, thumbnail.id, thumbnail.url, thumbnail.slug, sitePost.created_at',
         )
         .orderBy('created_at', 'DESC')
         .limit(limit)
@@ -135,7 +135,6 @@ export class NewsService {
         slug: true,
         thumbnail: {
           id: true,
-          data: true,
           url: true,
           storage_type: true,
           slug: true,
@@ -164,10 +163,10 @@ export class NewsService {
         'post.created_at AS created_at',
         'post.slug AS slug',
         'post.status AS status',
-        "jsonb_build_object('data', thumbnail.data, 'url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
+        "jsonb_build_object('url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
         `COALESCE(json_agg(jsonb_build_object('id', categories.id, 'name', categories.name, 'slug', categories.slug)) FILTER (WHERE categories.id IS NOT NULL), '[]') AS categories`,
       ])
-      .groupBy('post.id, thumbnail.data, thumbnail.url, thumbnail.slug')
+      .groupBy('post.id, thumbnail.url, thumbnail.slug')
       .orderBy('created_at', 'DESC')
       .limit(4)
       .getRawMany();
@@ -235,7 +234,6 @@ export class NewsService {
         'post.slug',
         'post.status',
         'thumbnail.id',
-        'thumbnail.data',
         'thumbnail.url',
         'thumbnail.slug',
       ])
@@ -260,7 +258,7 @@ export class NewsService {
         id: true,
         slug: true,
         title: true,
-        thumbnail: { id: true, data: true, url: true, slug: true },
+        thumbnail: { id: true, url: true, slug: true },
         categories: true,
         content: true,
         relatedQueries: true,
@@ -414,7 +412,6 @@ export class NewsService {
         'post.slug',
         'post.status',
         'thumbnail.id',
-        'thumbnail.data',
         'thumbnail.url',
         'thumbnail.slug',
       ])
