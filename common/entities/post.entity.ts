@@ -4,7 +4,6 @@ import {
   Entity,
   Index,
   JoinColumn,
-  JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany,
@@ -13,10 +12,9 @@ import {
 import { BaseEntity } from './base';
 import { Category } from './category.entity';
 import { Media } from './media.entity';
-import { Site } from './site.entity';
+import { SitePost } from './site_posts.entity';
 import { TrendingArticle } from './trending_articles.entity';
 import type { User } from './user.entity';
-import { SitePost } from './site_posts.entity';
 export enum PostStatus {
   NEW = 'NEW',
   DRAFT = 'DRAFT',

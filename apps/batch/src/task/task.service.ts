@@ -71,11 +71,10 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    // await this.handleCleanupOrphanTrending();
-    // await this.handleCleanupOldPosts();
     // await this.handleCrawlerArticles();
+    // await this.handleCleanupOldPosts();
     // await this.googleIndex();
-    await this.googleMetaData();
+    // await this.googleMetaData();
   }
   @Cron('10 */2 * * *')
   async googleIndex() {
@@ -214,7 +213,13 @@ export class TaskService {
         created_at: LessThan(fiveDaysAgo),
         indexStatus: In([IndexStatus.NEUTRAL]),
       },
-      relations: ['post', 'post.article', 'post.thumbnail', 'post.categories'],
+      relations: [
+        'post',
+        'post.article',
+        'post.article.trending',
+        'post.thumbnail',
+        'post.categories',
+      ],
     });
 
     if (oldSitePosts.length === 0) {
@@ -225,83 +230,58 @@ export class TaskService {
     this.logger.log(`Deleting ${oldSitePosts.length} old posts...`);
 
     for (const sitePost of oldSitePosts) {
+      const post_id = sitePost.post_id;
+
+      const post_thumbnail_id = sitePost.post.thumbnail_id;
+      const article_id = sitePost.post.article_id;
+      const article_thumbnail_id = sitePost.post?.article?.thumbnail_id;
+
+      const trending_id = sitePost.post?.article?.trending_id;
+
+      const trending_thumbnail_id =
+        sitePost.post.article?.trending?.thumbnail_id;
+
       await this.sitePostRepository.delete({ id: sitePost.id });
 
-      if (sitePost?.post?.categories?.length) {
-        await this.postRepository
-          .createQueryBuilder()
-          .relation(Post, 'categories')
-          .of(sitePost.post_id)
-          .remove(sitePost.post.categories.map((category) => category.id));
+      await this.categoryRepository
+        .createQueryBuilder()
+        .delete()
+        .from('category_posts')
+        .where('post_id = :postId', { postId: sitePost.post_id })
+        .execute();
+
+      if (post_id) {
+        await this.postRepository.delete({ id: post_id });
+      }
+      article_id &&
+        (await this.trendingArticleRepository.delete({ id: article_id }));
+
+      if (trending_id) {
+        await this.trendingRepository.delete({
+          id: trending_id,
+        });
+      }
+      if (post_thumbnail_id) {
+        await this.removeImage(post_thumbnail_id);
       }
 
-      if (sitePost.post.article) {
-        await this.trendingArticleRepository.delete({
-          id: sitePost.post.article_id,
-        });
-        await this.mediaRepository.delete({
-          id: sitePost.post.article.thumbnail_id,
-        });
-      }
+      article_thumbnail_id &&
+        (await this.mediaRepository.delete({ id: article_thumbnail_id }));
 
-      if (sitePost.post.thumbnail) {
-        const isThumbnailUsed = await this.postRepository.count({
-          where: { thumbnail_id: sitePost.post.thumbnail.id },
-        });
-        if (isThumbnailUsed === 0) {
-          await this.mediaRepository.delete(sitePost.post.thumbnail.id);
-        }
-      }
-      await this.postRepository.delete(sitePost.post_id);
+      trending_thumbnail_id &&
+        (await this.mediaRepository.delete({ id: trending_thumbnail_id }));
+    }
 
-      this.logger.log(`Deleted Post ID: ${sitePost.post.id}`);
-      await this.handleCleanupOrphanTrending();
+    const orphanTrending = await this.trendingRepository.find({
+      where: { articles: { id: IsNull() } },
+      relations: ['articles', 'articles.posts'],
+    });
+    for (const trending of orphanTrending) {
+      await this.trendingRepository.delete({ id: trending.id });
+      await this.mediaRepository.delete({ id: trending.thumbnail_id });
     }
 
     this.logger.debug('END - Cleanup Old Posts.');
-  }
-
-  // @Cron('0 3 * * *')
-  async handleCleanupOrphanTrending() {
-    this.logger.debug('START - Cleanup Orphan Trending.');
-
-    const orphanTrendings = await this.trendingRepository
-      .createQueryBuilder('trending')
-      .leftJoin(
-        'trending_article',
-        'article',
-        'trending.id = article.trending_id',
-      )
-      .where('article.id IS NULL')
-      .select(['trending.id', 'trending.thumbnail_id'])
-      .getMany();
-
-    if (orphanTrendings.length === 0) {
-      this.logger.log('No orphan trendings to delete.');
-      return;
-    }
-
-    const trendingIds = orphanTrendings.map((t) => t.id);
-    const thumbnailIds = orphanTrendings
-      .map((t) => t.thumbnail_id)
-      .filter((id) => id !== null);
-
-    this.logger.log(`Deleting ${trendingIds.length} orphan trendings...`);
-
-    await this.trendingRepository.delete(trendingIds);
-
-    for (const thumbnailId of thumbnailIds) {
-      const isStillUsed = await this.trendingRepository.count({
-        where: { thumbnail_id: thumbnailId },
-      });
-
-      if (isStillUsed === 0) {
-        await this.mediaRepository.delete(thumbnailId);
-        this.logger.log(`Deleted unused thumbnail ID: ${thumbnailId}`);
-      }
-    }
-
-    this.logger.debug('END - Cleanup Orphan Trending.');
   }
 
   @Cron('0 */2 * * *')
@@ -414,25 +394,6 @@ export class TaskService {
 
       const articleSlug = generateSlug(article.title);
 
-      if (article?.image?.imageUrl) {
-        const thumbnail = await this.mediaRepository.upsert(
-          {
-            filename: articleData.title,
-            slug: generateSlug(`thumbnail article ${articleSlug}`),
-            storage_type: StorageType.URL,
-            url: article.image.imageUrl,
-            mimetype: 'url',
-          },
-          { conflictPaths: ['slug'] },
-        );
-        const thumbnailId = thumbnail.generatedMaps[0]?.id;
-        articleData.thumbnail_id = thumbnailId;
-
-        this.logger.debug(
-          `Article Thumbnail Saved | ID: ${thumbnailId} | Slug: "${articleSlug}"`,
-        );
-      }
-
       if (article.url) {
         const postContent = await generatePostFromHtml({
           title: article.title,
@@ -441,6 +402,25 @@ export class TaskService {
         });
 
         if (postContent?.content) {
+          if (article?.image?.imageUrl) {
+            const thumbnail = await this.mediaRepository.upsert(
+              {
+                filename: articleData.title,
+                slug: generateSlug(`thumbnail article ${articleSlug}`),
+                storage_type: StorageType.URL,
+                url: article.image.imageUrl,
+                mimetype: 'url',
+              },
+              { conflictPaths: ['slug'] },
+            );
+            const thumbnailId = thumbnail.generatedMaps[0]?.id;
+            articleData.thumbnail_id = thumbnailId;
+
+            this.logger.debug(
+              `Article Thumbnail Saved | ID: ${thumbnailId} | Slug: "${articleSlug}"`,
+            );
+          }
+
           const savedArticle = await this.saveArticle(articleData, postContent);
 
           this.logger.debug(
@@ -512,7 +492,7 @@ export class TaskService {
     });
 
     const category = await this.categoryRepository.findOne({
-      where: { slug: postContent.category.slug },
+      where: { slug: postContent?.category?.slug },
     });
 
     const newPost = this.postRepository.create({
@@ -595,5 +575,32 @@ export class TaskService {
     }
 
     return savedPost;
+  }
+
+  private async removeImage(id: string) {
+    const image = await this.mediaRepository.findOne({
+      where: { id: id },
+      select: ['slug', 'id'],
+    });
+    console.log(image);
+
+    await this.mediaRepository.delete({ id: id });
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+
+    await fetch(process.env.CDN_API + '/upload', {
+      headers: myHeaders,
+      method: 'DELETE',
+      body: JSON.stringify({ filename: image.slug + '.png' }),
+    })
+      .then(async (response) => {
+        return response.json();
+      })
+      .then((result) => {
+        return console.log(result);
+      })
+      .catch((error) => {
+        return console.log(error);
+      });
   }
 }

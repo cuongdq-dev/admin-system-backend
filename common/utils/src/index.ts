@@ -147,7 +147,30 @@ export async function saveImageAsBase64(
     size: buffer.length,
   };
 
-  return mediaEntity as Media;
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+
+  const cdnResult = await fetch(process.env.CDN_API + '/upload', {
+    headers: myHeaders,
+    method: 'POST',
+    body: JSON.stringify({ title: mediaEntity.slug, image: mediaEntity.data }),
+  })
+    .then(async (response) => {
+      return response.json();
+    })
+    .then((result) => {
+      return result;
+    })
+    .catch((error) => {
+      return undefined;
+    });
+
+  if (!!cdnResult?.url) {
+    mediaEntity.url = process.env.CDN_API + cdnResult?.url;
+    mediaEntity.data = undefined;
+    mediaEntity.storage_type = StorageType.URL;
+  }
+  return { ...mediaEntity } as Media;
 }
 
 export async function generatePostFromHtml(body: {
