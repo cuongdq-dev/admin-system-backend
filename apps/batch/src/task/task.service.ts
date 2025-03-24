@@ -75,7 +75,7 @@ export class TaskService {
     // await this.handleCleanupOldPosts();
     // await this.handleCrawlerArticles();
     // await this.googleIndex();
-    // await this.googleMetaData();
+    await this.googleMetaData();
   }
   @Cron('10 */2 * * *')
   async googleIndex() {
@@ -102,9 +102,13 @@ export class TaskService {
       const { post, site } = sitePost;
       if (!post || !site) continue;
 
+      const googleResulted = await this.googleIndexRequestRepository.findOne({
+        where: { site_id: site.id, post_id: post.id, type: 'URL_UPDATED' },
+      });
+
+      if (googleResulted?.response?.urlNotificationMetadata?.url) continue;
       const postUrl = `${site.domain}/bai-viet/${post.slug}`;
       this.logger.log(`🔍 Indexing: ${postUrl}`);
-
       const success = await submitToGoogleIndex(postUrl);
       await this.googleIndexRequestRepository.upsert(
         {
@@ -175,7 +179,7 @@ export class TaskService {
           url: postUrl,
           googleUrl:
             'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
-          type: 'URL_METADATAA',
+          type: 'URL_METADATA',
           response: success,
           requested_at: new Date(),
         },
