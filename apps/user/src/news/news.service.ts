@@ -64,7 +64,6 @@ export class NewsService {
       data.slice(4, 13),
       data.slice(14, 20),
     ]);
-    console.log(recentNews.length, featureNews.length, otherNews.length);
 
     return { recentNews, featureNews, otherNews };
   }
@@ -308,7 +307,6 @@ export class NewsService {
   }
 
   async getRss(site: Site) {
-    console.log(site);
     const data = await this.postRepo.find({
       where: { sitePosts: { site_id: site.id } },
       select: {
