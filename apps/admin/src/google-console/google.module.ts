@@ -1,5 +1,6 @@
 import {
   Category,
+  GoogleIndexRequest,
   Media,
   Post,
   Site,
@@ -20,6 +21,7 @@ import { GoogleService } from './google.service';
       User,
       SitePost,
       Category,
+      GoogleIndexRequest,
       Site,
       Media,
       Trending,

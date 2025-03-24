@@ -1,9 +1,9 @@
-import { Post, Site, SitePost } from '@app/entities';
+import { GoogleIndexRequest, Post, Site, SitePost } from '@app/entities';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GoogleAuth } from 'google-auth-library';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { In, Repository, Not, FindOptionsWhere, IsNull } from 'typeorm';
+import { FindOptionsWhere, In, IsNull, Repository } from 'typeorm';
 import { googleIndexingPaginateConfig } from './google.pagination';
 
 @Injectable()
@@ -11,6 +11,8 @@ export class GoogleService {
   constructor(
     @InjectRepository(Site) private siteRepository: Repository<Site>,
     @InjectRepository(Post) private postRepository: Repository<Post>,
+    @InjectRepository(GoogleIndexRequest)
+    private googleIndexRequestRepository: Repository<GoogleIndexRequest>,
     @InjectRepository(SitePost)
     private sitePostRepository: Repository<SitePost>,
   ) {}
@@ -201,5 +203,34 @@ export class GoogleService {
         };
       }),
     };
+  }
+  async getLogs(
+    paginateQuery: PaginateQuery,
+    query: { site_id?: string; type?: string[] },
+  ) {
+    const where: FindOptionsWhere<GoogleIndexRequest> = {};
+
+    // Chỉ thêm `site_id` nếu có giá trị hợp lệ
+    if (query?.site_id) where.site_id = query.site_id;
+    if (query?.type) {
+      const indexStatuses = Array.isArray(query.type)
+        ? query.type
+        : [query.type];
+      where.type = In(indexStatuses);
+    }
+
+    const data = await paginate(
+      paginateQuery,
+      this.googleIndexRequestRepository,
+      {
+        defaultSortBy: [['requested_at', 'DESC']],
+        sortableColumns: ['requested_at', 'post_slug'],
+        where: where,
+        defaultLimit: 200,
+        maxLimit: 500,
+      },
+    );
+
+    return data;
   }
 }

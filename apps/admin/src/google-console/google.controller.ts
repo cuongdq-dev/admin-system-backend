@@ -67,4 +67,17 @@ export class GoogleController {
       indexStatus: query?.indexStatus?.split(','),
     });
   }
+
+  @Get('logs/list')
+  @ApiOkPaginatedResponse(SitePost, googleIndexingPaginateConfig)
+  @ApiPaginationQuery(googleIndexingPaginateConfig)
+  getLogs(
+    @Paginate() paginateQuery: PaginateQuery,
+    @Query() query: { site_id: string; type: string },
+  ) {
+    return this.googleService.getLogs(paginateQuery, {
+      ...query,
+      type: query?.type?.split(','),
+    });
+  }
 }

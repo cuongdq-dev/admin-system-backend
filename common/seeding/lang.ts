@@ -283,6 +283,7 @@ export const languages = [
       google_website_nav: 'Google Website',
       google_indexing_nav: 'Google Indexing',
       google_console_list_page: 'Google Console List',
+      google_logs_nav: 'Google Logs',
     },
   },
   {
@@ -563,6 +564,7 @@ export const languages = [
       google_website_nav: 'Google Website',
       google_indexing_nav: 'Google Indexing',
       google_console_list_page: 'Google Console List',
+      google_logs_nav: 'Google Logs',
     },
   },
 ];
