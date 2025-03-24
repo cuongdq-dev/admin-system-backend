@@ -43,13 +43,6 @@ export class NewsService {
                 'slug', categories.slug
               )) FILTER (WHERE categories.id IS NOT NULL), '[]'
             ) AS categories`,
-          `COALESCE(
-              jsonb_agg(DISTINCT jsonb_build_object(
-                'id', site.id, 
-                'adsense_client', site.adsense_client, 
-                'adsense_slots', site.adsense_slots
-              )) FILTER (WHERE site.id IS NOT NULL), '[]'
-            ) AS sites`,
         ])
         .groupBy(
           'post.id, thumbnail.id, thumbnail.data, thumbnail.url, thumbnail.slug, sitePost.created_at',
@@ -58,14 +51,43 @@ export class NewsService {
         .limit(limit)
         .getRawMany();
 
-    const data = await getNewsList(20);
+    const [data, categories] = await Promise.all([
+      getNewsList(20),
+      this.categoryRepo
+        .createQueryBuilder('categories')
+        .leftJoin('categories.posts', 'post')
+        .leftJoin('categories.sites', 'sites')
+        .leftJoin('post.sitePosts', 'sitePosts')
+        .where('sites.id = :siteId', { siteId: site.id })
+        .andWhere('sitePosts.site_id = :siteId', { siteId: site.id })
+        .select(['categories.id', 'categories.slug', 'categories.name'])
+        .loadRelationCountAndMap(
+          'categories.postCount',
+          'categories.posts',
+          'post',
+          (qb) => {
+            return qb
+              .leftJoin('post.sitePosts', 'filteredSite')
+              .where('filteredSite.site_id = :siteId', { siteId: site.id });
+          },
+        )
+        .getMany(),
+    ]);
+
     const [recentNews, featureNews, otherNews] = await Promise.all([
       data.slice(0, 4),
       data.slice(4, 13),
       data.slice(14, 20),
     ]);
 
-    return { recentNews, featureNews, otherNews };
+    return {
+      home: { recentNews, featureNews, otherNews },
+      adsense: {
+        adsense_client: site.adsense_client,
+        adsense_slots: site.adsense_slots,
+      },
+      categories: categories,
+    };
   }
 
   async getAdsense(site: Site) {
