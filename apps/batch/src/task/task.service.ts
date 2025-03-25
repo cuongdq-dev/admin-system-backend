@@ -298,10 +298,6 @@ export class TaskService {
       return { name: category.name, slug: category.slug };
     });
     for (const trending of trendingList) {
-      this.logger.debug(
-        `Processing Trending Topic: "${trending.title.query}" | Posts: ${trending?.articles?.length || 0}`,
-      );
-
       const trendingData = await this.processTrending(trending);
 
       if (trending?.articles?.length) {
@@ -355,10 +351,6 @@ export class TaskService {
       const thumbnailId = thumbnail.generatedMaps[0]?.id;
 
       trendingData.thumbnail_id = thumbnailId;
-
-      this.logger.debug(
-        `Trending Thumbnail Saved | ID: ${thumbnailId} | Query: "${trendingData.titleQuery}"`,
-      );
     }
 
     const resultTrending = await this.trendingRepository.upsert(trendingData, {
@@ -366,10 +358,6 @@ export class TaskService {
     });
 
     const savedTrending = resultTrending.generatedMaps[0];
-
-    this.logger.debug(
-      `Trending Data Saved | ID: ${savedTrending?.id} | Query: "${trendingData.titleQuery}"`,
-    );
 
     return savedTrending;
   }
@@ -380,10 +368,6 @@ export class TaskService {
     categories: { name: string; slug: string }[],
   ) {
     for (const article of articles) {
-      this.logger.debug(
-        `Processing Article: "${article.title}" | Source: ${article.source}`,
-      );
-
       const articleData = {
         title: article.title,
         source: article.source,
@@ -415,28 +399,16 @@ export class TaskService {
             );
             const thumbnailId = thumbnail.generatedMaps[0]?.id;
             articleData.thumbnail_id = thumbnailId;
-
-            this.logger.debug(
-              `Article Thumbnail Saved | ID: ${thumbnailId} | Slug: "${articleSlug}"`,
-            );
           }
 
           const savedArticle = await this.saveArticle(articleData, postContent);
 
-          this.logger.debug(
-            `Article Saved | ID: ${savedArticle.id} | Title: "${article.title}"`,
-          );
-
-          const savedPost = await this.savePost(
+          await this.savePost(
             savedArticle.id,
             postContent,
             categories,
             postContent.thumbnail,
           );
-          savedPost &&
-            this.logger.debug(
-              `Post Saved | ID: ${savedPost.id} | Content Length: ${postContent.content.length} | Description: "${postContent.description}"`,
-            );
         }
       }
     }
@@ -582,8 +554,6 @@ export class TaskService {
       where: { id: id },
       select: ['slug', 'id'],
     });
-    console.log(image);
-
     await this.mediaRepository.delete({ id: id });
     const myHeaders = new Headers();
     myHeaders.append('Content-Type', 'application/json');
