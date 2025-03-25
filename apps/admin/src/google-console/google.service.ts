@@ -208,9 +208,10 @@ export class GoogleService {
     paginateQuery: PaginateQuery,
     query: { site_id?: string; type?: string[] },
   ) {
-    const where: FindOptionsWhere<GoogleIndexRequest> = {};
+    const where: FindOptionsWhere<GoogleIndexRequest> = {
+      type: In(['URL_UPDATED', 'URL_METADATA']),
+    };
 
-    // Chỉ thêm `site_id` nếu có giá trị hợp lệ
     if (query?.site_id) where.site_id = query.site_id;
     if (query?.type) {
       const indexStatuses = Array.isArray(query.type)
