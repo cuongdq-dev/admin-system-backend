@@ -129,7 +129,6 @@ export async function saveImageAsBase64(
   slug: string,
   filename: string,
   imageUrl: string,
-  withCdn?: boolean,
 ) {
   const response = await fetch(imageUrl);
 
@@ -152,8 +151,6 @@ export async function saveImageAsBase64(
     size: buffer.length,
   };
 
-  if (!withCdn) return { ...mediaEntity } as Media;
-
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
 
@@ -174,7 +171,6 @@ export async function saveImageAsBase64(
 
   if (!!cdnResult?.url) {
     mediaEntity.url = process.env.CDN_API + cdnResult?.url;
-    mediaEntity.data = undefined;
     mediaEntity.storage_type = StorageType.URL;
   }
   return { ...mediaEntity } as Media;
@@ -502,11 +498,10 @@ async function processImages(
         'post image ' + title,
         'post thumbnail ' + title,
         imgSrc,
-        i == 0,
       );
 
       if (i == 0) {
-        thumbnail = base64Image;
+        thumbnail = { ...base64Image, data: undefined } as any;
       }
       if (base64Image?.data) {
         $(img).attr('src', `${base64Image.data}`);
