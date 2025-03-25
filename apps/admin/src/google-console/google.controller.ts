@@ -15,7 +15,7 @@ import { GoogleService } from './google.service';
 export class GoogleController {
   constructor(private readonly googleService: GoogleService) {}
 
-  @Get('index')
+  @Post('index')
   async submitToGoogleIndex(@Query('url') url: string) {
     return this.googleService.submitToGoogleIndex(url);
   }
@@ -34,8 +34,8 @@ export class GoogleController {
   }
 
   @Get('sitemaps/list')
-  async listSitemaps(@Query('siteUrl') siteUrl: string) {
-    return this.googleService.listSitemaps(siteUrl);
+  async listSitemaps(@Query() query: { site_id: string }) {
+    return this.googleService.listSitemaps(query.site_id);
   }
 
   @Post('sitemap')

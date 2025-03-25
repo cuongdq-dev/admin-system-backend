@@ -104,19 +104,36 @@ export class GoogleService {
   }
 
   // ✅ Lấy danh sách các sitemap đã gửi
-  async listSitemaps(siteUrl: string) {
+  async listSitemaps(site_id: string) {
+    if (!site_id) return undefined;
+    const site = await this.siteRepository.findOne({ where: { id: site_id } });
+    const siteUrl = new URL(site.domain).href;
+    if (!siteUrl) return undefined;
+
     try {
       const client = await this.getAuthClient(
         'https://www.googleapis.com/auth/webmasters.readonly',
       );
 
-      const response = await client.request({
+      const response: any = await client.request({
         url: `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/sitemaps`,
         method: 'GET',
       });
 
       this.logger.log(`✅ Retrieved sitemaps for: ${siteUrl}`);
-      return response.data;
+      if (response?.data?.sitemap)
+        return {
+          data: response?.data?.sitemap,
+          meta: {
+            totalItems: Number(response?.data?.sitemap?.length),
+            totalPages: 1,
+            itemsPerpage: Number(response?.data?.sitemap?.length),
+            currentPage: 1,
+          },
+        };
+      else {
+        return undefined;
+      }
     } catch (error) {
       this.logger.error(`❌ Error fetching sitemaps: ${error.message}`);
       throw error;
