@@ -1,4 +1,4 @@
-import { Category, Post } from '@app/entities';
+import { Post } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const newsPaginateConfig: PaginateConfig<Post> = {
@@ -14,7 +14,7 @@ export const newsPaginateConfig: PaginateConfig<Post> = {
     'meta_description',
     'created_at',
     'thumbnail',
-    'thumbnail.data',
+    // 'thumbnail.data',
     'thumbnail.url',
     'thumbnail.storage_type',
     'slug',
