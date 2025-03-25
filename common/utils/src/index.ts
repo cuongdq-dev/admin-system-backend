@@ -125,6 +125,7 @@ export async function saveImageAsBase64(
   slug: string,
   filename: string,
   imageUrl: string,
+  withCdn?: boolean,
 ) {
   const response = await fetch(imageUrl);
 
@@ -146,6 +147,8 @@ export async function saveImageAsBase64(
     storage_type: StorageType.BASE64,
     size: buffer.length,
   };
+
+  if (!withCdn) return { ...mediaEntity } as Media;
 
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
@@ -497,6 +500,7 @@ async function processImages(
         'post image ' + title,
         'post thumbnail ' + title,
         imgSrc,
+        i == 0,
       );
 
       if (i == 0) {
