@@ -15,6 +15,7 @@ export * from './enum';
 export * from './serializer.interceptor';
 export * from './validation-options';
 
+// IMAGE DOCKER
 export const convertImageData = (
   repoDb: RepositoryEntity[],
   imageName: string,
@@ -37,6 +38,7 @@ export const convertImageData = (
   };
 };
 
+// REPOSITORY DOCKER
 export function convertResponseRepository(data: RepositoryEntity) {
   return {
     ...data,
@@ -75,6 +77,7 @@ interface RSSFeed {
   };
 }
 
+// FETCH LIST HOT SEARCH
 export async function fetchTrendings() {
   const trendingUrl = 'https://trends.google.com/trending/rss?geo=VN';
   const response = await fetch(trendingUrl);
@@ -121,6 +124,7 @@ export async function fetchTrendings() {
   });
 }
 
+// CONVERT IMAGE TO BASE 64 AND SAVE TO CDN
 export async function saveImageAsBase64(
   slug: string,
   filename: string,
@@ -298,10 +302,8 @@ function extractMetaKeywords($: cheerio.CheerioAPI): { query: string }[] {
     : [];
 }
 
-function getHtml(
-  hostname: string,
-  $: cheerio.CheerioAPI,
-): { content: string; status: PostStatus } {
+type GetHtmlProps = { content: string; status: PostStatus };
+function getHtml(hostname: string, $: cheerio.CheerioAPI): GetHtmlProps {
   $('script, video, source').remove();
   $('div')
     .filter(function () {
