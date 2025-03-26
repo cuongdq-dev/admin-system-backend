@@ -71,8 +71,13 @@ export class Site extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   token: string;
 
+  // 🔹 GA code
+  @Column({ type: 'varchar', length: 250, nullable: true })
+  @IsOptional({ groups: [ValidationGroup.UPDATE] })
+  adsense_ga: string; // ga-xxx
+
   // 🔹 Google AdSense Client ID
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 250, nullable: true })
   @IsOptional({ groups: [ValidationGroup.UPDATE] })
   adsense_client: string; // ca-pub-xxxxxxxxxxxxx
 

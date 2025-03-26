@@ -92,6 +92,7 @@ export class NewsService {
 
   async getAdsense(site: Site) {
     return {
+      adsense_ga: site.adsense_ga,
       adsense_client: site.adsense_client,
       adsense_slots: site.adsense_slots,
     };
