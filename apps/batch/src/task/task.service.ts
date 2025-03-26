@@ -71,7 +71,7 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    await this.handleCrawlerArticles();
+    // await this.handleCrawlerArticles();
     // await this.handleCleanupOldPosts();
     // await this.googleIndex();
     // await this.googleMetaData();
@@ -205,6 +205,15 @@ export class TaskService {
   async handleCleanupOldPosts() {
     this.logger.debug('START - Cleanup Old Posts.');
 
+    const orphanTrending = await this.trendingRepository.find({
+      where: { articles: { id: IsNull() } },
+      relations: ['articles', 'articles.posts'],
+    });
+    for (const trending of orphanTrending) {
+      await this.trendingRepository.delete({ id: trending.id });
+      await this.mediaRepository.delete({ id: trending.thumbnail_id });
+    }
+
     const fiveDaysAgo = new Date();
     fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 2);
 
@@ -270,15 +279,6 @@ export class TaskService {
 
       trending_thumbnail_id &&
         (await this.mediaRepository.delete({ id: trending_thumbnail_id }));
-    }
-
-    const orphanTrending = await this.trendingRepository.find({
-      where: { articles: { id: IsNull() } },
-      relations: ['articles', 'articles.posts'],
-    });
-    for (const trending of orphanTrending) {
-      await this.trendingRepository.delete({ id: trending.id });
-      await this.mediaRepository.delete({ id: trending.thumbnail_id });
     }
 
     this.logger.debug('END - Cleanup Old Posts.');
