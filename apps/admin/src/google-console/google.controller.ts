@@ -1,5 +1,5 @@
 import { SitePost } from '@app/entities';
-import { Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
   ApiOkPaginatedResponse,
@@ -38,18 +38,18 @@ export class GoogleController {
     return this.googleService.listSitemaps(query.site_id);
   }
 
-  @Post('sitemap')
+  @Post('sitemaps/create')
   async submitSitemap(
-    @Query('siteUrl') siteUrl: string,
-    @Query('sitemapUrl') sitemapUrl: string,
+    @Body('siteUrl') siteUrl: string,
+    @Body('sitemapUrl') sitemapUrl: string,
   ) {
     return this.googleService.submitSitemap(siteUrl, sitemapUrl);
   }
 
-  @Delete('sitemap')
+  @Delete('sitemaps/delete')
   async deleteSitemap(
-    @Query('siteUrl') siteUrl: string,
-    @Query('sitemapUrl') sitemapUrl: string,
+    @Body('siteUrl') siteUrl: string,
+    @Body('sitemapUrl') sitemapUrl: string,
   ) {
     return this.googleService.deleteSitemap(siteUrl, sitemapUrl);
   }

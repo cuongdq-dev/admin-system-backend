@@ -123,7 +123,9 @@ export class GoogleService {
       this.logger.log(`✅ Retrieved sitemaps for: ${siteUrl}`);
       if (response?.data?.sitemap)
         return {
-          data: response?.data?.sitemap,
+          data: response?.data?.sitemap?.map((sm) => {
+            return { ...sm, id: Date.parse(sm.lastSubmitted).toString() };
+          }),
           meta: {
             totalItems: Number(response?.data?.sitemap?.length),
             totalPages: 1,
@@ -153,6 +155,7 @@ export class GoogleService {
       });
 
       this.logger.log(`✅ Submitted sitemap: ${sitemapUrl} for ${siteUrl}`);
+
       return response.data;
     } catch (error) {
       this.logger.error(`❌ Sitemap submission error: ${error.message}`);
