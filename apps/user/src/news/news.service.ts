@@ -83,6 +83,7 @@ export class NewsService {
     return {
       home: { recentNews, featureNews, otherNews },
       adsense: {
+        adsense_ga: site.adsense_ga,
         adsense_client: site.adsense_client,
         adsense_slots: site.adsense_slots,
       },
@@ -91,6 +92,7 @@ export class NewsService {
   }
 
   async getAdsense(site: Site) {
+    console.log(site.adsense_ga);
     return {
       adsense_ga: site.adsense_ga,
       adsense_client: site.adsense_client,
