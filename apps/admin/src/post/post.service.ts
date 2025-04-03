@@ -43,9 +43,10 @@ export class PostService {
     const fiveDaysAgo = new Date();
     fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 2);
 
-    return paginate(
+    const data = await paginate(
       { ...query, filter: { ...query.filter } },
       this.sitePostRepository,
+
       {
         ...postArchivedPaginateConfig,
         where: {
@@ -60,6 +61,22 @@ export class PostService {
         },
       },
     );
+    return {
+      ...data,
+      data: data.data.map((d) => {
+        return {
+          site_id: d.site?.id ?? null,
+          site_name: d.site?.name ?? null,
+          site_domain: d.site?.domain ?? null,
+          post_slug: d.post?.slug ?? null,
+          post_title: d.post?.title ?? null,
+          post_id: d.post?.id ?? null,
+          indexStatus: d.indexStatus ?? null,
+          created_at: d.created_at ?? null,
+          updated_at: d.updated_at ?? null,
+        };
+      }),
+    };
   }
 
   async getPostBySlug(post: Post) {
