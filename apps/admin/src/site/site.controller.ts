@@ -46,11 +46,7 @@ export class SiteController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
-        entity: Site,
-        filterField: 'id',
-        relations: ['posts', 'categories'],
-      }),
+      IsIDExistPipe({ entity: Site, filterField: 'id' }),
     )
     site: Site,
   ) {

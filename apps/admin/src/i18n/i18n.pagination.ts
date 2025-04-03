@@ -6,7 +6,7 @@ export const i18nPaginateConfig: PaginateConfig<LangContent> = {
   sortableColumns: ['created_at', 'code', 'content'],
   defaultSortBy: [['created_at', 'DESC']],
   searchableColumns: ['code', 'content'],
-  maxLimit: 100,
-  defaultLimit: 10,
+  maxLimit: 500,
+  defaultLimit: 100,
   filterableColumns: { title: [FilterOperator.EQ] },
 };

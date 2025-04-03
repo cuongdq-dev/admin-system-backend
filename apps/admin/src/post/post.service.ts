@@ -1,16 +1,19 @@
 import { Post, SitePost, Trending, User } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { In, Repository } from 'typeorm';
+import { In, LessThan, Repository } from 'typeorm';
 import { PostBodyDto } from './post.dto';
-import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
+import {
+  postArchivedPaginateConfig,
+  postPaginateConfig,
+  trendingPaginateConfig,
+} from './post.pagination';
+import { IndexStatus } from '@app/entities/site_posts.entity';
 
 @Injectable()
 export class PostService {
-  private readonly logger = new Logger(PostService.name);
-
   constructor(
     @InjectRepository(Post) private postRepository: Repository<Post>,
     @InjectRepository(SitePost)
@@ -34,6 +37,28 @@ export class PostService {
       { ...query, filter: { ...query.filter } },
       this.postRepository,
       postPaginateConfig,
+    );
+  }
+  async getArchived(query: PaginateQuery) {
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 2);
+
+    return paginate(
+      { ...query, filter: { ...query.filter } },
+      this.sitePostRepository,
+      {
+        ...postArchivedPaginateConfig,
+        where: {
+          created_at: LessThan(fiveDaysAgo),
+          indexStatus: In([
+            IndexStatus.NEW,
+            IndexStatus.INDEXING,
+            IndexStatus.DELETED,
+            IndexStatus.NEUTRAL,
+            IndexStatus.DELETED,
+          ]),
+        },
+      },
     );
   }
 

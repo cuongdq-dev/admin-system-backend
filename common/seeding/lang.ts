@@ -4,6 +4,8 @@ export const languages = [
     name: 'English',
     description: 'English language',
     content: {
+      setting_nav: 'System Setting',
+
       dashboard_nav: 'Dashboard',
       dashboard_page: 'Dashboard',
       pull_button: 'Pull',
@@ -89,6 +91,8 @@ export const languages = [
       product_detail_title: 'Product Detail',
 
       blog_nav: 'Blog',
+      blog_all_nav: 'All Blog',
+      blog_archived_nav: 'Archived',
       blog_list_page: 'Blog List',
       blog_detail_page: 'Blog Detail',
       blog_new_button: 'New Blog',
@@ -112,6 +116,8 @@ export const languages = [
       language_item_content: 'Content',
       language_item_code: 'Code',
       language_item_language: 'Language',
+
+      color_nav: 'Color',
 
       login_button: 'Log in',
       signup_button: 'Sign up',
@@ -291,6 +297,11 @@ export const languages = [
     name: 'Vietnamese',
     description: 'Vietnamese language',
     content: {
+      setting_nav: 'Cài Đặt',
+
+      blog_all_nav: 'Tất cả',
+      blog_archived_nav: 'Chưa chỉ mục',
+
       dashboard_nav: 'Bảng điều khiển',
       dashboard_page: 'Bảng điều khiển',
       pull_button: 'Pull',
@@ -400,6 +411,8 @@ export const languages = [
       language_item_content: 'Nội dung',
       language_item_code: 'Mã',
       language_item_language: 'Ngôn ngữ',
+
+      color_nav: 'Màu Sắc',
 
       login_button: 'Đăng nhập',
       signup_button: 'Đăng ký',

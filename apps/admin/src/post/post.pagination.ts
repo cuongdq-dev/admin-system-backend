@@ -1,4 +1,4 @@
-import { Post, Trending } from '@app/entities';
+import { Post, SitePost, Trending } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const postPaginateConfig: PaginateConfig<Post> = {
@@ -25,6 +25,17 @@ export const postPaginateConfig: PaginateConfig<Post> = {
     'status',
   ],
   filterableColumns: { title: [FilterOperator.EQ] },
+};
+
+export const postArchivedPaginateConfig: PaginateConfig<SitePost> = {
+  relations: [],
+  sortableColumns: ['created_at'],
+  defaultSortBy: [['created_at', 'DESC']],
+  searchableColumns: ['post.title', 'site.name'],
+  maxLimit: 500,
+  defaultLimit: 20,
+
+  filterableColumns: { created_at: [FilterOperator.EQ] },
 };
 
 export const trendingPaginateConfig: PaginateConfig<Trending> = {

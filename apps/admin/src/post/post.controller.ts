@@ -48,6 +48,13 @@ export class PostController {
     return this.postService.getAll(query);
   }
 
+  @Get('/archived/list')
+  @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
+  @ApiPaginationQuery(postPaginateConfig)
+  getArchived(@Paginate() query: PaginateQuery) {
+    return this.postService.getArchived(query);
+  }
+
   @Get('/trendings')
   @ApiOkPaginatedResponse(Trending, trendingPaginateConfig)
   @ApiPaginationQuery(trendingPaginateConfig)
