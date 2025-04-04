@@ -1,4 +1,13 @@
-import { Post, SitePost, Trending, User } from '@app/entities';
+import {
+  Category,
+  Media,
+  Post,
+  Site,
+  SitePost,
+  Trending,
+  TrendingArticle,
+  User,
+} from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,16 +20,29 @@ import {
   trendingPaginateConfig,
 } from './post.pagination';
 import { IndexStatus } from '@app/entities/site_posts.entity';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectRepository(Post) private postRepository: Repository<Post>,
+
+    @InjectRepository(Category)
+    private categoryRepository: Repository<Category>,
+
+    @InjectRepository(Site) private siteRepository: Repository<Site>,
+    @InjectRepository(Media) private mediaRepository: Repository<Media>,
+
     @InjectRepository(SitePost)
     private sitePostRepository: Repository<SitePost>,
 
     @InjectRepository(Trending)
     private trendingRepository: Repository<Trending>,
+
+    @InjectRepository(TrendingArticle)
+    private trendingArticleRepository: Repository<TrendingArticle>,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async getTrendings(query: PaginateQuery) {
@@ -65,6 +87,7 @@ export class PostService {
       ...data,
       data: data.data.map((d) => {
         return {
+          id: d.id,
           site_id: d.site?.id ?? null,
           site_name: d.site?.name ?? null,
           site_domain: d.site?.domain ?? null,
@@ -79,6 +102,124 @@ export class PostService {
     };
   }
 
+  async deletePostArchived(sitePost: SitePost) {
+    const postId = sitePost.post_id;
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+      relations: ['article', 'article.trending', 'categories'],
+      select: ['id', 'slug', 'title', 'thumbnail_id', 'article', 'categories'],
+    });
+
+    const {
+      id: post_id,
+      title: post_title,
+      slug: post_slug,
+      thumbnail_id: post_thumbnail_id,
+      article,
+      categories,
+    } = post || {
+      post_id: undefined,
+      title: undefined,
+      slug: undefined,
+      thumbnail_id: undefined,
+      article: undefined,
+      categories: undefined,
+    };
+
+    const deletedData = {
+      sitePost: {
+        id: sitePost.id,
+        site_id: sitePost.site_id,
+        post_id: sitePost.post_id,
+        created_at: sitePost.created_at,
+      },
+      post: {
+        id: post_id,
+        title: post_title,
+        slug: post_slug,
+        thumbnail_id: post_thumbnail_id,
+      },
+      article: article && {
+        id: article.id,
+        title: article.title,
+        thumbnail_id: article.thumbnail_id,
+      },
+      trending: article?.trending && {
+        id: article.trending.id,
+        title: article.trending.titleQuery,
+        thumbnail_id: article.trending.thumbnail_id,
+      },
+      mediaIds: {
+        post: post_thumbnail_id,
+        article: article?.thumbnail_id,
+        trending: article?.trending?.thumbnail_id,
+      },
+      categories: categories?.map((c) => ({
+        id: c.id,
+        name: c.name,
+      })),
+    };
+
+    const categoryIds = categories?.map((c) => c.id);
+
+    await this.dataSource.transaction(async (manager) => {
+      if (sitePost.id) {
+        await manager.delete(SitePost, { id: sitePost.id });
+      }
+
+      if (Number(categoryIds?.length) > 0) {
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from('category_posts')
+          .where('post_id = :postId', { postId: post_id })
+          .execute();
+      }
+
+      post_id && (await manager.delete(Post, { id: post_id }));
+
+      article?.id &&
+        (await manager.delete(TrendingArticle, { id: article.id }));
+
+      article?.trending_id &&
+        (await manager.delete(Trending, { id: article.trending_id }));
+
+      if (post_thumbnail_id) {
+        try {
+          await manager.delete(Media, { id: post_thumbnail_id });
+        } catch (error) {
+          console.log(
+            `POST Media with ID ${post_thumbnail_id} could not be deleted. Skipping...`,
+          );
+        }
+      }
+
+      if (article?.thumbnail_id) {
+        try {
+          await manager.delete(Media, { id: article.thumbnail_id });
+        } catch (error) {
+          console.log(
+            `ARTICLE Media with ID ${article.thumbnail_id} could not be deleted. Skipping...`,
+          );
+        }
+      }
+
+      if (article?.trending?.thumbnail_id) {
+        try {
+          await manager.delete(Media, { id: article.trending.thumbnail_id });
+        } catch (error) {
+          console.log(
+            `TRENDING Media with ID ${article.trending.thumbnail_id} could not be deleted. Skipping...`,
+          );
+        }
+      }
+    });
+
+    return {
+      message: 'Post and related data deleted successfully',
+      deleted: deletedData,
+    };
+  }
   async getPostBySlug(post: Post) {
     const result = await this.postRepository.update(
       { id: post.id, status: PostStatus.NEW },

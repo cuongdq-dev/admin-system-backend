@@ -1,6 +1,6 @@
 import { ValidationGroup } from '@app/crud/validation-group';
 import { UserParam } from '@app/decorators';
-import { Post as PostEntity, Trending, User } from '@app/entities';
+import { Post as PostEntity, SitePost, Trending, User } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
 import validationOptions from '@app/utils/validation-options';
 import {
@@ -30,9 +30,9 @@ import {
   Paginate,
   PaginateQuery,
 } from 'nestjs-paginate';
+import { PostBodyDto } from './post.dto';
 import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
 import { PostService } from './post.service';
-import { PostBodyDto } from './post.dto';
 
 @ApiTags('Post')
 @ApiBearerAuth()
@@ -53,6 +53,19 @@ export class PostController {
   @ApiPaginationQuery(postPaginateConfig)
   getArchived(@Paginate() query: PaginateQuery) {
     return this.postService.getArchived(query);
+  }
+
+  @Delete('/archived/delete/:id')
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  deletePostArchived(
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      IsIDExistPipe({ entity: SitePost, filterField: 'id' }),
+    )
+    sitePost: SitePost,
+  ) {
+    return this.postService.deletePostArchived(sitePost);
   }
 
   @Get('/trendings')

@@ -1,6 +1,8 @@
 import {
+  Category,
   Media,
   Post,
+  Site,
   SitePost,
   Trending,
   TrendingArticle,
@@ -15,7 +17,9 @@ import { PostService } from './post.service';
     TypeOrmModule.forFeature([
       Post,
       SitePost,
+      Category,
       Trending,
+      Site,
       TrendingArticle,
       Media,
     ]),
