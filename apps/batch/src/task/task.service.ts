@@ -28,7 +28,15 @@ import {
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, LessThan, MoreThan, Not, Repository } from 'typeorm';
+import {
+  DataSource,
+  In,
+  IsNull,
+  LessThan,
+  MoreThan,
+  Not,
+  Repository,
+} from 'typeorm';
 
 @Injectable()
 export class TaskService {
@@ -67,6 +75,8 @@ export class TaskService {
     private readonly googleIndexRequestRepository: Repository<GoogleIndexRequest>,
 
     private readonly telegramService: TelegramService,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async onModuleInit() {
@@ -85,7 +95,7 @@ export class TaskService {
 
     const unindexedPosts = await this.sitePostRepository.find({
       where: {
-        indexStatus: In([IndexStatus.NEW, IndexStatus.NEUTRAL]),
+        indexStatus: In([IndexStatus.NEW]),
         created_at: MoreThan(sixHoursAgo),
       },
       relations: ['post', 'site'],
@@ -220,15 +230,14 @@ export class TaskService {
     const oldSitePosts = await this.sitePostRepository.find({
       where: {
         created_at: LessThan(fiveDaysAgo),
-        indexStatus: In([IndexStatus.NEUTRAL]),
+        indexStatus: In([
+          IndexStatus.NEW,
+          IndexStatus.INDEXING,
+          IndexStatus.DELETED,
+          IndexStatus.NEUTRAL,
+          IndexStatus.DELETED,
+        ]),
       },
-      relations: [
-        'post',
-        'post.article',
-        'post.article.trending',
-        'post.thumbnail',
-        'post.categories',
-      ],
     });
 
     if (oldSitePosts.length === 0) {
@@ -238,47 +247,23 @@ export class TaskService {
 
     this.logger.log(`Deleting ${oldSitePosts.length} old posts...`);
 
-    for (const sitePost of oldSitePosts) {
-      const post_id = sitePost.post_id;
+    for (const [index, sitePost] of oldSitePosts.entries()) {
+      try {
+        this.logger.debug(
+          `Deleting post ${index + 1}/${oldSitePosts.length} - sitePost.id: ${sitePost.id}`,
+        );
 
-      const post_thumbnail_id = sitePost.post.thumbnail_id;
-      const article_id = sitePost.post.article_id;
-      const article_thumbnail_id = sitePost.post?.article?.thumbnail_id;
+        const deleted = await this.deletePostArchived(sitePost);
 
-      const trending_id = sitePost.post?.article?.trending_id;
-
-      const trending_thumbnail_id =
-        sitePost.post.article?.trending?.thumbnail_id;
-
-      await this.sitePostRepository.delete({ id: sitePost.id });
-
-      await this.categoryRepository
-        .createQueryBuilder()
-        .delete()
-        .from('category_posts')
-        .where('post_id = :postId', { postId: sitePost.post_id })
-        .execute();
-
-      if (post_id) {
-        await this.postRepository.delete({ id: post_id });
+        this.logger.verbose(
+          `✔ Deleted post ID ${deleted.deleted?.post?.id ?? 'N/A'} - "${deleted.deleted?.post?.title}"`,
+        );
+      } catch (err) {
+        this.logger.error(
+          `❌ Failed to delete sitePost ID ${sitePost.id}: ${err.message}`,
+          err.stack,
+        );
       }
-      article_id &&
-        (await this.trendingArticleRepository.delete({ id: article_id }));
-
-      if (trending_id) {
-        await this.trendingRepository.delete({
-          id: trending_id,
-        });
-      }
-      if (post_thumbnail_id) {
-        await this.removeImage(post_thumbnail_id);
-      }
-
-      article_thumbnail_id &&
-        (await this.mediaRepository.delete({ id: article_thumbnail_id }));
-
-      trending_thumbnail_id &&
-        (await this.mediaRepository.delete({ id: trending_thumbnail_id }));
     }
 
     this.logger.debug('END - Cleanup Old Posts.');
@@ -572,5 +557,125 @@ export class TaskService {
       .catch((error) => {
         return console.log(error);
       });
+  }
+
+  // DELETE POST ARCHIVERD
+  async deletePostArchived(sitePost: SitePost) {
+    const postId = sitePost.post_id;
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+      relations: ['article', 'article.trending', 'categories'],
+      select: ['id', 'slug', 'title', 'thumbnail_id', 'article', 'categories'],
+    });
+
+    const {
+      id: post_id,
+      title: post_title,
+      slug: post_slug,
+      thumbnail_id: post_thumbnail_id,
+      article,
+      categories,
+    } = post || {
+      post_id: undefined,
+      title: undefined,
+      slug: undefined,
+      thumbnail_id: undefined,
+      article: undefined,
+      categories: undefined,
+    };
+
+    const deletedData = {
+      sitePost: {
+        id: sitePost.id,
+        site_id: sitePost.site_id,
+        post_id: sitePost.post_id,
+        created_at: sitePost.created_at,
+      },
+      post: {
+        id: post_id,
+        title: post_title,
+        slug: post_slug,
+        thumbnail_id: post_thumbnail_id,
+      },
+      article: article && {
+        id: article.id,
+        title: article.title,
+        thumbnail_id: article.thumbnail_id,
+      },
+      trending: article?.trending && {
+        id: article.trending.id,
+        title: article.trending.titleQuery,
+        thumbnail_id: article.trending.thumbnail_id,
+      },
+      mediaIds: {
+        post: post_thumbnail_id,
+        article: article?.thumbnail_id,
+        trending: article?.trending?.thumbnail_id,
+      },
+      categories: categories?.map((c) => ({
+        id: c.id,
+        name: c.name,
+      })),
+    };
+
+    const categoryIds = categories?.map((c) => c.id);
+
+    await this.dataSource.transaction(async (manager) => {
+      if (sitePost.id) {
+        await manager.delete(SitePost, { id: sitePost.id });
+      }
+
+      if (Number(categoryIds?.length) > 0) {
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from('category_posts')
+          .where('post_id = :postId', { postId: post_id })
+          .execute();
+      }
+
+      post_id && (await manager.delete(Post, { id: post_id }));
+
+      article?.id &&
+        (await manager.delete(TrendingArticle, { id: article.id }));
+
+      article?.trending_id &&
+        (await manager.delete(Trending, { id: article.trending_id }));
+
+      if (post_thumbnail_id) {
+        try {
+          await manager.delete(Media, { id: post_thumbnail_id });
+        } catch (error) {
+          console.log(
+            `POST Media with ID ${post_thumbnail_id} could not be deleted. Skipping...`,
+          );
+        }
+      }
+
+      if (article?.thumbnail_id) {
+        try {
+          await manager.delete(Media, { id: article.thumbnail_id });
+        } catch (error) {
+          console.log(
+            `ARTICLE Media with ID ${article.thumbnail_id} could not be deleted. Skipping...`,
+          );
+        }
+      }
+
+      if (article?.trending?.thumbnail_id) {
+        try {
+          await manager.delete(Media, { id: article.trending.thumbnail_id });
+        } catch (error) {
+          console.log(
+            `TRENDING Media with ID ${article.trending.thumbnail_id} could not be deleted. Skipping...`,
+          );
+        }
+      }
+    });
+
+    return {
+      message: 'Post and related data deleted successfully',
+      deleted: deletedData,
+    };
   }
 }
