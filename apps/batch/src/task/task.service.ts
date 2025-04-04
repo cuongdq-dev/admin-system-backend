@@ -212,6 +212,65 @@ export class TaskService {
   }
 
   @Cron('0 1 * * *')
+  async googleMetaDataPassed() {
+    this.logger.debug('START - Get Google Meta Data.');
+
+    const indexedPosts = await this.sitePostRepository.find({
+      where: {
+        indexStatus: In([IndexStatus.PASS]),
+      },
+      relations: ['post', 'site'],
+      select: {
+        id: true,
+        post_id: true,
+        site_id: true,
+        post: { slug: true, id: true },
+        site: { domain: true, id: true },
+      },
+    });
+    for (const sitePost of indexedPosts) {
+      const { post, site } = sitePost;
+      if (!post || !site) continue;
+
+      const postUrl = `${site.domain}/bai-viet/${post.slug}`;
+
+      const success = await getMetaDataGoogleConsole(
+        postUrl,
+        site.domain + '/',
+      );
+      await this.googleIndexRequestRepository.upsert(
+        {
+          post_id: sitePost.post_id,
+          site_id: sitePost.site_id,
+          post_slug: sitePost.post.slug,
+          site_domain: sitePost.site.domain,
+          url: postUrl,
+          googleUrl:
+            'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+          type: 'URL_METADATA',
+          response: success,
+          requested_at: new Date(),
+        },
+        {
+          conflictPaths: ['type', 'post_slug'],
+          skipUpdateIfNoValuesChanged: true,
+        },
+      );
+      if (success) {
+        const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
+        if (!!verdict) {
+          sitePost.indexStatus = verdict;
+          sitePost.indexState = success;
+        }
+        await this.sitePostRepository.save(sitePost);
+      }
+      this.logger.log(`🔍 Indexing: ${postUrl}`);
+    }
+
+    this.logger.debug('END - Get Google Meta Data.');
+  }
+
+  @Cron('0 2 * * *')
   async handleCleanupOldPosts() {
     this.logger.debug('START - Cleanup Old Posts.');
 
