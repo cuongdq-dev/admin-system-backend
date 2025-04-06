@@ -9,18 +9,16 @@ import {
   User,
 } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
+import { IndexStatus } from '@app/entities/site_posts.entity';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { In, LessThan, Repository } from 'typeorm';
+import { DataSource, In, LessThan, Repository } from 'typeorm';
 import { PostBodyDto } from './post.dto';
 import {
   postArchivedPaginateConfig,
   postPaginateConfig,
-  trendingPaginateConfig,
 } from './post.pagination';
-import { IndexStatus } from '@app/entities/site_posts.entity';
-import { DataSource } from 'typeorm';
 
 @Injectable()
 export class PostService {
@@ -46,12 +44,66 @@ export class PostService {
   ) {}
 
   async getTrendings(query: PaginateQuery) {
-    const data = await paginate(
+    const qb = this.trendingRepository
+      .createQueryBuilder('trending')
+      .leftJoinAndSelect('trending.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('trending.articles', 'articles')
+      .leftJoinAndSelect('articles.thumbnail', 'articles_thumbnail')
+      .leftJoinAndSelect('articles.posts', 'articles_posts')
+      .leftJoinAndSelect('articles_posts.thumbnail', 'articles_posts_thumbnail')
+      .loadRelationCountAndMap('trending.postCount', 'articles.posts')
+      .loadRelationCountAndMap('trending.articleCount', 'trending.articles')
+      .select([
+        'trending.id',
+        'trending.created_at',
+        'trending.titleQuery',
+        'trending.formattedTraffic',
+        'trending.trendDate',
+        'trending.relatedQueries',
+        'thumbnail.id',
+        'thumbnail.url',
+        'thumbnail.slug',
+        'articles.id',
+        'articles.created_at',
+        'articles.relatedQueries',
+        'articles.slug',
+        'articles.title',
+        'articles.source',
+        'articles.meta_description',
+
+        'articles_thumbnail.id',
+        'articles_thumbnail.url',
+        'articles_thumbnail.slug',
+
+        'articles_posts.id',
+        'articles_posts.slug',
+        'articles_posts.title',
+        'articles_posts.meta_description',
+        'articles_posts.created_at',
+
+        'articles_posts_thumbnail.id',
+        'articles_posts_thumbnail.url',
+        'articles_posts_thumbnail.slug',
+      ])
+      .groupBy('trending.id')
+      .addGroupBy('thumbnail.id')
+      .addGroupBy('articles.id')
+      .addGroupBy('articles_thumbnail.id')
+      .addGroupBy('articles_posts.id')
+      .addGroupBy('articles_posts_thumbnail.id');
+
+    const paginatedData = await paginate(
       { ...query, filter: { ...query.filter } },
-      this.trendingRepository,
-      trendingPaginateConfig,
+      qb,
+      {
+        sortableColumns: ['created_at'],
+        defaultSortBy: [['created_at', 'DESC']],
+        maxLimit: 500,
+        defaultLimit: 20,
+      },
     );
-    return data.data;
+
+    return paginatedData;
   }
 
   async getAll(query: PaginateQuery) {

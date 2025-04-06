@@ -68,7 +68,7 @@ export class PostController {
     return this.postService.deletePostArchived(sitePost);
   }
 
-  @Get('/trendings')
+  @Get('/trending/list')
   @ApiOkPaginatedResponse(Trending, trendingPaginateConfig)
   @ApiPaginationQuery(trendingPaginateConfig)
   async getTrendings(@Paginate() query: PaginateQuery) {

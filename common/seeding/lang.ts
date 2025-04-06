@@ -92,6 +92,8 @@ export const languages = [
 
       blog_nav: 'Blog',
       blog_all_nav: 'All Blog',
+      blog_trending_nav: 'Trending',
+
       blog_archived_nav: 'Archived',
       blog_list_page: 'Blog List',
       blog_detail_page: 'Blog Detail',
@@ -388,6 +390,8 @@ export const languages = [
       product_detail_title: 'Chi tiết sản phẩm',
 
       blog_nav: 'Blog',
+      blog_trending_nav: 'Trending',
+
       blog_list_page: 'Danh sách bài viết',
       blog_detail_page: 'Chi tiết bài viết',
       blog_new_button: 'Thêm bài viết mới',
