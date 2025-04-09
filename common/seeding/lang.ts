@@ -91,6 +91,7 @@ export const languages = [
       product_detail_title: 'Product Detail',
 
       blog_nav: 'Blog',
+      blog_unused_nav: 'Blog Unused',
       blog_all_nav: 'All Blog',
       blog_trending_nav: 'Trending',
 
@@ -292,6 +293,10 @@ export const languages = [
       google_indexing_nav: 'Google Indexing',
       google_console_list_page: 'Google Console List',
       google_logs_nav: 'Google Logs',
+
+      blog_unsed_description: 'Blogs no longer used on any site',
+      blog_archived_description: 'Old blogs not indexed or removed from index',
+      blog_trending_description: 'Trending blogs from search data',
     },
   },
   {
@@ -391,6 +396,7 @@ export const languages = [
 
       blog_nav: 'Blog',
       blog_trending_nav: 'Trending',
+      blog_unused_nav: 'Blog Unused',
 
       blog_list_page: 'Danh sách bài viết',
       blog_detail_page: 'Chi tiết bài viết',
@@ -582,6 +588,11 @@ export const languages = [
       google_indexing_nav: 'Google Indexing',
       google_console_list_page: 'Google Console List',
       google_logs_nav: 'Google Logs',
+
+      blog_unsed_description:
+        'Các blog không còn được dùng trên bất kỳ site nào',
+      blog_archived_description: 'Blog cũ chưa hoặc ngừng lập chỉ mục',
+      blog_trending_description: 'Blog thịnh hành theo dữ liệu tìm kiếm',
     },
   },
 ];

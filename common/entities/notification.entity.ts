@@ -62,7 +62,10 @@ export class Notification extends BaseEntity {
   @Column({ type: 'uuid' })
   user_id: string;
 
-  @ManyToOne('users', 'notifications')
+  @ManyToOne(() => User, (user) => user.notifications, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'user_id' })
   user: Relation<User>;
 }

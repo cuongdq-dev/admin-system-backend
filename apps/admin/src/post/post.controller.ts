@@ -68,11 +68,47 @@ export class PostController {
     return this.postService.deletePostArchived(sitePost);
   }
 
+  @Get('/unused/list')
+  @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
+  @ApiPaginationQuery(postPaginateConfig)
+  getNew(@Paginate() query: PaginateQuery) {
+    return this.postService.getListUnused(query);
+  }
+
+  @Delete('/unused/delete/:id')
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  deletePostUnsed(
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      IsIDExistPipe({
+        entity: PostEntity,
+        filterField: 'id',
+        relations: [
+          'article',
+          'article.trending',
+          'sitePosts',
+          'thumbnail',
+          'categories',
+        ],
+      }),
+    )
+    post: PostEntity,
+  ) {
+    return this.postService.deletePostUnused(post);
+  }
+
   @Get('/trending/list')
   @ApiOkPaginatedResponse(Trending, trendingPaginateConfig)
   @ApiPaginationQuery(trendingPaginateConfig)
   async getTrendings(@Paginate() query: PaginateQuery) {
     return this.postService.getTrendings(query);
+  }
+
+  @Delete('/trending/delete/:id')
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  deleteTrending(@Param('id') trendingId: string) {
+    return this.postService.deleteTrending(trendingId);
   }
 
   @Get(':slug')

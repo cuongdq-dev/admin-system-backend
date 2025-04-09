@@ -14,7 +14,7 @@ import { Category } from './category.entity';
 import { Media } from './media.entity';
 import { SitePost } from './site_posts.entity';
 import { TrendingArticle } from './trending_articles.entity';
-import type { User } from './user.entity';
+import { User } from './user.entity';
 export enum PostStatus {
   NEW = 'NEW',
   DRAFT = 'DRAFT',
@@ -65,7 +65,10 @@ export class Post extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   thumbnail_id: string;
 
-  @ManyToOne('User', 'posts')
+  @ManyToOne(() => User, (user) => user.posts, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'user_id' })
   user: Relation<User>;
 

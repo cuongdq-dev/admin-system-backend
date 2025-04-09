@@ -8,7 +8,7 @@ import {
   Relation,
 } from 'typeorm';
 import { BaseEntity } from './base';
-import type { User } from './user.entity';
+import { User } from './user.entity';
 
 export enum TokenType {
   REGISTER_VERIFY = 'REGISTER_VERIFY',
@@ -32,7 +32,10 @@ export class Token extends BaseEntity {
   @Column({ type: 'uuid' })
   user_id: string;
 
-  @ManyToOne('User', 'tokens')
+  @ManyToOne(() => User, (user) => user.tokens, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'user_id' })
   user: Relation<User>;
 

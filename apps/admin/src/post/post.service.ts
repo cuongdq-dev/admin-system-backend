@@ -10,15 +10,16 @@ import {
 } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { DataSource, In, LessThan, Repository } from 'typeorm';
 import { PostBodyDto } from './post.dto';
-import {
-  postArchivedPaginateConfig,
-  postPaginateConfig,
-} from './post.pagination';
+import { postArchivedPaginateConfig } from './post.pagination';
 
 @Injectable()
 export class PostService {
@@ -50,9 +51,15 @@ export class PostService {
       .leftJoinAndSelect('trending.articles', 'articles')
       .leftJoinAndSelect('articles.thumbnail', 'articles_thumbnail')
       .leftJoinAndSelect('articles.posts', 'articles_posts')
+      .leftJoinAndSelect('articles_posts.sitePosts', 'site_posts')
+      .leftJoinAndSelect('site_posts.site', 'site')
       .leftJoinAndSelect('articles_posts.thumbnail', 'articles_posts_thumbnail')
       .loadRelationCountAndMap('trending.postCount', 'articles.posts')
       .loadRelationCountAndMap('trending.articleCount', 'trending.articles')
+      .loadRelationCountAndMap(
+        'articles_posts.siteCount',
+        'articles_posts.sitePosts',
+      )
       .select([
         'trending.id',
         'trending.created_at',
@@ -84,12 +91,22 @@ export class PostService {
         'articles_posts_thumbnail.id',
         'articles_posts_thumbnail.url',
         'articles_posts_thumbnail.slug',
+
+        'site_posts.id',
+        'site_posts.post_id',
+        'site_posts.site_id',
+
+        'site.id',
+        'site.domain',
+        'site.name',
       ])
       .groupBy('trending.id')
       .addGroupBy('thumbnail.id')
       .addGroupBy('articles.id')
       .addGroupBy('articles_thumbnail.id')
       .addGroupBy('articles_posts.id')
+      .addGroupBy('site_posts.id')
+      .addGroupBy('site.id')
       .addGroupBy('articles_posts_thumbnail.id');
 
     const paginatedData = await paginate(
@@ -107,12 +124,113 @@ export class PostService {
   }
 
   async getAll(query: PaginateQuery) {
-    return paginate(
-      { ...query, filter: { ...query.filter } },
-      this.postRepository,
-      postPaginateConfig,
-    );
+    const postsQb = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('post.categories', 'categories')
+      .innerJoinAndSelect('post.article', 'article')
+      .innerJoinAndSelect('post.sitePosts', 'sitePosts')
+      .innerJoinAndSelect('sitePosts.site', 'sp_site')
+      .innerJoinAndSelect('sitePosts.post', 'sp_post')
+      .loadRelationCountAndMap('sitePosts.siteCount', 'post.sitePosts')
+      .select([
+        'post.id',
+        'post.title',
+        'post.slug',
+        'post.meta_description',
+        'post.created_at',
+        'post.article_id',
+        'article.id',
+        'article.source',
+        'article.slug',
+
+        'thumbnail.id',
+        'thumbnail.url',
+        'thumbnail.slug',
+
+        'categories.id',
+        'categories.slug',
+        'categories.name',
+
+        'sitePosts.id',
+        'sitePosts.created_at',
+
+        'sp_site.id',
+        'sp_site.name',
+        'sp_site.domain',
+        'sp_site.created_at',
+
+        'sp_post.id',
+        'sp_post.title',
+        'sp_post.slug',
+        'sp_post.created_at',
+      ])
+      .groupBy('post.id')
+      .addGroupBy('thumbnail.id')
+      .addGroupBy('article.id')
+      .addGroupBy('sitePosts.id')
+      .addGroupBy('categories.id')
+      .addGroupBy('sp_site.id')
+      .addGroupBy('sp_post.id');
+
+    return paginate({ ...query, filter: { ...query.filter } }, postsQb, {
+      sortableColumns: ['created_at'],
+      defaultSortBy: [['created_at', 'DESC']],
+      maxLimit: 500,
+      defaultLimit: 23,
+    });
   }
+
+  async getListUnused(query: PaginateQuery) {
+    const postsQb = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('post.categories', 'categories')
+      .leftJoinAndSelect('post.article', 'article')
+      .leftJoinAndSelect('post.sitePosts', 'sitePosts')
+      .select([
+        'post.id',
+        'post.title',
+
+        'sitePosts.id',
+        'sitePosts.post_id',
+        'sitePosts.site_id',
+        'sitePosts.created_at',
+
+        'post.slug',
+        'post.status',
+        'post.meta_description',
+        'post.created_at',
+        'post.article_id',
+
+        'article.id',
+        'article.slug',
+        'article.source',
+
+        'thumbnail.id',
+        'thumbnail.url',
+        'thumbnail.slug',
+
+        'categories.id',
+        'categories.slug',
+        'categories.name',
+      ])
+      .addSelect('article.source', 'post_source')
+      .where('sitePosts.id IS NULL')
+      .groupBy('post.id')
+      .addGroupBy('thumbnail.id')
+      .addGroupBy('article.id')
+      .addGroupBy('sitePosts.id')
+      .addGroupBy('categories.id');
+
+    return paginate({ ...query, filter: { ...query.filter } }, postsQb, {
+      sortableColumns: ['created_at'],
+      defaultSortBy: [['created_at', 'DESC']],
+      maxLimit: 500,
+      defaultLimit: 23,
+    });
+  }
+
   async getArchived(query: PaginateQuery) {
     const fiveDaysAgo = new Date();
     fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 2);
@@ -272,6 +390,230 @@ export class PostService {
       deleted: deletedData,
     };
   }
+
+  async deletePostUnused(postValues: Post) {
+    if (postValues.sitePosts.length > 0) {
+      throw new BadRequestException(
+        'Some posts in this trending are currently in use by sites. Cannot delete!',
+      );
+    }
+    const {
+      id: post_id,
+      title: post_title,
+      slug: post_slug,
+      thumbnail_id: post_thumbnail_id,
+      article,
+      categories,
+    } = postValues || {
+      post_id: undefined,
+      title: undefined,
+      slug: undefined,
+      thumbnail_id: undefined,
+      article: undefined,
+      categories: undefined,
+    };
+
+    const deletedData = {
+      post: {
+        id: post_id,
+        title: post_title,
+        slug: post_slug,
+        thumbnail_id: post_thumbnail_id,
+      },
+      article: article && {
+        id: article.id,
+        title: article.title,
+        thumbnail_id: article.thumbnail_id,
+      },
+      trending: article?.trending && {
+        id: article.trending.id,
+        title: article.trending.titleQuery,
+        thumbnail_id: article.trending.thumbnail_id,
+      },
+      mediaIds: {
+        post: post_thumbnail_id,
+        article: article?.thumbnail_id,
+        trending: article?.trending?.thumbnail_id,
+      },
+      categories: categories?.map((c) => ({
+        id: c.id,
+        name: c.name,
+      })),
+    };
+
+    const categoryIds = categories?.map((c) => c.id);
+
+    await this.dataSource.transaction(async (manager) => {
+      if (Number(categoryIds?.length) > 0) {
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from('category_posts')
+          .where('post_id = :postId', { postId: post_id })
+          .execute();
+      }
+
+      post_id && (await manager.delete(Post, { id: post_id }));
+
+      article?.id &&
+        (await manager.delete(TrendingArticle, { id: article.id }));
+
+      article?.trending_id &&
+        (await manager.delete(Trending, { id: article.trending_id }));
+
+      if (post_thumbnail_id) {
+        try {
+          await manager.delete(Media, { id: post_thumbnail_id });
+        } catch (error) {
+          console.log(
+            `POST Media with ID ${post_thumbnail_id} could not be deleted. Skipping...`,
+          );
+        }
+      }
+
+      if (article?.thumbnail_id) {
+        try {
+          await manager.delete(Media, { id: article.thumbnail_id });
+        } catch (error) {
+          console.log(
+            `ARTICLE Media with ID ${article.thumbnail_id} could not be deleted. Skipping...`,
+          );
+        }
+      }
+
+      if (article?.trending?.thumbnail_id) {
+        try {
+          await manager.delete(Media, { id: article.trending.thumbnail_id });
+        } catch (error) {
+          console.log(
+            `TRENDING Media with ID ${article.trending.thumbnail_id} could not be deleted. Skipping...`,
+          );
+        }
+      }
+    });
+
+    return {
+      message: 'Post and related data deleted successfully',
+      deleted: deletedData,
+    };
+  }
+  async deleteTrending(trendingId: string) {
+    const trending = await this.trendingRepository
+      .createQueryBuilder('trending')
+      .leftJoinAndSelect('trending.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('trending.articles', 'articles')
+      .leftJoinAndSelect('articles.thumbnail', 'articles_thumbnail')
+      .leftJoinAndSelect('articles.posts', 'articles_posts')
+      .leftJoinAndSelect('articles_posts.sitePosts', 'site_posts')
+      .leftJoinAndSelect('site_posts.site', 'site')
+      .leftJoinAndSelect('articles_posts.thumbnail', 'articles_posts_thumbnail')
+      .loadRelationCountAndMap('trending.postCount', 'articles.posts')
+      .loadRelationCountAndMap('trending.articleCount', 'trending.articles')
+      .loadRelationCountAndMap(
+        'articles_posts.siteCount',
+        'articles_posts.sitePosts',
+      )
+      .select([
+        'trending.id',
+        'trending.created_at',
+        'trending.titleQuery',
+        'trending.formattedTraffic',
+        'trending.trendDate',
+        'trending.relatedQueries',
+        'trending.thumbnail_id',
+        'articles.id',
+        'articles.created_at',
+        'articles.relatedQueries',
+        'articles.slug',
+        'articles.title',
+        'articles.thumbnail_id',
+        'articles.source',
+        'articles.meta_description',
+
+        'articles_thumbnail.id',
+        'articles_thumbnail.url',
+        'articles_thumbnail.slug',
+
+        'articles_posts.id',
+        'articles_posts.slug',
+        'articles_posts.title',
+        'articles_posts.meta_description',
+        'articles_posts.created_at',
+        'articles_posts.thumbnail_id',
+
+        'site_posts.id',
+        'site_posts.post_id',
+        'site_posts.site_id',
+
+        'site.id',
+        'site.domain',
+        'site.name',
+      ])
+      .where('trending.id = :id', { id: trendingId })
+      .groupBy('trending.id')
+      .addGroupBy('thumbnail.id')
+      .addGroupBy('articles.id')
+      .addGroupBy('articles_thumbnail.id')
+      .addGroupBy('articles_posts.id')
+      .addGroupBy('site_posts.id')
+      .addGroupBy('site.id')
+      .addGroupBy('articles_posts_thumbnail.id')
+      .getOne();
+
+    if (!trending) {
+      throw new BadRequestException('Trending Not Exist!');
+    }
+
+    const totalSiteCount = trending?.articles?.reduce(
+      (total: number, article: any) => {
+        const siteCountInArticle = article?.posts?.reduce(
+          (count: number, post: any) => {
+            return count + (Number(post?.siteCount) || 0);
+          },
+          0,
+        );
+
+        return total + siteCountInArticle;
+      },
+      0,
+    );
+
+    if (totalSiteCount > 0) {
+      throw new BadRequestException(
+        'Some posts in this trending are currently in use by sites. Cannot delete!',
+      );
+    }
+
+    const deletedData = {
+      articles: trending.articles && {
+        id: trending.articles.map((a) => a.id),
+        thumbnail_id: trending.articles.map((a) => a.thumbnail_id),
+      },
+      trending: trending && {
+        id: trending.id,
+        title: trending.titleQuery,
+        thumbnail_id: trending.thumbnail_id,
+      },
+    };
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.delete(Trending, { id: deletedData?.trending?.id });
+
+      for (const article of trending.articles) {
+        if (article.thumbnail_id)
+          await manager.delete(Media, { id: article.thumbnail_id });
+      }
+
+      if (trending.thumbnail_id)
+        await manager.delete(Media, { id: trending.thumbnail_id });
+    });
+
+    return {
+      message: 'Trending has been successfully deleted!',
+      deleted: true,
+    };
+  }
+
   async getPostBySlug(post: Post) {
     const result = await this.postRepository.update(
       { id: post.id, status: PostStatus.NEW },
