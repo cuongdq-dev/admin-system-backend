@@ -126,12 +126,6 @@ export class GoogleService {
           data: response?.data?.sitemap?.map((sm) => {
             return { ...sm, id: Date.parse(sm.lastSubmitted).toString() };
           }),
-          meta: {
-            totalItems: Number(response?.data?.sitemap?.length),
-            totalPages: 1,
-            itemsPerpage: Number(response?.data?.sitemap?.length),
-            currentPage: 1,
-          },
         };
       else {
         return undefined;
