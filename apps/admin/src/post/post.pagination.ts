@@ -44,11 +44,20 @@ export const postPaginateConfig: PaginateConfig<Post> = {
 export const postArchivedPaginateConfig: PaginateConfig<SitePost> = {
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
-  relations: ['site', 'post'],
+  relations: ['site', 'post', 'post.thumbnail', 'post.categories'],
   select: [
     'post.slug',
     'post.title',
     'post.id',
+    'post.meta_description',
+    'post.thumbnail.id',
+    'post.thumbnail.slug',
+    'post.thumbnail.url',
+
+    'post.categories.id',
+    'post.categories.slug',
+    'post.categories.name',
+
     'site.id',
     'site.name',
     'site.domain',

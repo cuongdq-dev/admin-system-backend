@@ -138,6 +138,7 @@ export class PostService {
         'post.title',
         'post.slug',
         'post.meta_description',
+        'post.status',
         'post.created_at',
         'post.article_id',
         'article.id',
@@ -264,9 +265,12 @@ export class PostService {
           post_slug: d.post?.slug ?? null,
           post_title: d.post?.title ?? null,
           post_id: d.post?.id ?? null,
+          post_meta_description: d.post?.meta_description ?? null,
           indexStatus: d.indexStatus ?? null,
           created_at: d.created_at ?? null,
           updated_at: d.updated_at ?? null,
+          thumbnail: d?.post?.thumbnail ?? null,
+          categories: d?.post?.categories ?? null,
         };
       }),
     };
