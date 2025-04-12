@@ -17,7 +17,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { DataSource, In, LessThan, Repository } from 'typeorm';
+import {
+  DataSource,
+  FindOptionsWhere,
+  In,
+  IsNull,
+  LessThan,
+  Repository,
+} from 'typeorm';
 import { PostBodyDto } from './post.dto';
 import { postArchivedPaginateConfig } from './post.pagination';
 
@@ -123,7 +130,7 @@ export class PostService {
     return paginatedData;
   }
 
-  async getAll(query: PaginateQuery) {
+  async getAll(query: PaginateQuery & Record<string, any>) {
     const postsQb = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.thumbnail', 'thumbnail')
@@ -173,6 +180,18 @@ export class PostService {
       .addGroupBy('categories.id')
       .addGroupBy('sp_site.id')
       .addGroupBy('sp_post.id');
+
+    if (query?.site_id)
+      postsQb.andWhere('sp_site.id = :site_id', { site_id: query.site_id });
+
+    if (query?.categories_id) {
+      const categoriesIds = query.categories_id
+        .split(',')
+        .map((id) => id.trim());
+      postsQb.andWhere('categories.id IN (:...categoriesIds)', {
+        categoriesIds,
+      });
+    }
 
     return paginate({ ...query, filter: { ...query.filter } }, postsQb, {
       sortableColumns: ['created_at'],

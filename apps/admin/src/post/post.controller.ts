@@ -12,6 +12,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -44,8 +45,11 @@ export class PostController {
   @Get('/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
-  getAll(@Paginate() query: PaginateQuery) {
-    return this.postService.getAll(query);
+  getAll(
+    @Paginate() paginateQuery: PaginateQuery,
+    @Query() query: { indexStatus?: string; site_id: string },
+  ) {
+    return this.postService.getAll({ ...paginateQuery, ...query });
   }
 
   @Get('/archived/list')

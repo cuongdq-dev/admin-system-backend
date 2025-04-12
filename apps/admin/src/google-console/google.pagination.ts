@@ -1,4 +1,4 @@
-import { Site, SitePost } from '@app/entities';
+import { SitePost } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const googleIndexingPaginateConfig: PaginateConfig<SitePost> = {

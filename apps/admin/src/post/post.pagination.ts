@@ -2,14 +2,7 @@ import { Post, SitePost, Trending } from '@app/entities';
 import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 
 export const postPaginateConfig: PaginateConfig<Post> = {
-  relations: [
-    'thumbnail',
-    'article',
-    'categories',
-    // 'sitePosts',
-    // 'sitePosts.site',
-    // 'sitePosts.post',
-  ],
+  relations: ['thumbnail', 'article', 'categories'],
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
   searchableColumns: ['title', 'content'],
@@ -31,10 +24,7 @@ export const postPaginateConfig: PaginateConfig<Post> = {
     'categories.name',
 
     'article_id',
-    // 'sitePosts.id',
-    // 'post.slug',
-    // 'post.id',
-    // 'site.id',
+
     'slug',
     'status',
   ],
