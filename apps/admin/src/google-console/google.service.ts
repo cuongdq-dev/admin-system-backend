@@ -200,6 +200,7 @@ export class GoogleService {
       ...googleIndexingPaginateConfig,
       where: where,
     });
+    console.log(data.data);
 
     return {
       ...data,
@@ -210,6 +211,9 @@ export class GoogleService {
           site_domain: d.site?.domain ?? null,
           post_slug: d.post?.slug ?? null,
           post_title: d.post?.title ?? null,
+          post_meta_description: d.post?.meta_description ?? null,
+          post_categories: d.post?.categories ?? null,
+          post_thumbnail: d?.post?.thumbnail ?? null,
           post_id: d.post?.id ?? null,
           indexStatus: d.indexStatus ?? null,
           created_at: d.created_at ?? null,
@@ -222,30 +226,48 @@ export class GoogleService {
     paginateQuery: PaginateQuery,
     query: { site_id?: string; type?: string[] },
   ) {
-    const where: FindOptionsWhere<GoogleIndexRequest> = {
-      type: In(['URL_UPDATED', 'URL_METADATA']),
-    };
+    const qb = this.googleIndexRequestRepository
+      .createQueryBuilder('req')
+      .leftJoinAndMapOne('req.post', 'posts', 'post', 'post.id = req.post_id')
 
-    if (query?.site_id) where.site_id = query.site_id;
-    if (query?.type) {
-      const indexStatuses = Array.isArray(query.type)
-        ? query.type
-        : [query.type];
-      where.type = In(indexStatuses);
+      .orderBy('req.requested_at', 'DESC')
+      .select([
+        'req.id',
+        'req.post_id',
+        'req.response',
+        'req.site_id',
+        'req.url',
+        'req.googleUrl',
+        'req.type',
+        'req.requested_at',
+        'req.site_domain',
+        'post.id',
+        'post.title',
+        'post.slug',
+        'post.meta_description',
+      ])
+      .groupBy('req.id')
+      .addGroupBy('post.id');
+
+    if (query?.site_id) {
+      qb.andWhere('req.site_id = :site_id', { site_id: query.site_id });
     }
 
-    const data = await paginate(
-      paginateQuery,
-      this.googleIndexRequestRepository,
-      {
-        defaultSortBy: [['requested_at', 'DESC']],
-        sortableColumns: ['requested_at', 'post_slug'],
-        where: where,
-        defaultLimit: 200,
-        maxLimit: 500,
-      },
-    );
+    if (query?.type?.length) {
+      qb.andWhere('req.type IN (:...types)', { types: query.type });
+    } else {
+      qb.andWhere('req.type IN (:...types)', {
+        types: ['URL_UPDATED', 'URL_METADATA'],
+      });
+    }
+    const data = await paginate(paginateQuery, qb, {
+      sortableColumns: ['requested_at', 'post_slug'],
+      defaultSortBy: [['requested_at', 'DESC']],
+      defaultLimit: 20,
+      maxLimit: 500,
+    });
 
+    console.log(data.data);
     return data;
   }
 }

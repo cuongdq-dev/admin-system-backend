@@ -55,8 +55,11 @@ export class PostController {
   @Get('/archived/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
-  getArchived(@Paginate() query: PaginateQuery) {
-    return this.postService.getArchived(query);
+  getArchived(
+    @Paginate() paginate: PaginateQuery,
+    @Query() query: { indexStatus?: string; site_id: string },
+  ) {
+    return this.postService.getArchived({ ...paginate, ...query });
   }
 
   @Delete('/archived/delete/:id')
@@ -75,8 +78,11 @@ export class PostController {
   @Get('/unused/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
-  getNew(@Paginate() query: PaginateQuery) {
-    return this.postService.getListUnused(query);
+  getNew(
+    @Paginate() paginate: PaginateQuery,
+    @Query() query: { indexStatus?: string; site_id: string },
+  ) {
+    return this.postService.getListUnused({ ...paginate, ...query });
   }
 
   @Delete('/unused/delete/:id')

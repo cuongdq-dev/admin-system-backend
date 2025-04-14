@@ -2,9 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
   Unique,
 } from 'typeorm';
+import { Post, Site } from '.';
 
 @Entity('google_index_requests')
 @Unique(['post_slug', 'type'])
@@ -38,4 +42,12 @@ export class GoogleIndexRequest {
 
   @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
   response: any;
+
+  @ManyToOne(() => Post, { eager: false })
+  @JoinColumn({ name: 'post_id' })
+  post: Relation<Post>;
+
+  @ManyToOne(() => Site, { eager: false })
+  @JoinColumn({ name: 'site_id' })
+  site: Relation<Site>;
 }

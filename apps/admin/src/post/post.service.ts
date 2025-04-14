@@ -201,7 +201,7 @@ export class PostService {
     });
   }
 
-  async getListUnused(query: PaginateQuery) {
+  async getListUnused(query: PaginateQuery & Record<string, any>) {
     const postsQb = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.thumbnail', 'thumbnail')
@@ -242,6 +242,18 @@ export class PostService {
       .addGroupBy('article.id')
       .addGroupBy('sitePosts.id')
       .addGroupBy('categories.id');
+
+    if (query?.site_id)
+      postsQb.andWhere('sitePosts.id = :site_id', { site_id: query.site_id });
+
+    if (query?.categories_id) {
+      const categoriesIds = query.categories_id
+        .split(',')
+        .map((id) => id.trim());
+      postsQb.andWhere('categories.id IN (:...categoriesIds)', {
+        categoriesIds,
+      });
+    }
 
     return paginate({ ...query, filter: { ...query.filter } }, postsQb, {
       sortableColumns: ['created_at'],

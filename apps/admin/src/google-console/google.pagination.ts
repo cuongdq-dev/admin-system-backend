@@ -4,11 +4,21 @@ import { FilterOperator, PaginateConfig } from 'nestjs-paginate';
 export const googleIndexingPaginateConfig: PaginateConfig<SitePost> = {
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
-  relations: ['post', 'site'],
+  relations: ['post', 'site', 'post.thumbnail', 'post.categories'],
   select: [
     'post.slug',
     'post.title',
     'post.id',
+    'post.meta_description',
+    'post.thumbnail.id',
+    'post.thumbnail.slug',
+    'post.thumbnail.data',
+    'post.thumbnail.url',
+
+    'post.categories.id',
+    'post.categories.slug',
+    'post.categories.name',
+
     'site.id',
     'site.name',
     'site.domain',
