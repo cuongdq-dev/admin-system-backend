@@ -200,7 +200,6 @@ export class GoogleService {
       ...googleIndexingPaginateConfig,
       where: where,
     });
-    console.log(data.data);
 
     return {
       ...data,
@@ -229,6 +228,7 @@ export class GoogleService {
     const qb = this.googleIndexRequestRepository
       .createQueryBuilder('req')
       .leftJoinAndMapOne('req.post', 'posts', 'post', 'post.id = req.post_id')
+      .leftJoinAndSelect('post.thumbnail', 'thumbnail')
 
       .orderBy('req.requested_at', 'DESC')
       .select([
@@ -245,9 +245,14 @@ export class GoogleService {
         'post.title',
         'post.slug',
         'post.meta_description',
+        'thumbnail.id',
+        'thumbnail.data',
+        'thumbnail.slug',
+        'thumbnail.url',
       ])
       .groupBy('req.id')
-      .addGroupBy('post.id');
+      .addGroupBy('post.id')
+      .addGroupBy('thumbnail.id');
 
     if (query?.site_id) {
       qb.andWhere('req.site_id = :site_id', { site_id: query.site_id });
@@ -267,7 +272,6 @@ export class GoogleService {
       maxLimit: 500,
     });
 
-    console.log(data.data);
     return data;
   }
 }

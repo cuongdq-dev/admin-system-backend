@@ -1,4 +1,4 @@
-import { Lang, Notification, User } from '@app/entities';
+import { Category, Lang, Notification, Post, Site, User } from '@app/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SettingController } from './setting.controller';
@@ -6,9 +6,7 @@ import { SettingService } from './setting.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Notification]),
-    TypeOrmModule.forFeature([Lang]),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([Notification, Lang, User, Post, Site, Category]),
   ],
   providers: [SettingService],
   controllers: [SettingController],
