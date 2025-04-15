@@ -18,14 +18,17 @@ export class SettingService {
   ) {}
 
   async getSetting(user: User) {
-    const [notifyNew, lang] = await Promise.all([
+    const [notifyNew, lang, u] = await Promise.all([
       this.notificationRepository.count({
         where: { user_id: user.id, status: NotificationStatus.NEW },
       }),
       this.langRepository.find(),
+      this.userRepository.findOne({
+        where: { id: user.id },
+        relations: ['avatar'],
+      }),
     ]);
-
-    return { lang, user, notifyNew };
+    return { lang, user: u, notifyNew };
   }
 
   async setFirebaseToken(token: string, user: User) {
