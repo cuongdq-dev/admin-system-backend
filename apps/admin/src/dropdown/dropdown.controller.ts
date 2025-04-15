@@ -10,6 +10,11 @@ import { AuthGuard } from '@nestjs/passport';
 export class DropdownController {
   constructor(private dropdownService: DropdownService) {}
 
+  @Get('')
+  getDropdowns() {
+    return this.dropdownService.getDropdowns();
+  }
+
   @Get('/sites')
   getSite() {
     return this.dropdownService.getSites();

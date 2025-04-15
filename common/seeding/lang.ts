@@ -4,6 +4,15 @@ export const languages = [
     name: 'English',
     description: 'English language',
     content: {
+      post_summary: 'New Posts',
+      site_summary: 'New Sites',
+      trending_summary: 'New Trendings',
+      category_summary: 'Categories',
+      google_console_summary: 'Google Indexed',
+      keyword_summary: 'Keywords',
+      source_summary: 'Sources',
+      google_Search_status_chart: 'Google Search',
+
       setting_nav: 'System Setting',
 
       dashboard_nav: 'Dashboard',
@@ -304,6 +313,15 @@ export const languages = [
     name: 'Vietnamese',
     description: 'Vietnamese language',
     content: {
+      post_summary: 'New Posts',
+      site_summary: 'New Sites',
+      trending_summary: 'New Trendings',
+      category_summary: 'Categories',
+      google_console_summary: 'Google Indexed',
+      keyword_summary: 'Keywords',
+      google_Search_status_chart: 'Google Search',
+      source_summary: 'Sources',
+
       setting_nav: 'Cài Đặt',
 
       blog_all_nav: 'Tất cả',

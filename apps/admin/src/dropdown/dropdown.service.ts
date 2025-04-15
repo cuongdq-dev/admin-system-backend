@@ -18,6 +18,23 @@ export class DropdownService {
     private categoryRepository: Repository<Category>,
   ) {}
 
+  async getDropdowns() {
+    const [sites, posts, categories] = await Promise.all([
+      this.siteRepository
+        .createQueryBuilder('site')
+        .select(['site.id AS id', 'site.name AS title'])
+        .getRawMany(),
+      this.postRepository
+        .createQueryBuilder('post')
+        .select(['post.id AS id', 'post.title AS title'])
+        .getRawMany(),
+      this.categoryRepository
+        .createQueryBuilder('category')
+        .select(['category.id AS id', 'category.name AS title'])
+        .getRawMany(),
+    ]);
+    return { sites, posts, categories };
+  }
   async getSites() {
     return await this.siteRepository
       .createQueryBuilder('site')
