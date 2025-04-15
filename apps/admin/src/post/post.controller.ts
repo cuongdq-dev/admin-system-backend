@@ -47,9 +47,13 @@ export class PostController {
   @ApiPaginationQuery(postPaginateConfig)
   getAll(
     @Paginate() paginateQuery: PaginateQuery,
-    @Query() query: { indexStatus?: string; site_id: string },
+    @Query() query: { indexStatus?: string; site_id?: string; status?: string },
   ) {
-    return this.postService.getAll({ ...paginateQuery, ...query });
+    return this.postService.getAll({
+      ...paginateQuery,
+      ...query,
+      status: query?.status?.split(','),
+    });
   }
 
   @Get('/archived/list')

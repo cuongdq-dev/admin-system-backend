@@ -184,6 +184,13 @@ export class PostService {
     if (query?.site_id)
       postsQb.andWhere('sp_site.id = :site_id', { site_id: query.site_id });
 
+    if (query?.status?.length) {
+      postsQb.andWhere('post.status IN (:...status)', { status: query.status });
+    } else {
+      postsQb.andWhere('post.status IN (:...status)', {
+        status: ['NEW', 'DRAFT', 'PUBLISHED', 'DELETED'],
+      });
+    }
     if (query?.categories_id) {
       const categoriesIds = query.categories_id
         .split(',')
