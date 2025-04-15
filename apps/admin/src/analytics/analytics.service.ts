@@ -119,7 +119,6 @@ export class AnalyticsService {
       .orderBy('postCount', 'DESC')
       .getRawMany();
 
-    console.log(raw);
     return {
       chart: {
         categories: raw.map((r) => r.name),
