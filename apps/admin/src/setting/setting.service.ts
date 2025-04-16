@@ -1,4 +1,11 @@
-import { Lang, Notification, User } from '@app/entities';
+import {
+  Category,
+  Lang,
+  Notification,
+  Post as PostEntity,
+  Site,
+  User,
+} from '@app/entities';
 import { NotificationStatus } from '@app/entities/notification.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,10 +22,19 @@ export class SettingService {
 
     @InjectRepository(User)
     private userRepository: Repository<User>,
+
+    @InjectRepository(Site)
+    private siteRepository: Repository<Site>,
+
+    @InjectRepository(PostEntity)
+    private postRepository: Repository<PostEntity>,
+
+    @InjectRepository(Category)
+    private categoryRepository: Repository<Category>,
   ) {}
 
   async getSetting(user: User) {
-    const [notifyNew, lang, u] = await Promise.all([
+    const [notifyNew, lang, u, sites, posts, categories] = await Promise.all([
       this.notificationRepository.count({
         where: { user_id: user.id, status: NotificationStatus.NEW },
       }),
@@ -27,8 +43,26 @@ export class SettingService {
         where: { id: user.id },
         relations: ['avatar'],
       }),
+
+      this.siteRepository
+        .createQueryBuilder('site')
+        .select(['site.id AS id', 'site.name AS title'])
+        .getRawMany(),
+      this.postRepository
+        .createQueryBuilder('post')
+        .select(['post.id AS id', 'post.title AS title'])
+        .getRawMany(),
+      this.categoryRepository
+        .createQueryBuilder('category')
+        .select(['category.id AS id', 'category.name AS title'])
+        .getRawMany(),
     ]);
-    return { lang, user: u, notifyNew };
+    return {
+      lang,
+      user: u,
+      notifyNew,
+      dropdown: { sites, posts, categories },
+    };
   }
 
   async setFirebaseToken(token: string, user: User) {
