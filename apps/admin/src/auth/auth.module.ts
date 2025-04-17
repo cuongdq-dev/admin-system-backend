@@ -11,14 +11,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { SessionModule } from '../session/session.module';
 import { RefreshJwtStrategy } from './strategies/refresh.strategy';
 import { AuthController } from './auth.controller';
-import { User } from '@app/entities';
+import { Post, Site, User } from '@app/entities';
 
 @Module({
   imports: [
     UserModule,
     TokenModule,
     SessionModule,
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Site, Post]),
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({

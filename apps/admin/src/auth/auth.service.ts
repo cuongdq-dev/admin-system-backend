@@ -1,10 +1,12 @@
-import { User } from '@app/entities';
+import { Site, User } from '@app/entities';
 import { MailData } from '@app/modules';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { SessionService } from '../session/session.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +15,12 @@ export class AuthService {
     private mailerService: MailerService,
     private configService: ConfigService,
     private sessionService: SessionService,
+
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+
+    @InjectRepository(Site)
+    private siteRepository: Repository<Site>,
   ) {}
 
   async createJwtToken(user: User) {
@@ -100,6 +108,21 @@ export class AuthService {
   }
 
   async getProfile(user: User) {
-    return true;
+    const [profile, sites] = await Promise.all([
+      this.userRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.avatar', 'avatar')
+        .leftJoinAndSelect('user.avatar', 'sites')
+        .where('user.id = :userId', { userId: user.id })
+        .select(['user.id', 'avatar.id', 'avatar.url', 'avatar.filename'])
+        .getRawOne(),
+      this.siteRepository
+        .createQueryBuilder('site')
+        .where('site.created_by = :userId', { userId: user.id })
+        .getRawMany(),
+    ]);
+    console.log(sites);
+
+    return { ...profile, sites: sites };
   }
 }

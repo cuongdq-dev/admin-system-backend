@@ -1,39 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsString,
-  MaxLength,
-  IsNotEmpty,
-  IsOptional,
-  IsArray,
-  ValidateNested,
-  IsUUID,
-} from 'class-validator';
-import { ValidationGroup } from 'common/crud';
-
-// TRENDING
-interface ITrendingArticle {
-  id?: string;
-  title: string;
-  source: string;
-  url: string;
-  image?: ITrendingImage;
-}
-
-interface ITrendingImage {
-  id?: string;
-  newsUrl: string;
-  source: string;
-  imageUrl: string;
-}
-
-interface ITrending {
-  id?: string;
-  title: { query: string; exploreLink: string };
-  formattedTraffic: string;
-  relatedQueries: { query?: string; slug?: string }[];
-  image?: ITrendingImage;
-  articles: ITrendingArticle[];
-}
+import { IsArray, IsOptional, IsUUID, ValidateNested } from 'class-validator';
 
 class CategoryIdDto {
   @IsUUID()

@@ -40,7 +40,7 @@ import { PostService } from './post.service';
 @UseGuards(AuthGuard('jwt'))
 @Controller({ path: 'post', version: '1' })
 export class PostController {
-  constructor(private postService: PostService) {}
+  constructor(private readonly postService: PostService) {}
 
   @Get('/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
@@ -68,7 +68,7 @@ export class PostController {
 
   @Delete('/archived/delete/:id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
-  deletePostArchived(
+  deleteArchivedPost(
     @Param(
       'id',
       ParseUUIDPipe,
@@ -82,7 +82,7 @@ export class PostController {
   @Get('/unused/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
-  getNew(
+  getUnusedPosts(
     @Paginate() paginate: PaginateQuery,
     @Query() query: { indexStatus?: string; site_id: string },
   ) {
@@ -91,7 +91,7 @@ export class PostController {
 
   @Delete('/unused/delete/:id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
-  deletePostUnsed(
+  deleteUnusedPost(
     @Param(
       'id',
       ParseUUIDPipe,
@@ -115,19 +115,19 @@ export class PostController {
   @Get('/trending/list')
   @ApiOkPaginatedResponse(Trending, trendingPaginateConfig)
   @ApiPaginationQuery(trendingPaginateConfig)
-  async getTrendings(@Paginate() query: PaginateQuery) {
+  getTrendingPosts(@Paginate() query: PaginateQuery) {
     return this.postService.getTrendings(query);
   }
 
   @Delete('/trending/delete/:id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
-  deleteTrending(@Param('id') trendingId: string) {
+  deleteTrendingPost(@Param('id') trendingId: string) {
     return this.postService.deleteTrending(trendingId);
   }
 
   @Get(':slug')
   @ApiParam({ name: 'slug', type: 'varchar' })
-  getOne(
+  getPostBySlug(
     @Param(
       'slug',
       IsIDExistPipe({
@@ -154,7 +154,7 @@ export class PostController {
   @Post()
   @ApiBody({ type: PickType(PostEntity, ['content', 'title']) })
   @ApiCreatedResponse({ type: PostEntity })
-  create(
+  createPost(
     @Body(
       new ValidationPipe({
         ...validationOptions,
@@ -178,7 +178,7 @@ export class PostController {
     ]),
   })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
-  partialUpdate(
+  updatePost(
     @Param(
       'id',
       ParseUUIDPipe,
@@ -196,7 +196,6 @@ export class PostController {
       }),
     )
     post: PostEntity,
-
     @Body(
       new ValidationPipe({
         ...validationOptions,
@@ -210,7 +209,7 @@ export class PostController {
 
   @Delete(':id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
-  delete(
+  deletePost(
     @Param(
       'id',
       ParseUUIDPipe,

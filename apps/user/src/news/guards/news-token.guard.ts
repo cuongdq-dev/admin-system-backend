@@ -1,15 +1,13 @@
+import { Site } from '@app/entities';
 import {
   CanActivate,
   ExecutionContext,
   Injectable,
   UnauthorizedException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as url from 'url';
-import { Site } from '@app/entities';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class NewsTokenGuard implements CanActivate {

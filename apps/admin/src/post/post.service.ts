@@ -17,14 +17,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import {
-  DataSource,
-  FindOptionsWhere,
-  In,
-  IsNull,
-  LessThan,
-  Repository,
-} from 'typeorm';
+import { DataSource, In, LessThan, Repository } from 'typeorm';
 import { PostBodyDto } from './post.dto';
 import { postArchivedPaginateConfig } from './post.pagination';
 

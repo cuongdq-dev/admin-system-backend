@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Config, NodeSSH } from 'node-ssh';
 import { parse, stringify } from 'yaml';
-import { ServiceStatusDto } from './dto/server.dto';
 
 @Injectable()
 export class ServerService {
@@ -209,7 +208,7 @@ export class ServerService {
   private parseRamInfo(data: string) {
     const lines = data.split('\n');
     const memLine = lines.find((line) => line.includes('Mem:')) || '';
-    const [_, total, used, available] = memLine.split(/\s+/);
+    const [, , used, available] = memLine.split(/\s+/);
     return {
       used: parseInt(used, 10),
       available: parseInt(available, 10),
@@ -226,57 +225,10 @@ export class ServerService {
   }
 
   private parseDiskInfo(data: string) {
-    const [_, total, used, available] = data.split(/\s+/);
+    const [, , used, available] = data.split(/\s+/);
     return {
       used: parseFloat(used.replace('G', '')),
       available: parseFloat(available.replace('G', '')),
-    };
-  }
-
-  private async parseServiceInfo(
-    connectionId: string,
-    service: string,
-    serviceInfo: string,
-    netstatInfo: string,
-  ): Promise<ServiceStatusDto> {
-    const isInstalled = serviceInfo.trim() !== '';
-    let port = '';
-    let memoryUsage = 'N/A';
-    let isActive = false;
-
-    if (isInstalled) {
-      const servicePortMatch = netstatInfo.match(new RegExp(`.*:${service}.*`));
-      if (servicePortMatch) {
-        port = servicePortMatch[0].split(' ')[3];
-      }
-
-      const systemctlStatus = await this.executeTemporaryCommand(
-        connectionId,
-        `systemctl is-active ${service === 'psql' ? 'postgresql' : service}`,
-      );
-      isActive = systemctlStatus?.data?.trim() === 'active';
-
-      if (service === 'docker') {
-        const dockerStats = await this.executeTemporaryCommand(
-          connectionId,
-          'docker stats --no-stream --format "{{.MemUsage}}"',
-        );
-        memoryUsage = dockerStats?.data?.trim();
-      } else {
-        const serviceSize = await this.executeTemporaryCommand(
-          connectionId,
-          `du -sh /var/lib/${service}`,
-        );
-        memoryUsage = serviceSize?.data?.split('\t')[0];
-      }
-    }
-
-    return {
-      service,
-      is_installed: isInstalled,
-      is_active: isActive,
-      port,
-      memory_usage: 'Memory Usage - ' + memoryUsage,
     };
   }
 

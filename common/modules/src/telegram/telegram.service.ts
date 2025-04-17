@@ -184,13 +184,21 @@ export class TelegramService {
     try {
       const url = `https://api.telegram.org/bot${teleToken}/getUpdates`;
 
+      const webhookInfo = await fetch(
+        `https://api.telegram.org/bot${teleToken}/getWebhookInfo`,
+        {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
+      console.log(await webhookInfo.json());
       const response = await fetch(url, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
 
       const data = await response.json();
-
+      console.log(data);
       if (data.ok && data.result.length > 0) {
         const chatId = data.result[data.result.length - 1]?.message?.chat?.id;
         return chatId ? chatId.toString() : null;

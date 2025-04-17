@@ -1,10 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsStrongPassword,
-} from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class ServerCreateDto {
   @ApiProperty({ example: 'Password@123' })

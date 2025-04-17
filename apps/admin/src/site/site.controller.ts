@@ -1,4 +1,5 @@
-import { Site, SitePost } from '@app/entities';
+import { BodyWithUser, UserParam } from '@app/decorators';
+import { Site, User } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
 import {
   Body,
@@ -9,9 +10,17 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiParam, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiParam,
+  ApiTags,
+  PickType,
+} from '@nestjs/swagger';
 import {
   ApiOkPaginatedResponse,
   ApiPaginationQuery,
@@ -19,10 +28,12 @@ import {
   PaginateQuery,
 } from 'nestjs-paginate';
 import { SiteBodyDto } from './site.dto';
-import { sitePostsPaginateConfig, sitePaginateConfig } from './site.pagination';
+import { sitePaginateConfig } from './site.pagination';
 import { SiteService } from './site.service';
 
 @ApiTags('site')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller({ path: 'site', version: '1' })
 export class SiteController {
   constructor(private siteService: SiteService) {}
@@ -30,14 +41,15 @@ export class SiteController {
   @Get('/list')
   @ApiOkPaginatedResponse(Site, sitePaginateConfig)
   @ApiPaginationQuery(sitePaginateConfig)
-  getAll(@Paginate() query: PaginateQuery) {
-    return this.siteService.getAll(query);
+  getAll(@Paginate() query: PaginateQuery, @UserParam() user: User) {
+    return this.siteService.getAll(query, user);
   }
 
   @Post('/create')
   @ApiCreatedResponse({ type: Site })
-  create(@Body() createDto: SiteBodyDto) {
-    return this.siteService.create(createDto);
+  @ApiBody({ type: PickType(Site, []) })
+  create(@BodyWithUser() createDto: SiteBodyDto, @UserParam() user: User) {
+    return this.siteService.create(user, createDto);
   }
 
   @Post('/telegram/:id')
@@ -46,7 +58,7 @@ export class SiteController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({ entity: Site, filterField: 'id' }),
+      IsIDExistPipe({ entity: Site, checkOwner: true }),
     )
     site: Site,
   ) {
@@ -54,37 +66,37 @@ export class SiteController {
   }
 
   @Patch('update/:id')
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  @ApiBody({ type: PickType(Site, []) })
   partialUpdate(
     @Param(
       'id',
       ParseUUIDPipe,
       IsIDExistPipe({
         entity: Site,
-        filterField: 'id',
+        checkOwner: true,
         relations: ['sitePosts', 'categories'],
       }),
     )
     site: Site,
-    @Body() updateDto: SiteBodyDto,
+
+    @BodyWithUser() updateDto: SiteBodyDto,
   ) {
     return this.siteService.update(site, updateDto);
   }
 
-  @Delete('/delete/:id')
+  @Delete(':id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   delete(
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
-        entity: Site,
-        filterField: 'id',
-        relations: ['sitePosts'],
-      }),
+      IsIDExistPipe({ entity: Site, checkOwner: true }),
     )
     site: Site,
   ) {
-    return this.siteService.delete(site);
+    return site;
+    // return this.siteService.delete(site);
   }
 
   @Get('/:id/categories/list')
@@ -106,14 +118,7 @@ export class SiteController {
   @Get('/:id')
   @ApiParam({ name: 'id', type: 'varchar' })
   getById(
-    @Param(
-      'id',
-      IsIDExistPipe({
-        entity: Site,
-        filterField: 'id',
-        relations: ['categories'],
-      }),
-    )
+    @Param('id', IsIDExistPipe({ entity: Site, relations: ['categories'] }))
     site: Site,
   ) {
     return this.siteService.getById(site);

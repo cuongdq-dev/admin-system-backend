@@ -1,7 +1,5 @@
-import { ValidationGroup } from '@app/crud/validation-group';
 import { Category } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
-import validationOptions from '@app/utils/validation-options';
 import {
   Body,
   Controller,
@@ -12,26 +10,18 @@ import {
   Patch,
   Post,
   UseGuards,
-  ValidationPipe,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiCreatedResponse,
-  ApiParam,
-  ApiTags,
-  PickType,
-} from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import {
   ApiOkPaginatedResponse,
   ApiPaginationQuery,
   Paginate,
   PaginateQuery,
 } from 'nestjs-paginate';
+import { CategoryBodyDto } from './category.dto';
 import { categoryPaginateConfig } from './category.pagination';
 import { CategoryService } from './category.service';
-import { AuthGuard } from '@nestjs/passport';
-import { CategoryBodyDto } from './category.dto';
 
 @ApiTags('category')
 @ApiBearerAuth()

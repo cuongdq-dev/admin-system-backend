@@ -1,4 +1,4 @@
-import { Category, Post, Site, SitePost } from '@app/entities';
+import { Category, Post, Site, SitePost, User } from '@app/entities';
 import { TelegramService } from '@app/modules/telegram/telegram.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,12 +22,11 @@ export class SiteService {
   /**
    * Lấy danh sách tất cả các site có phân trang
    */
-  async getAll(query: PaginateQuery) {
-    return paginate(
-      { ...query, filter: { ...query.filter } },
-      this.siteRepository,
-      sitePaginateConfig,
-    );
+  async getAll(query: PaginateQuery, user: User) {
+    return paginate(query, this.siteRepository, {
+      ...sitePaginateConfig,
+      where: { ...sitePaginateConfig.where, created_by: user.id },
+    });
   }
 
   /**
@@ -127,8 +126,10 @@ export class SiteService {
   /**
    * Tạo site mới
    */
-  async create(createDto: SiteBodyDto) {
-    const result = await this.siteRepository.create(createDto).save();
+  async create(user: User, createDto: SiteBodyDto) {
+    const result = await this.siteRepository
+      .create({ ...createDto, created_by: user.id })
+      .save();
     return this.siteRepository.findOne({
       where: { id: result.id },
       relations: ['categories'],

@@ -47,17 +47,13 @@ export class ServerController {
   connectServer(
     @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: ServerEntity }))
     server: ServerEntity,
-    @UserParam() user: User,
   ) {
     return this.serverService.connectServer(server);
   }
 
   @Delete('/disconnect/:connectionId')
   @ApiParam({ name: 'connectionId', type: 'string', format: 'uuid' })
-  disconnectServer(
-    @Param('connectionId') connectionId: string,
-    @UserParam() user: User,
-  ) {
+  disconnectServer(@Param('connectionId') connectionId: string) {
     return this.serverService.disconnectServer(connectionId);
   }
 

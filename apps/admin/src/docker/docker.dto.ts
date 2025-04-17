@@ -1,10 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsStrongPassword,
-} from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class ServerCreateDto {
   @ApiProperty({ example: 'Password@123' })
@@ -71,12 +66,12 @@ export class CreateRepositoryDto {
   @IsString()
   email: string;
 
-  @ApiProperty({ example: 'xxx' })
+  @ApiProperty({ example: 'fine_grained_token' })
   @IsNotEmpty()
   @IsString()
   fine_grained_token: string;
 
-  @ApiProperty({ example: '' })
+  @ApiProperty({ example: 'https://github_url.com' })
   @IsNotEmpty()
   @IsString()
   github_url: string;
@@ -95,11 +90,11 @@ export class UpdateRepositoryDto {
   @IsString()
   email: string;
 
-  @ApiProperty({ example: 'xxx' })
+  @ApiProperty({ example: 'fine_grained_token' })
   @IsString()
   fine_grained_token: string;
 
-  @ApiProperty({ example: '' })
+  @ApiProperty({ example: 'github_url' })
   @IsString()
   github_url: string;
 }

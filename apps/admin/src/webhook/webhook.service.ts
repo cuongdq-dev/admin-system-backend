@@ -81,7 +81,7 @@ export class WebhookService {
     chatId: string,
     chatBotToken: string,
   ) {
-    const [_, postId, categorySlug] = data.split('_');
+    const [, postId, categorySlug] = data.split('_');
 
     const post = await this.postRepository.findOne({
       where: { id: postId },
@@ -126,7 +126,7 @@ export class WebhookService {
     chatId: string,
     chatBotToken: string,
   ) {
-    const [_, postId] = data.split('_');
+    const [, postId] = data.split('_');
     const post = await this.postRepository.findOne({
       where: { id: postId },
       relations: ['categories'],
@@ -156,7 +156,7 @@ export class WebhookService {
     chatId: string,
     chatBotToken: string,
   ) {
-    const [_, postId] = data.split('_');
+    const [, postId] = data.split('_');
     const post = await this.postRepository.findOne({
       where: { id: postId },
       relations: ['categories'],
@@ -189,7 +189,7 @@ export class WebhookService {
     chatId: string,
     chatBotToken: string,
   ) {
-    const [_, postId] = data.split('_');
+    const [, postId] = data.split('_');
     const post = await this.postRepository.findOne({
       where: { id: postId },
       relations: ['categories'],

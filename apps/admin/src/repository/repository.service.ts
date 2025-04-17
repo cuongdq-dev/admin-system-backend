@@ -11,7 +11,7 @@ export class RepositoryService {
     private repositoryRepository: Repository<RepositoryEntity>,
   ) {}
 
-  async getListRepository(server: Server, user: User) {
+  async getListRepository(server: Server) {
     const list = await this.repositoryRepository.find({
       where: { server_id: server.id, deleted_by: null, deleted_at: null },
     });

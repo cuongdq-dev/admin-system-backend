@@ -306,6 +306,15 @@ export const languages = [
       blog_unsed_description: 'Blogs no longer used on any site',
       blog_archived_description: 'Old blogs not indexed or removed from index',
       blog_trending_description: 'Trending blogs from search data',
+
+      user_email_item: 'Email',
+      user_name_item: 'Name',
+      user_username_item: 'Username',
+      user_password_item: 'Password',
+      user_avatar_item: 'Avatar',
+      user_banner_item: 'Banner',
+      user_site_item: 'Sites',
+      user_created_item: 'Created At',
     },
   },
   {
@@ -613,6 +622,15 @@ export const languages = [
       blog_unsed_description: 'Blog không còn được dùng ở bất kỳ site nào',
       blog_archived_description: 'Blog cũ không còn index hoặc đã bị gỡ bỏ',
       blog_trending_description: 'Blog xu hướng từ dữ liệu tìm kiếm',
+
+      user_email_item: 'Email',
+      user_name_item: 'Họ & Tên',
+      user_username_item: 'Tên Đăng Nhập',
+      user_password_item: 'Mật Khẩu',
+      user_avatar_item: 'Ảnh đại diện',
+      user_banner_item: 'Ảnh bìa',
+      user_site_item: 'Sites',
+      user_created_item: 'Cập nhất mới nhất',
     },
   },
 ];

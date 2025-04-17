@@ -1,15 +1,13 @@
-import { Category, Site, User } from '@app/entities';
-import { Injectable, Logger } from '@nestjs/common';
+import { Category } from '@app/entities';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
-import { categoryPaginateConfig } from './category.pagination';
 import { CategoryBodyDto } from './category.dto';
+import { categoryPaginateConfig } from './category.pagination';
 
 @Injectable()
 export class CategoryService {
-  private readonly logger = new Logger(CategoryService.name);
-
   constructor(
     @InjectRepository(Category)
     private postCategoryRepository: Repository<Category>,

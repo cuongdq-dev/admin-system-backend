@@ -1,6 +1,5 @@
 import { Logger } from '@nestjs/common';
 import {
-  ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -9,13 +8,6 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-
-type SocketQuery = {
-  userName: string;
-  uuid: string;
-  channelId: string;
-  app: string;
-};
 
 @WebSocketGateway()
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -36,10 +28,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('message')
-  handleMessage(
-    @MessageBody() message: string,
-    @ConnectedSocket() client: Socket,
-  ): string {
+  handleMessage(@MessageBody() message: string): string {
     console.log('Received message from client:', message);
     this.wss.emit('message', message);
     return 'Message received on server';

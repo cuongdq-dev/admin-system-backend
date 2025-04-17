@@ -7,14 +7,11 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { ApiPaginationQuery, PaginateQuery } from 'nestjs-paginate';
-import { NotificationPaginateConfig } from './setting.pagination';
-import { SettingService } from './setting.service';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { SettingService } from './setting.service';
 
 @ApiTags('setting')
 @Controller({ path: 'setting', version: '1' })

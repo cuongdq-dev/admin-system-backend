@@ -5,11 +5,9 @@ import {
   Param,
   Query,
   Req,
-  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { Response } from 'express';
 import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
 import { NewsTokenGuard } from './guards/news-token.guard';
 import { newsPaginateConfig } from './news.pagination';

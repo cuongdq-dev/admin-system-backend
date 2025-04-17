@@ -71,7 +71,7 @@ export class ServerService {
       this.getServerStatus(connectionId),
       this.getServiceInfo(connectionId),
       this.getNginxInfo(connectionId),
-      this.getListRepository(server, user),
+      this.getListRepository(server),
       this.getListImages(connectionId, user),
       this.getListContainers(connectionId),
     ]);
@@ -89,7 +89,7 @@ export class ServerService {
     };
   }
 
-  async getListRepository(server: Server, user: User) {
+  async getListRepository(server: Server) {
     const list = await this.repositoryRepository.find({
       where: { server_id: server.id, deleted_by: null, deleted_at: null },
     });
@@ -111,10 +111,8 @@ export class ServerService {
         owner_id: server.owner_id,
       },
     )
-      .then((res) => {
-        return res.connectionId;
-      })
-      .catch((err) => {
+      .then((res) => res.connectionId)
+      .catch(() => {
         throw new BadRequestException();
       });
 

@@ -4,7 +4,6 @@ import {
   ServerService as ServerServiceEntity,
   Service,
 } from '@app/entities';
-import { MessagesModule } from '@app/modules/messages/messages.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServerController } from './server.controller';

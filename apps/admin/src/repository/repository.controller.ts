@@ -45,7 +45,7 @@ export class RepositoryController {
     @UserParam()
     user: User,
   ) {
-    return this.repositoryService.getListRepository(server, user);
+    return this.repositoryService.getListRepository(server);
   }
 
   @Post('/:connectionId/:serverId/create')

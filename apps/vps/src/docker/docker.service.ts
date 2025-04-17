@@ -139,7 +139,6 @@ export class DockerService {
   async runImage(connectionId: string, body: RunDockerDto) {
     const {
       imageName,
-      imageId,
       imageTag,
       containerPort,
       hostPort,
