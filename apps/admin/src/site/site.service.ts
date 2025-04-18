@@ -3,7 +3,7 @@ import { TelegramService } from '@app/modules/telegram/telegram.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { SiteBodyDto } from './site.dto';
 import { sitePaginateConfig } from './site.pagination';
 
@@ -17,6 +17,7 @@ export class SiteService {
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
     private readonly telegramService: TelegramService,
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
@@ -206,7 +207,24 @@ export class SiteService {
   /**
    * Xóa site (soft delete)
    */
-  async delete(site: Site) {
-    await this.siteRepository.softDelete(site.id);
+  async delete(site: Site, user: User) {
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(SitePost).delete({ site_id: site.id });
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from('site_categories')
+        .where('site_id = :siteId', { siteId: site.id })
+        .execute();
+
+      await manager.getRepository(Site).update(site.id, {
+        deleted_by: user.id,
+      });
+      await manager.getRepository(Site).softDelete(site.id);
+    });
+    return {
+      message: 'Site deleted successfully.',
+      site,
+    };
   }
 }

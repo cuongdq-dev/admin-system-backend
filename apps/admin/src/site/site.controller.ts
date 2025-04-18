@@ -85,7 +85,7 @@ export class SiteController {
     return this.siteService.update(site, updateDto);
   }
 
-  @Delete(':id')
+  @Delete('/delete/:id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   delete(
     @Param(
@@ -94,9 +94,10 @@ export class SiteController {
       IsIDExistPipe({ entity: Site, checkOwner: true }),
     )
     site: Site,
+
+    @UserParam() user: User,
   ) {
-    return site;
-    // return this.siteService.delete(site);
+    return this.siteService.delete(site, user);
   }
 
   @Get('/:id/categories/list')

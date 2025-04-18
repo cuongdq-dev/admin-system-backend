@@ -1,6 +1,8 @@
+import { ValidationGroup } from '@app/crud/validation-group';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import * as bcrypt from 'bcryptjs';
 import { Exclude } from 'class-transformer';
+import { IsOptional } from 'class-validator';
 import {
   AfterLoad,
   BeforeInsert,
@@ -18,10 +20,9 @@ import type { Media } from './media.entity';
 import { Notification } from './notification.entity';
 import type { Post } from './post.entity';
 import { Server } from './server.entity';
+import { Site } from './site.entity';
 import type { Session } from './user_session.entity';
 import { Token } from './user_token.entity';
-import { IsOptional } from 'class-validator';
-import { ValidationGroup } from '@app/crud/validation-group';
 
 @Entity({ name: 'users' })
 @Unique(['name', 'email'])
@@ -33,6 +34,14 @@ export class User extends BaseEntity {
   @ApiProperty({ example: 'example@danimai.com' })
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
+
+  @ApiProperty({ example: 'stress city' })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  address: string;
+
+  @ApiProperty({ example: '12345678' })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  phoneNumber: string;
 
   @ApiProperty({ example: 'Password@123' })
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -71,6 +80,10 @@ export class User extends BaseEntity {
   @ApiHideProperty()
   @OneToMany('Post', 'user')
   posts: Relation<Post[]>;
+
+  @ApiHideProperty()
+  @OneToMany('Site', 'user')
+  sites: Relation<Site[]>;
 
   @OneToMany('Server', 'user')
   servers: Relation<Server[]>;

@@ -1,4 +1,4 @@
-import { Site, User } from '@app/entities';
+import { Category, Post, Site, User } from '@app/entities';
 import { MailData } from '@app/modules';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
@@ -21,6 +21,10 @@ export class AuthService {
 
     @InjectRepository(Site)
     private siteRepository: Repository<Site>,
+    @InjectRepository(Category)
+    private categoryRepository: Repository<Category>,
+    @InjectRepository(Post)
+    private postRepository: Repository<Post>,
   ) {}
 
   async createJwtToken(user: User) {
@@ -108,21 +112,44 @@ export class AuthService {
   }
 
   async getProfile(user: User) {
-    const [profile, sites] = await Promise.all([
+    const [profile, sites, categories, posts] = await Promise.all([
       this.userRepository
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.avatar', 'avatar')
-        .leftJoinAndSelect('user.avatar', 'sites')
         .where('user.id = :userId', { userId: user.id })
-        .select(['user.id', 'avatar.id', 'avatar.url', 'avatar.filename'])
-        .getRawOne(),
+        .select([
+          'user.id',
+          'user.name',
+          'user.email',
+          'user.is_active',
+          'user.created_at',
+          'user.updated_at',
+          'avatar.id',
+          'avatar.url',
+          'avatar.filename',
+        ])
+        .groupBy('user.id')
+        .addGroupBy('avatar.id')
+        .getOne(),
       this.siteRepository
         .createQueryBuilder('site')
         .where('site.created_by = :userId', { userId: user.id })
-        .getRawMany(),
-    ]);
-    console.log(sites);
+        .getMany(),
 
-    return { ...profile, sites: sites };
+      this.categoryRepository
+        .createQueryBuilder('category')
+        .where('category.created_by = :userId', { userId: user.id })
+        .getMany(),
+      this.postRepository
+        .createQueryBuilder('post')
+        .leftJoinAndSelect('post.thumbnail', 'thumbnail')
+        .leftJoinAndSelect('post.categories', 'categories')
+        .leftJoinAndSelect('post.sitePosts', 'sitePosts')
+        .where('post.created_by = :userId', { userId: user.id })
+        .limit(10)
+        .getMany(),
+    ]);
+
+    return { ...profile, sites, categories, posts };
   }
 }

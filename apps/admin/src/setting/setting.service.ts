@@ -46,6 +46,7 @@ export class SettingService {
 
       this.siteRepository
         .createQueryBuilder('site')
+        .where('site.created_by = :createdBy', { createdBy: user.id })
         .select(['site.id AS id', 'site.name AS title'])
         .getRawMany(),
       this.postRepository
@@ -54,6 +55,7 @@ export class SettingService {
         .getRawMany(),
       this.categoryRepository
         .createQueryBuilder('category')
+        .where('category.created_by = :createdBy', { createdBy: user.id })
         .select(['category.id AS id', 'category.name AS title'])
         .getRawMany(),
     ]);

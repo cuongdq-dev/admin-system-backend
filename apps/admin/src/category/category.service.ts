@@ -1,8 +1,8 @@
-import { Category } from '@app/entities';
+import { Category, User } from '@app/entities';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CategoryBodyDto } from './category.dto';
 import { categoryPaginateConfig } from './category.pagination';
 
@@ -11,13 +11,17 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private postCategoryRepository: Repository<Category>,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async getAll(query: PaginateQuery) {
+  async getAll(query: PaginateQuery, user: User) {
     return paginate(
       { ...query, filter: { ...query.filter } },
       this.postCategoryRepository,
-      categoryPaginateConfig,
+      {
+        ...categoryPaginateConfig,
+        where: { ...categoryPaginateConfig.where, created_by: user?.id },
+      },
     );
   }
 
@@ -38,7 +42,31 @@ export class CategoryService {
       relations: ['posts', 'sites'],
     });
   }
-  async delete(category: Category) {
-    await this.postCategoryRepository.softDelete(category.id);
+  async delete(category: Category, user) {
+    await this.dataSource.transaction(async (manager) => {
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from('site_categories')
+        .where('category_id = :categoryId', { categoryId: category.id })
+        .execute();
+
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from('category_posts')
+        .where('category_id = :categoryId', { categoryId: category.id })
+        .execute();
+
+      await this.postCategoryRepository.update(
+        { id: category.id },
+        { deleted_by: user.id },
+      );
+      await this.postCategoryRepository.softDelete(category.id);
+    });
+    return {
+      message: 'Category deleted successfully.',
+      category,
+    };
   }
 }

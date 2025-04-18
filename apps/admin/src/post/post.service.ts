@@ -20,6 +20,7 @@ import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { DataSource, In, LessThan, Repository } from 'typeorm';
 import { PostBodyDto } from './post.dto';
 import { postArchivedPaginateConfig } from './post.pagination';
+import { generateSlug } from '@app/utils';
 
 @Injectable()
 export class PostService {
@@ -128,8 +129,8 @@ export class PostService {
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.thumbnail', 'thumbnail')
       .leftJoinAndSelect('post.categories', 'categories')
-      .innerJoinAndSelect('post.article', 'article')
       .innerJoinAndSelect('post.sitePosts', 'sitePosts')
+      .innerJoinAndSelect('post.article', 'article')
       .innerJoinAndSelect('sitePosts.site', 'sp_site')
       .innerJoinAndSelect('sitePosts.post', 'sp_post')
       .loadRelationCountAndMap('sitePosts.siteCount', 'post.sitePosts')
@@ -664,10 +665,43 @@ export class PostService {
     };
   }
 
-  create(createDto: Post, user: User) {
-    return this.postRepository
-      .create({ ...createDto, user_id: user.id })
+  async create(data: Post & PostBodyDto) {
+    const result = await this.postRepository
+      .create({ ...data, slug: generateSlug(data?.title) })
       .save();
+    if (data.sites) {
+      const siteIds = data.sites.map((site) => site.id);
+
+      const existingSitePosts = await this.sitePostRepository.find({
+        where: { post_id: result.id },
+      });
+
+      const existingSiteIds = existingSitePosts.map((sp) => sp.site_id);
+
+      const sitesToRemove = existingSiteIds.filter(
+        (id) => !siteIds.includes(id),
+      );
+      if (sitesToRemove.length > 0) {
+        await this.sitePostRepository.delete({
+          post_id: result.id,
+          site_id: In(sitesToRemove),
+        });
+      }
+
+      const sitesToAdd = siteIds.filter((id) => !existingSiteIds.includes(id));
+      if (sitesToAdd.length > 0) {
+        const newSitePosts = sitesToAdd.map((siteId) => ({
+          post_id: result.id,
+          site_id: siteId,
+        }));
+        await this.sitePostRepository.insert(newSitePosts);
+      }
+    }
+
+    return await this.postRepository.findOne({
+      where: { id: result.id },
+      relations: ['thumbnail', 'categories', 'sitePosts'],
+    });
   }
 
   async update(post: Post, updateDto: Post & PostBodyDto) {

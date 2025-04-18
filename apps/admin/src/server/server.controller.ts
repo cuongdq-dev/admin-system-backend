@@ -1,5 +1,5 @@
 import { ValidationGroup } from '@app/crud/validation-group';
-import { UserParam } from '@app/decorators';
+import { BodyWithUser, UserParam } from '@app/decorators';
 import { Server as ServerEntity, User } from '@app/entities';
 import { OwnershipGuard } from '@app/guard';
 import { IsIDExistPipe } from '@app/pipes';
@@ -45,7 +45,11 @@ export class ServerController {
   @UseGuards(OwnershipGuard)
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   connectServer(
-    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: ServerEntity }))
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      IsIDExistPipe({ entity: ServerEntity, checkOwner: true }),
+    )
     server: ServerEntity,
   ) {
     return this.serverService.connectServer(server);
@@ -74,7 +78,11 @@ export class ServerController {
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   @ApiParam({ name: 'connectionId', type: 'string', format: 'uuid' })
   partialGetDetail(
-    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: ServerEntity }))
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      IsIDExistPipe({ entity: ServerEntity, checkOwner: true }),
+    )
     server: ServerEntity,
     @Param('connectionId')
     connectionId: string,
@@ -89,7 +97,10 @@ export class ServerController {
     type: PickType(ServerEntity, ['name', 'host', 'port', 'user', 'password']),
   })
   @ApiCreatedResponse({ type: ServerEntity })
-  createServer(@Body() createDto: ServerCreateDto, @UserParam() user: User) {
+  createServer(
+    @BodyWithUser() createDto: ServerCreateDto,
+    @UserParam() user: User,
+  ) {
     return this.serverService.createServer(createDto, user);
   }
 
@@ -102,10 +113,14 @@ export class ServerController {
   })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   partialUpdate(
-    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: ServerEntity }))
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      IsIDExistPipe({ entity: ServerEntity, checkOwner: true }),
+    )
     server: ServerEntity,
 
-    @Body(
+    @BodyWithUser(
       new ValidationPipe({
         ...validationOptions,
         groups: [ValidationGroup.UPDATE],
@@ -123,7 +138,11 @@ export class ServerController {
   @UseGuards(OwnershipGuard)
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   partialDelete(
-    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: ServerEntity }))
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      IsIDExistPipe({ entity: ServerEntity, checkOwner: true }),
+    )
     server: ServerEntity,
     @UserParam() user: User,
   ) {

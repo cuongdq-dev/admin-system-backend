@@ -1,7 +1,7 @@
-import { Category } from '@app/entities';
+import { BodyWithUser, UserParam } from '@app/decorators';
+import { Category, User } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
 import {
-  Body,
   Controller,
   Delete,
   Get,
@@ -23,40 +23,40 @@ import { CategoryBodyDto } from './category.dto';
 import { categoryPaginateConfig } from './category.pagination';
 import { CategoryService } from './category.service';
 
-@ApiTags('category')
+@ApiTags('Category')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller({ path: 'category', version: '1' })
 export class CategoryController {
-  constructor(private categoryService: CategoryService) {}
+  constructor(private readonly categoryService: CategoryService) {}
 
   @Get('/list')
   @ApiOkPaginatedResponse(Category, categoryPaginateConfig)
   @ApiPaginationQuery(categoryPaginateConfig)
-  getAll(@Paginate() query: PaginateQuery) {
-    return this.categoryService.getAll(query);
+  getAll(@Paginate() query: PaginateQuery, @UserParam() user: User) {
+    return this.categoryService.getAll(query, user);
   }
 
   @Post('/create')
   @ApiCreatedResponse({ type: Category })
-  create(@Body() createDto: CategoryBodyDto) {
+  create(@BodyWithUser() createDto: CategoryBodyDto) {
     return this.categoryService.create(createDto);
   }
 
-  @Patch('update/:id')
+  @Patch('/update/:id')
   partialUpdate(
     @Param(
       'id',
       ParseUUIDPipe,
       IsIDExistPipe({
         entity: Category,
-        filterField: 'id',
+        checkOwner: true,
         relations: ['posts', 'sites'],
       }),
     )
     category: Category,
 
-    @Body() updateDto: CategoryBodyDto,
+    @BodyWithUser() updateDto: CategoryBodyDto,
   ) {
     return this.categoryService.update(category, updateDto);
   }
@@ -68,12 +68,14 @@ export class CategoryController {
       ParseUUIDPipe,
       IsIDExistPipe({
         entity: Category,
-        filterField: 'id',
+        checkOwner: true,
         relations: ['posts'],
       }),
     )
     category: Category,
+
+    @UserParam() user: User,
   ) {
-    return this.categoryService.delete(category);
+    return this.categoryService.delete(category, user);
   }
 }

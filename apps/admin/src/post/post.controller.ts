@@ -1,5 +1,5 @@
 import { ValidationGroup } from '@app/crud/validation-group';
-import { UserParam } from '@app/decorators';
+import { BodyWithUser, UserParam } from '@app/decorators';
 import { Post as PostEntity, SitePost, Trending, User } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
 import validationOptions from '@app/utils/validation-options';
@@ -48,11 +48,13 @@ export class PostController {
   getAll(
     @Paginate() paginateQuery: PaginateQuery,
     @Query() query: { indexStatus?: string; site_id?: string; status?: string },
+    @UserParam() user: User,
   ) {
     return this.postService.getAll({
       ...paginateQuery,
       ...query,
       status: query?.status?.split(','),
+      created_by: user.id,
     });
   }
 
@@ -152,19 +154,18 @@ export class PostController {
   }
 
   @Post()
-  @ApiBody({ type: PickType(PostEntity, ['content', 'title']) })
+  @ApiBody({
+    type: PickType(PostEntity, [
+      'content',
+      'title',
+      'status',
+      'meta_description',
+      'relatedQueries',
+    ]),
+  })
   @ApiCreatedResponse({ type: PostEntity })
-  createPost(
-    @Body(
-      new ValidationPipe({
-        ...validationOptions,
-        groups: [ValidationGroup.CREATE],
-      }),
-    )
-    createDto: PostEntity,
-    @UserParam() user: User,
-  ) {
-    return this.postService.create(createDto, user);
+  createPost(@BodyWithUser() body: PostEntity) {
+    return this.postService.create(body);
   }
 
   @Patch(':id')
