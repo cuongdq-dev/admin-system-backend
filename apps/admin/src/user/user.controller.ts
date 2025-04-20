@@ -1,10 +1,11 @@
-import { User } from '@app/entities';
+import { Post as PostEntity, User } from '@app/entities';
 import {
   Body,
   Controller,
   Get,
   HttpStatus,
   Patch,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -18,8 +19,15 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import {
+  ApiOkPaginatedResponse,
+  ApiPaginationQuery,
+  Paginate,
+  PaginateQuery,
+} from 'nestjs-paginate';
 import { UserParam } from '../../../../common/decorators/src/user.decorator';
 import { UserUpdateDto } from './user.dto';
+import { postPaginateConfig } from './user.pagination';
 import { UserService } from './user.service';
 
 @ApiTags('User')
@@ -35,7 +43,26 @@ export class UserController {
   @Get('/me')
   @ApiOperation({ summary: 'get logged in user details' })
   async me(@UserParam() user: User) {
-    return user;
+    return this.userService.findMe(user);
+  }
+
+  @Get('/post/list')
+  @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
+  @ApiPaginationQuery(postPaginateConfig)
+  getPostByUser(
+    @Paginate() paginateQuery: PaginateQuery,
+    @Query() query: { indexStatus?: string; site_id?: string; status?: string },
+    @UserParam() user: User,
+  ) {
+    return this.userService.getPostByUser(
+      {
+        ...paginateQuery,
+        ...query,
+        status: query?.status?.split(','),
+        created_by: user.id,
+      },
+      user,
+    );
   }
 
   @Patch('/me')

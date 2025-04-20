@@ -10,6 +10,7 @@ import {
 } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
+import { generateSlug } from '@app/utils';
 import {
   BadRequestException,
   ForbiddenException,
@@ -20,7 +21,6 @@ import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { DataSource, In, LessThan, Repository } from 'typeorm';
 import { PostBodyDto } from './post.dto';
 import { postArchivedPaginateConfig } from './post.pagination';
-import { generateSlug } from '@app/utils';
 
 @Injectable()
 export class PostService {
@@ -182,7 +182,7 @@ export class PostService {
       postsQb.andWhere('post.status IN (:...status)', { status: query.status });
     } else {
       postsQb.andWhere('post.status IN (:...status)', {
-        status: ['NEW', 'DRAFT', 'PUBLISHED', 'DELETED'],
+        status: ['NEW', 'DRAFT', 'PUBLISHED'],
       });
     }
     if (query?.categories_id) {
@@ -308,6 +308,7 @@ export class PostService {
     };
   }
 
+  // USE WITH POST ARCHIVED, POST ACTIVE
   async deletePostArchived(sitePost: SitePost) {
     const postId = sitePost.post_id;
     const post = await this.postRepository.findOne({
@@ -669,6 +670,7 @@ export class PostService {
     const result = await this.postRepository
       .create({ ...data, slug: generateSlug(data?.title) })
       .save();
+
     if (data.sites) {
       const siteIds = data.sites.map((site) => site.id);
 
@@ -744,9 +746,20 @@ export class PostService {
   }
 
   async delete(post: Post, user: User) {
-    if (post.user_id !== user.id) {
-      throw new ForbiddenException('You are now allowed to edit this post.');
+    if (post.status == PostStatus.DELETED) {
+      throw new BadRequestException('Post already deleted!');
     }
-    await this.postRepository.delete(post.id);
+
+    const checkUsed = await this.sitePostRepository.findOne({
+      where: { post_id: post.id },
+      relations: ['site'],
+    });
+    if (checkUsed) {
+      throw new BadRequestException(
+        'Some posts in this trending are currently in use by sites. Cannot delete!',
+      );
+    }
+
+    await this.deletePostUnused(post);
   }
 }

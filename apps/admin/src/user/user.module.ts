@@ -1,4 +1,4 @@
-import { User } from '@app/entities';
+import { Category, Post, Site, SitePost, User } from '@app/entities';
 import { MediaModule, MulterConfigService } from '@app/modules';
 import { Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
@@ -8,7 +8,8 @@ import { UserService } from './user.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Site, Post, Category, SitePost]),
+
     MediaModule,
     MulterModule.registerAsync({
       useClass: MulterConfigService,

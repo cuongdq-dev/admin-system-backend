@@ -29,7 +29,6 @@ export const IsIDExistPipe: IsIDExistPipeType = ({
   @Injectable()
   class IsIDExistMixinPipe implements PipeTransform {
     protected exceptionFactory: (error: string) => any;
-
     constructor(
       @InjectDataSource() private dataSource: DataSource,
       @Inject(REQUEST) private request: any,

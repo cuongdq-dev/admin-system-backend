@@ -37,6 +37,11 @@ export const languages = [
       user_detail_title: 'User Detail',
       user_profile_title: 'Profile',
       user_tab_profile: 'Profile',
+
+      user_my_post_title: 'Your Posts',
+      user_input_post_title: 'Click to add new post',
+      user_manage_post: 'Manage Posts',
+
       server_nav: 'Server',
       server_new_button: 'New Server',
       connect_server_button: 'Connect Server',
@@ -214,6 +219,7 @@ export const languages = [
       preset_title: 'Preset',
       list_title: 'List',
       detail_title: 'Detail',
+      view_all: 'View All',
 
       docker_container_id_item: 'Id',
       docker_container_name_item: 'Container',
@@ -355,6 +361,10 @@ export const languages = [
       user_detail_title: 'Chi tiết người dùng',
       user_profile_title: 'Hồ sơ',
       user_tab_profile: 'Hồ sơ',
+
+      user_my_post_title: 'Bài viết của bạn',
+      user_input_post_title: 'Nhấn vào để nhập bài viết mới',
+      user_manage_post: 'Quản lý bài viết',
 
       server_nav: 'Máy chủ',
       server_new_button: 'Thêm máy chủ',
@@ -530,6 +540,7 @@ export const languages = [
       preset_title: 'Giao diện',
       list_title: 'Danh sách',
       detail_title: 'Chi tiết',
+      view_all: 'View All',
 
       docker_container_id_item: 'Id',
       docker_container_name_item: 'Tên container',

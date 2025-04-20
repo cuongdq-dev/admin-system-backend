@@ -164,8 +164,10 @@ export class PostController {
     ]),
   })
   @ApiCreatedResponse({ type: PostEntity })
-  createPost(@BodyWithUser() body: PostEntity) {
-    return this.postService.create(body);
+  createPost(@BodyWithUser() body: PostEntity & PostBodyDto) {
+    console.log(body);
+    return true;
+    // return this.postService.create(body);
   }
 
   @Patch(':id')
@@ -214,7 +216,11 @@ export class PostController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({ entity: PostEntity, relations: { user: true } }),
+      IsIDExistPipe({
+        entity: PostEntity,
+        checkOwner: true,
+        relations: { user: true },
+      }),
     )
     post: PostEntity,
     @UserParam() user: User,
