@@ -274,13 +274,19 @@ export class TaskService {
   async handleCleanupOldPosts() {
     this.logger.debug('START - Cleanup Old Posts.');
 
-    const orphanTrending = await this.trendingRepository.find({
-      where: { articles: { id: IsNull() } },
-      relations: ['articles', 'articles.posts'],
-    });
+    const orphanTrending = await this.trendingRepository
+      .createQueryBuilder('trending')
+      .leftJoinAndSelect('trending.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('trending.articles', 'articles')
+      .leftJoinAndSelect('articles.posts', 'articles_posts')
+      .where('articles_posts.id IS NULL OR articles.id IS NULL')
+      .getMany();
+
     for (const trending of orphanTrending) {
-      await this.trendingRepository.delete({ id: trending.id });
-      await this.mediaRepository.delete({ id: trending.thumbnail_id });
+      await this.dataSource.transaction(async (manager) => {
+        await manager.delete(Trending, { id: trending.id });
+        await manager.softDelete(Media, { id: trending.thumbnail_id });
+      });
     }
 
     const fiveDaysAgo = new Date();
@@ -600,31 +606,6 @@ export class TaskService {
     return savedPost;
   }
 
-  private async removeImage(id: string) {
-    const image = await this.mediaRepository.findOne({
-      where: { id: id },
-      select: ['slug', 'id'],
-    });
-    await this.mediaRepository.delete({ id: id });
-    const myHeaders = new Headers();
-    myHeaders.append('Content-Type', 'application/json');
-
-    await fetch(process.env.CDN_API + '/upload', {
-      headers: myHeaders,
-      method: 'DELETE',
-      body: JSON.stringify({ filename: image.slug + '.png' }),
-    })
-      .then(async (response) => {
-        return response.json();
-      })
-      .then((result) => {
-        return console.log(result);
-      })
-      .catch((error) => {
-        return console.log(error);
-      });
-  }
-
   // DELETE POST ARCHIVERD
   async deletePostArchived(sitePost: SitePost) {
     const postId = sitePost.post_id;
@@ -710,7 +691,7 @@ export class TaskService {
 
       if (post_thumbnail_id) {
         try {
-          await this.removeImage(post_thumbnail_id);
+          await this.mediaRepository.softDelete({ id: post_thumbnail_id });
         } catch (error) {
           console.log(
             `POST Media with ID ${post_thumbnail_id} could not be deleted. Skipping...`,
@@ -720,7 +701,7 @@ export class TaskService {
 
       if (article?.thumbnail_id) {
         try {
-          await this.removeImage(article.thumbnail_id);
+          await this.mediaRepository.softDelete({ id: article.thumbnail_id });
         } catch (error) {
           console.log(
             `ARTICLE Media with ID ${article.thumbnail_id} could not be deleted. Skipping...`,
@@ -730,7 +711,9 @@ export class TaskService {
 
       if (article?.trending?.thumbnail_id) {
         try {
-          await this.removeImage(article.trending.thumbnail_id);
+          await this.mediaRepository.softDelete({
+            id: article.trending.thumbnail_id,
+          });
         } catch (error) {
           console.log(
             `TRENDING Media with ID ${article.trending.thumbnail_id} could not be deleted. Skipping...`,

@@ -43,11 +43,11 @@ export class GoogleIndexRequest {
   @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
   response: any;
 
-  @ManyToOne(() => Post, { eager: false })
+  @ManyToOne(() => Post, { eager: false, cascade: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'post_id' })
   post: Relation<Post>;
 
-  @ManyToOne(() => Site, { eager: false })
+  @ManyToOne(() => Site, { eager: false, cascade: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'site_id' })
   site: Relation<Site>;
 }
