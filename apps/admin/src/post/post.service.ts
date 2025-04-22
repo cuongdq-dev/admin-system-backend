@@ -7,7 +7,6 @@ import {
   StorageType,
   Trending,
   TrendingArticle,
-  User,
 } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
@@ -391,7 +390,7 @@ export class PostService {
 
       if (post_thumbnail_id) {
         try {
-          await this.removeImage(post_thumbnail_id);
+          await this.mediaRepository.softDelete({ id: post_thumbnail_id });
         } catch (error) {
           console.log(
             `POST Media with ID ${post_thumbnail_id} could not be deleted. Skipping...`,
@@ -401,7 +400,7 @@ export class PostService {
 
       if (article?.thumbnail_id) {
         try {
-          await this.removeImage(article.thumbnail_id);
+          await this.mediaRepository.softDelete({ id: article.thumbnail_id });
         } catch (error) {
           console.log(
             `ARTICLE Media with ID ${article.thumbnail_id} could not be deleted. Skipping...`,
@@ -411,7 +410,9 @@ export class PostService {
 
       if (article?.trending?.thumbnail_id) {
         try {
-          await this.removeImage(article.trending.thumbnail_id);
+          await this.mediaRepository.softDelete({
+            id: article.trending.thumbnail_id,
+          });
         } catch (error) {
           console.log(
             `TRENDING Media with ID ${article.trending.thumbnail_id} could not be deleted. Skipping...`,
@@ -495,7 +496,7 @@ export class PostService {
 
       if (post_thumbnail_id) {
         try {
-          await this.removeImage(post_thumbnail_id);
+          await this.mediaRepository.softDelete({ id: post_thumbnail_id });
         } catch (error) {
           console.log(
             `POST Media with ID ${post_thumbnail_id} could not be deleted. Skipping...`,
@@ -505,7 +506,7 @@ export class PostService {
 
       if (article?.thumbnail_id) {
         try {
-          await this.removeImage(article.thumbnail_id);
+          await this.mediaRepository.softDelete({ id: article.thumbnail_id });
         } catch (error) {
           console.log(
             `ARTICLE Media with ID ${article.thumbnail_id} could not be deleted. Skipping...`,
@@ -515,7 +516,9 @@ export class PostService {
 
       if (article?.trending?.thumbnail_id) {
         try {
-          await this.removeImage(article.trending.thumbnail_id);
+          await this.mediaRepository.softDelete({
+            id: article.trending.thumbnail_id,
+          });
         } catch (error) {
           console.log(
             `TRENDING Media with ID ${article.trending.thumbnail_id} could not be deleted. Skipping...`,
@@ -632,9 +635,11 @@ export class PostService {
       await manager.delete(Trending, { id: deletedData?.trending?.id });
 
       for (const article of trending.articles) {
-        if (article.thumbnail_id) await this.removeImage(article.thumbnail_id);
+        if (article.thumbnail_id)
+          await this.mediaRepository.softDelete({ id: article.thumbnail_id });
       }
-      if (trending.thumbnail_id) await this.removeImage(trending.thumbnail_id);
+      if (trending.thumbnail_id)
+        await this.mediaRepository.softDelete({ id: trending.thumbnail_id });
     });
 
     return {
@@ -704,7 +709,7 @@ export class PostService {
 
       if (!!cdnResult.url) {
         mediaEntity.url = process.env.CDN_DOMAIN + cdnResult?.url;
-        mediaEntity.storage_type = StorageType.URL;
+        mediaEntity.storage_type = StorageType.LOCAL;
         mediaEntity.data = null;
       }
       const thumbnailResult = await this.mediaRepository.upsert(mediaEntity, {
@@ -759,7 +764,7 @@ export class PostService {
     return { ...post, ...updateDto };
   }
 
-  async delete(post: Post, user: User) {
+  async delete(post: Post) {
     if (post.status == PostStatus.DELETED) {
       throw new BadRequestException('Post already deleted!');
     }
@@ -775,30 +780,5 @@ export class PostService {
     }
 
     await this.deletePostUnused(post);
-  }
-
-  private async removeImage(id: string) {
-    const myHeaders = new Headers();
-    myHeaders.append('Content-Type', 'application/json');
-    const image = await this.mediaRepository.findOne({
-      where: { id: id },
-      select: ['slug', 'id'],
-    });
-
-    await fetch(process.env.CDN_API + '/upload', {
-      headers: myHeaders,
-      method: 'DELETE',
-      body: JSON.stringify({ filename: image.slug + '.png' }),
-    })
-      .then(async (response) => {
-        await this.mediaRepository.delete({ id: id });
-        return response.json();
-      })
-      .then((result) => {
-        return console.log(result);
-      })
-      .catch((error) => {
-        return console.log(error);
-      });
   }
 }

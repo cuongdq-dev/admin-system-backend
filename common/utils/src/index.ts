@@ -155,7 +155,7 @@ export async function saveImageAsBase64(
 
   if (!!cdnResult?.url) {
     mediaEntity.url = process.env.CDN_DOMAIN + cdnResult?.url;
-    mediaEntity.storage_type = StorageType.URL;
+    mediaEntity.storage_type = StorageType.LOCAL;
   }
   return { ...mediaEntity } as Media;
 }

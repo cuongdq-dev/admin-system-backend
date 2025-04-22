@@ -19,6 +19,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -36,7 +37,6 @@ import {
 import { CreatePostDto, PostBodyDto } from './post.dto';
 import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
 import { PostService } from './post.service';
-import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Post')
 @ApiBearerAuth()
@@ -239,8 +239,7 @@ export class PostController {
       }),
     )
     post: PostEntity,
-    @UserParam() user: User,
   ) {
-    return this.postService.delete(post, user);
+    // return this.postService.delete(post);
   }
 }
