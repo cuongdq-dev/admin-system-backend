@@ -661,7 +661,7 @@ export class PostService {
   async create(body: CreatePostDto, thumbnail?: Express.Multer.File) {
     const [categories] = await Promise.all([
       this.categoryRepository.find({
-        where: { id: In(body.categories.map((cate) => cate.id)) },
+        where: { id: In(body?.categories?.map((cate) => cate?.id)) },
       }),
     ]);
 
