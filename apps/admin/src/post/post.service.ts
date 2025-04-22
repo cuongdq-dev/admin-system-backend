@@ -712,9 +712,12 @@ export class PostService {
         mediaEntity.storage_type = StorageType.LOCAL;
         mediaEntity.data = null;
       }
-      const thumbnailResult = await this.mediaRepository.upsert(mediaEntity, {
-        conflictPaths: ['slug'],
-      });
+      const thumbnailResult = await this.mediaRepository.upsert(
+        { ...mediaEntity, deleted_at: null, deleted_by: null },
+        {
+          conflictPaths: ['slug'],
+        },
+      );
 
       await this.postRepository.update(
         { id: result.id },

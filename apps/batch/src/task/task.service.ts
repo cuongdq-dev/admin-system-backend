@@ -386,6 +386,8 @@ export class TaskService {
           storage_type: StorageType.URL,
           url: trending.image.imageUrl,
           mimetype: 'url',
+          deleted_at: null,
+          deleted_by: null,
         },
         {
           conflictPaths: ['slug'],
@@ -438,6 +440,8 @@ export class TaskService {
                 storage_type: StorageType.URL,
                 url: article.image.imageUrl,
                 mimetype: 'url',
+                deleted_at: null,
+                deleted_by: null,
               },
               { conflictPaths: ['slug'] },
             );
@@ -503,9 +507,12 @@ export class TaskService {
 
     if (existingPost) return existingPost;
 
-    const thumbnailUpsert = await this.mediaRepository.upsert(thumbnail, {
-      conflictPaths: ['slug'],
-    });
+    const thumbnailUpsert = await this.mediaRepository.upsert(
+      { ...thumbnail, deleted_at: null, deleted_by: null },
+      {
+        conflictPaths: ['slug'],
+      },
+    );
 
     const category = await this.categoryRepository.findOne({
       where: { slug: postContent?.category?.slug },

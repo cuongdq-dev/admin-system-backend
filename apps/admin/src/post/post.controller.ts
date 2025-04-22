@@ -240,6 +240,6 @@ export class PostController {
     )
     post: PostEntity,
   ) {
-    // return this.postService.delete(post);
+    return this.postService.delete(post);
   }
 }
