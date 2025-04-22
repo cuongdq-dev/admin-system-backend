@@ -703,7 +703,7 @@ export class TaskService {
 
       if (post_thumbnail_id) {
         try {
-          await manager.delete(Media, { id: post_thumbnail_id });
+          await this.removeImage(post_thumbnail_id);
         } catch (error) {
           console.log(
             `POST Media with ID ${post_thumbnail_id} could not be deleted. Skipping...`,
@@ -713,7 +713,7 @@ export class TaskService {
 
       if (article?.thumbnail_id) {
         try {
-          await manager.delete(Media, { id: article.thumbnail_id });
+          await this.removeImage(article.thumbnail_id);
         } catch (error) {
           console.log(
             `ARTICLE Media with ID ${article.thumbnail_id} could not be deleted. Skipping...`,
@@ -723,7 +723,7 @@ export class TaskService {
 
       if (article?.trending?.thumbnail_id) {
         try {
-          await manager.delete(Media, { id: article.trending.thumbnail_id });
+          await this.removeImage(article.trending.thumbnail_id);
         } catch (error) {
           console.log(
             `TRENDING Media with ID ${article.trending.thumbnail_id} could not be deleted. Skipping...`,

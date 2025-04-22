@@ -4,22 +4,20 @@ import {
   Post,
   Site,
   SitePost,
+  StorageType,
   Trending,
   TrendingArticle,
   User,
 } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
-import { generateSlug } from '@app/utils';
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { generateSlug, uploadImageCdn } from '@app/utils';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
+import * as path from 'path';
 import { DataSource, In, LessThan, Repository } from 'typeorm';
-import { PostBodyDto } from './post.dto';
+import { CreatePostDto, PostBodyDto } from './post.dto';
 import { postArchivedPaginateConfig } from './post.pagination';
 
 @Injectable()
@@ -393,7 +391,7 @@ export class PostService {
 
       if (post_thumbnail_id) {
         try {
-          await manager.delete(Media, { id: post_thumbnail_id });
+          await this.removeImage(post_thumbnail_id);
         } catch (error) {
           console.log(
             `POST Media with ID ${post_thumbnail_id} could not be deleted. Skipping...`,
@@ -403,7 +401,7 @@ export class PostService {
 
       if (article?.thumbnail_id) {
         try {
-          await manager.delete(Media, { id: article.thumbnail_id });
+          await this.removeImage(article.thumbnail_id);
         } catch (error) {
           console.log(
             `ARTICLE Media with ID ${article.thumbnail_id} could not be deleted. Skipping...`,
@@ -413,7 +411,7 @@ export class PostService {
 
       if (article?.trending?.thumbnail_id) {
         try {
-          await manager.delete(Media, { id: article.trending.thumbnail_id });
+          await this.removeImage(article.trending.thumbnail_id);
         } catch (error) {
           console.log(
             `TRENDING Media with ID ${article.trending.thumbnail_id} could not be deleted. Skipping...`,
@@ -429,7 +427,7 @@ export class PostService {
   }
 
   async deletePostUnused(postValues: Post) {
-    if (postValues.sitePosts.length > 0) {
+    if (postValues?.sitePosts?.length > 0) {
       throw new BadRequestException(
         'Some posts in this trending are currently in use by sites. Cannot delete!',
       );
@@ -472,10 +470,7 @@ export class PostService {
         article: article?.thumbnail_id,
         trending: article?.trending?.thumbnail_id,
       },
-      categories: categories?.map((c) => ({
-        id: c.id,
-        name: c.name,
-      })),
+      categories: categories?.map((c) => ({ id: c.id, name: c.name })),
     };
 
     const categoryIds = categories?.map((c) => c.id);
@@ -500,7 +495,7 @@ export class PostService {
 
       if (post_thumbnail_id) {
         try {
-          await manager.delete(Media, { id: post_thumbnail_id });
+          await this.removeImage(post_thumbnail_id);
         } catch (error) {
           console.log(
             `POST Media with ID ${post_thumbnail_id} could not be deleted. Skipping...`,
@@ -510,7 +505,7 @@ export class PostService {
 
       if (article?.thumbnail_id) {
         try {
-          await manager.delete(Media, { id: article.thumbnail_id });
+          await this.removeImage(article.thumbnail_id);
         } catch (error) {
           console.log(
             `ARTICLE Media with ID ${article.thumbnail_id} could not be deleted. Skipping...`,
@@ -520,7 +515,7 @@ export class PostService {
 
       if (article?.trending?.thumbnail_id) {
         try {
-          await manager.delete(Media, { id: article.trending.thumbnail_id });
+          await this.removeImage(article.trending.thumbnail_id);
         } catch (error) {
           console.log(
             `TRENDING Media with ID ${article.trending.thumbnail_id} could not be deleted. Skipping...`,
@@ -637,12 +632,9 @@ export class PostService {
       await manager.delete(Trending, { id: deletedData?.trending?.id });
 
       for (const article of trending.articles) {
-        if (article.thumbnail_id)
-          await manager.delete(Media, { id: article.thumbnail_id });
+        if (article.thumbnail_id) await this.removeImage(article.thumbnail_id);
       }
-
-      if (trending.thumbnail_id)
-        await manager.delete(Media, { id: trending.thumbnail_id });
+      if (trending.thumbnail_id) await this.removeImage(trending.thumbnail_id);
     });
 
     return {
@@ -666,44 +658,66 @@ export class PostService {
     };
   }
 
-  async create(data: Post & PostBodyDto) {
-    const result = await this.postRepository
-      .create({ ...data, slug: generateSlug(data?.title) })
-      .save();
+  async create(body: CreatePostDto, thumbnail?: Express.Multer.File) {
+    const [categories] = await Promise.all([
+      this.categoryRepository.find({
+        where: { id: In(body.categories.map((cate) => cate.id)) },
+      }),
+    ]);
 
-    if (data.sites) {
-      const siteIds = data.sites.map((site) => site.id);
+    const data = {
+      title: body.title,
+      slug: body.slug || generateSlug(body.title),
+      created_by: body?.created_by,
+      meta_description: body.meta_description,
 
-      const existingSitePosts = await this.sitePostRepository.find({
-        where: { post_id: result.id },
+      content: body.content || '',
+      categories: categories,
+      user_id: body.created_by,
+      relatedQueries: body.relatedQueries.split(',').map((query) => {
+        return { slug: generateSlug(query), query: query };
+      }),
+    } as Post;
+
+    const result = await this.postRepository.create(data).save();
+
+    if (result.id && body?.sites?.length > 0) {
+      const sitePosts = body?.sites?.map((site) => {
+        return { site_id: site.id, post_id: result.id };
       });
-
-      const existingSiteIds = existingSitePosts.map((sp) => sp.site_id);
-
-      const sitesToRemove = existingSiteIds.filter(
-        (id) => !siteIds.includes(id),
-      );
-      if (sitesToRemove.length > 0) {
-        await this.sitePostRepository.delete({
-          post_id: result.id,
-          site_id: In(sitesToRemove),
-        });
-      }
-
-      const sitesToAdd = siteIds.filter((id) => !existingSiteIds.includes(id));
-      if (sitesToAdd.length > 0) {
-        const newSitePosts = sitesToAdd.map((siteId) => ({
-          post_id: result.id,
-          site_id: siteId,
-        }));
-        await this.sitePostRepository.insert(newSitePosts);
-      }
+      await this.sitePostRepository.insert(sitePosts);
     }
 
-    return await this.postRepository.findOne({
-      where: { id: result.id },
-      relations: ['thumbnail', 'categories', 'sitePosts'],
-    });
+    if (result.id && thumbnail) {
+      const base64Image = thumbnail.buffer.toString('base64');
+      const mediaEntity = {
+        data: `data:image/png;base64, ${base64Image}`,
+        filename: thumbnail.originalname,
+        slug: generateSlug(path.parse(thumbnail.originalname).name),
+        mimetype: thumbnail.mimetype,
+        size: thumbnail.size,
+        storage_type: StorageType.BASE64,
+        url: '',
+      };
+
+      const cdnResult = await uploadImageCdn(mediaEntity);
+
+      if (!!cdnResult.url) {
+        mediaEntity.url = process.env.CDN_API + cdnResult?.url;
+        mediaEntity.storage_type = StorageType.URL;
+        mediaEntity.data = null;
+      }
+      const thumbnailResult = await this.mediaRepository.upsert(mediaEntity, {
+        conflictPaths: ['slug'],
+      });
+
+      await this.postRepository.update(
+        { id: result.id },
+        { thumbnail_id: thumbnailResult.generatedMaps[0]?.id },
+      );
+    }
+
+    return body;
   }
 
   async update(post: Post, updateDto: Post & PostBodyDto) {
@@ -761,5 +775,35 @@ export class PostService {
     }
 
     await this.deletePostUnused(post);
+  }
+
+  private async removeImage(id: string) {
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+    const image = await this.mediaRepository.findOne({
+      where: { id: id },
+      select: ['slug', 'id'],
+    });
+    console.log('image', image.slug + '.png');
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.delete(Media, { id: id });
+
+      await fetch(process.env.CDN_API + '/upload', {
+        headers: myHeaders,
+        method: 'DELETE',
+        body: JSON.stringify({ filename: image.slug + '.png' }),
+      })
+        .then(async (response) => {
+          await this.mediaRepository.delete({ id: id });
+          return response.json();
+        })
+        .then((result) => {
+          return console.log(result);
+        })
+        .catch((error) => {
+          return console.log(error);
+        });
+    });
   }
 }

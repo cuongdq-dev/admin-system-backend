@@ -151,10 +151,20 @@ export async function saveImageAsBase64(
     size: buffer.length,
   };
 
+  const cdnResult = await uploadImageCdn(mediaEntity);
+
+  if (!!cdnResult?.url) {
+    mediaEntity.url = process.env.CDN_API + cdnResult?.url;
+    mediaEntity.storage_type = StorageType.URL;
+  }
+  return { ...mediaEntity } as Media;
+}
+
+export async function uploadImageCdn(mediaEntity: Record<string, any>) {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
 
-  const cdnResult = await fetch(process.env.CDN_API + '/upload', {
+  return await fetch(process.env.CDN_API + '/upload', {
     headers: myHeaders,
     method: 'POST',
     body: JSON.stringify({ title: mediaEntity.slug, image: mediaEntity.data }),
@@ -168,12 +178,6 @@ export async function saveImageAsBase64(
     .catch((error) => {
       return undefined;
     });
-
-  if (!!cdnResult?.url) {
-    mediaEntity.url = process.env.CDN_API + cdnResult?.url;
-    mediaEntity.storage_type = StorageType.URL;
-  }
-  return { ...mediaEntity } as Media;
 }
 
 export async function generatePostFromHtml(body: {

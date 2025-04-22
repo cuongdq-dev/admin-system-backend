@@ -21,6 +21,8 @@ import { SiteModule } from './site/site.module';
 import { UserModule } from './user/user.module';
 import { WebhookModule } from './webhook/webhook.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { MulterModule } from '@nestjs/platform-express';
+import * as multer from 'multer';
 
 const modules = [
   AuthModule,
@@ -49,6 +51,9 @@ export const global_modules = [
   }),
   TypeOrmModule.forRootAsync({ useClass: TypeORMConfigFactory }),
   MailerModule.forRootAsync({ useClass: MailerConfigClass }),
+  MulterModule.register({
+    storage: multer.memoryStorage(),
+  }),
 ];
 
 @Module({

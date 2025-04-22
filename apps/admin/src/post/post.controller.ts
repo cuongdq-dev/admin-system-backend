@@ -13,7 +13,9 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -31,9 +33,10 @@ import {
   Paginate,
   PaginateQuery,
 } from 'nestjs-paginate';
-import { PostBodyDto } from './post.dto';
+import { CreatePostDto, PostBodyDto } from './post.dto';
 import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
 import { PostService } from './post.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Post')
 @ApiBearerAuth()
@@ -161,13 +164,16 @@ export class PostController {
       'status',
       'meta_description',
       'relatedQueries',
+      'thumbnail',
     ]),
   })
+  @UseInterceptors(FileInterceptor('thumbnail'))
   @ApiCreatedResponse({ type: PostEntity })
-  createPost(@BodyWithUser() body: PostEntity & PostBodyDto) {
-    console.log(body);
-    return true;
-    // return this.postService.create(body);
+  async createPost(
+    @BodyWithUser() body: CreatePostDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.postService.create(body, file);
   }
 
   @Patch(':id')
@@ -219,7 +225,17 @@ export class PostController {
       IsIDExistPipe({
         entity: PostEntity,
         checkOwner: true,
-        relations: { user: true },
+        relations: [
+          'user',
+          'thumbnail',
+          'article.trending',
+          'categories',
+          'sitePosts',
+          'sitePosts.site',
+          'article.thumbnail',
+          'article.trending.thumbnail',
+          'article.trending.articles',
+        ],
       }),
     )
     post: PostEntity,
