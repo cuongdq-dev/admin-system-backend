@@ -154,7 +154,7 @@ export async function saveImageAsBase64(
   const cdnResult = await uploadImageCdn(mediaEntity);
 
   if (!!cdnResult?.url) {
-    mediaEntity.url = process.env.CDN_API + cdnResult?.url;
+    mediaEntity.url = process.env.CDN_DOMAIN + cdnResult?.url;
     mediaEntity.storage_type = StorageType.URL;
   }
   return { ...mediaEntity } as Media;

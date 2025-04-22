@@ -703,7 +703,7 @@ export class PostService {
       const cdnResult = await uploadImageCdn(mediaEntity);
 
       if (!!cdnResult.url) {
-        mediaEntity.url = process.env.CDN_API + cdnResult?.url;
+        mediaEntity.url = process.env.CDN_DOMAIN + cdnResult?.url;
         mediaEntity.storage_type = StorageType.URL;
         mediaEntity.data = null;
       }
@@ -784,26 +784,21 @@ export class PostService {
       where: { id: id },
       select: ['slug', 'id'],
     });
-    console.log('image', image.slug + '.png');
 
-    await this.dataSource.transaction(async (manager) => {
-      await manager.delete(Media, { id: id });
-
-      await fetch(process.env.CDN_API + '/upload', {
-        headers: myHeaders,
-        method: 'DELETE',
-        body: JSON.stringify({ filename: image.slug + '.png' }),
+    await fetch(process.env.CDN_API + '/upload', {
+      headers: myHeaders,
+      method: 'DELETE',
+      body: JSON.stringify({ filename: image.slug + '.png' }),
+    })
+      .then(async (response) => {
+        await this.mediaRepository.delete({ id: id });
+        return response.json();
       })
-        .then(async (response) => {
-          await this.mediaRepository.delete({ id: id });
-          return response.json();
-        })
-        .then((result) => {
-          return console.log(result);
-        })
-        .catch((error) => {
-          return console.log(error);
-        });
-    });
+      .then((result) => {
+        return console.log(result);
+      })
+      .catch((error) => {
+        return console.log(error);
+      });
   }
 }
