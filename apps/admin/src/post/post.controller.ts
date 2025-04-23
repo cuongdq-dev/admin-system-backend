@@ -178,7 +178,7 @@ export class PostController {
     return this.postService.create(body, file);
   }
 
-  @Post('create/:id')
+  @Post('update/:id')
   @ApiBody({
     type: PickType(PostEntity, [
       'content',
