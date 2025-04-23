@@ -1,3 +1,4 @@
+import { PostStatus } from '@app/entities/post.entity';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -31,11 +32,6 @@ export class PostBodyDto {
   sites: SiteIdDto[];
 }
 
-export enum PostStatus {
-  DRAFT = 'draft',
-  PUBLIC = 'public',
-}
-
 export class CreatePostDto {
   @IsOptional()
   @IsString()
@@ -47,15 +43,19 @@ export class CreatePostDto {
 
   @IsOptional()
   @IsString()
-  slug?: string;
+  deleted_by?: string;
+
+  @IsOptional()
+  @IsString()
+  updated_by?: string;
 
   @IsOptional()
   @IsString()
   meta_description?: string;
 
   @IsOptional()
-  @IsString()
-  relatedQueries?: string;
+  @IsArray()
+  relatedQueries?: { id: string; title: string }[];
 
   @IsOptional()
   @IsString()

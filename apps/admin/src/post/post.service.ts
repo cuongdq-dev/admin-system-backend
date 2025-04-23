@@ -7,6 +7,7 @@ import {
   StorageType,
   Trending,
   TrendingArticle,
+  User,
 } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
@@ -648,18 +649,33 @@ export class PostService {
     };
   }
 
-  async getPostBySlug(post: Post) {
+  async getPostBySlug(post: Post, user: User) {
     const result = await this.postRepository.update(
       { id: post.id, status: PostStatus.NEW },
       { status: PostStatus.DRAFT },
     );
+    const categories = await this.categoryRepository.find({
+      where: {
+        posts: { id: post.id }, // Liên kết qua bài viết
+        created_by: user.id, // Điều kiện lọc theo user
+      },
+      relations: ['posts'], // Nếu cần quan hệ với bài viết
+    });
+
+    const sites =
+      post?.sitePosts &&
+      (await this.siteRepository.find({
+        where: {
+          id: In(post?.sitePosts?.map((st) => st.site_id)), // Liên kết qua bài viết
+          created_by: user.id, // Điều kiện lọc theo user
+        },
+      }));
 
     return {
       ...post,
       status: !!result.affected ? PostStatus.DRAFT : post.status,
-      sites: post.sitePosts.map((st) => {
-        return st.site;
-      }),
+      categories,
+      sites,
     };
   }
 
@@ -672,15 +688,15 @@ export class PostService {
 
     const data = {
       title: body.title,
-      slug: body.slug || generateSlug(body.title),
+      slug: generateSlug(body.title),
       created_by: body?.created_by,
-      meta_description: body.meta_description,
+      meta_description: body?.meta_description,
 
-      content: body.content || '',
+      content: body?.content || '',
       categories: categories,
-      user_id: body.created_by,
-      relatedQueries: body.relatedQueries.split(',').map((query) => {
-        return { slug: generateSlug(query), query: query };
+      user_id: body?.created_by,
+      relatedQueries: body?.relatedQueries?.map((query) => {
+        return { query: query.title, slug: generateSlug(query.title) };
       }),
     } as Post;
 
@@ -728,43 +744,123 @@ export class PostService {
     return body;
   }
 
-  async update(post: Post, updateDto: Post & PostBodyDto) {
-    await this.postRepository.save({ ...post, ...updateDto });
+  async update(
+    id: string,
+    body: CreatePostDto,
+    user: User,
+    thumbnail?: Express.Multer.File,
+  ) {
+    const { categories, status, sites, relatedQueries, ...values } = body;
+    const dataToUpdate = {
+      ...values,
+      updated_by: body.updated_by,
+    };
 
-    if (updateDto.sites) {
-      const siteIds = updateDto.sites.map((site) => site.id);
-
-      const existingSitePosts = await this.sitePostRepository.find({
-        where: { post_id: post.id },
+    if (status) dataToUpdate['status'] = body.status;
+    if (categories) {
+      const categories = await this.categoryRepository.find({
+        where: { id: In(body?.categories?.map((cate) => cate.id)) },
+      });
+      dataToUpdate['categories'] = categories;
+    }
+    if (sites) {
+      const sites = await this.siteRepository.find({
+        where: {
+          id: In(body?.sites?.map((site) => site.id)),
+          created_by: user.id,
+        },
+        select: ['id'],
       });
 
-      const existingSiteIds = existingSitePosts.map((sp) => sp.site_id);
+      dataToUpdate['sitePosts'] = sites.map((site) => {
+        return {
+          site_id: site.id,
+          post_id: id,
+          indexStatus: IndexStatus.NEW,
+          created_by: user.id,
+        };
+      });
+    }
+    if (relatedQueries) {
+      dataToUpdate['relatedQueries'] = body?.relatedQueries.map((query) => {
+        return { slug: generateSlug(query.title), query: query.title };
+      });
+    }
+    if (thumbnail) {
+      const base64Image = thumbnail.buffer.toString('base64');
+      const mediaEntity = {
+        data: `data:image/png;base64, ${base64Image}`,
+        filename: thumbnail.originalname,
+        slug: generateSlug(path.parse(thumbnail.originalname).name),
+        mimetype: thumbnail.mimetype,
+        size: thumbnail.size,
+        storage_type: StorageType.BASE64,
+        url: '',
+      };
 
-      const sitesToRemove = existingSiteIds.filter(
-        (id) => !siteIds.includes(id),
+      const cdnResult = await uploadImageCdn(mediaEntity);
+
+      if (!!cdnResult.url) {
+        mediaEntity.url = process.env.CDN_DOMAIN + cdnResult?.url;
+        mediaEntity.storage_type = StorageType.LOCAL;
+        mediaEntity.data = null;
+      }
+      const thumbnailResult = await this.mediaRepository.upsert(
+        { ...mediaEntity, deleted_at: null, deleted_by: null },
+        {
+          conflictPaths: ['slug'],
+        },
       );
-      if (sitesToRemove.length > 0) {
-        await this.sitePostRepository.delete({
-          post_id: post.id,
-          site_id: In(sitesToRemove),
-        });
-      }
 
-      const sitesToAdd = siteIds.filter((id) => !existingSiteIds.includes(id));
-      if (sitesToAdd.length > 0) {
-        const newSitePosts = sitesToAdd.map((siteId) => ({
-          post_id: post.id,
-          site_id: siteId,
-        }));
-        await this.sitePostRepository.insert(newSitePosts);
-      }
+      dataToUpdate['thumbnail_id'] = thumbnailResult.generatedMaps[0].id;
     }
 
-    if (updateDto.status == PostStatus.DELETED) {
-      await this.postRepository.softDelete({ id: post.id });
-    }
+    console.log(dataToUpdate);
 
-    return { ...post, ...updateDto };
+    await this.dataSource.transaction(async (manager) => {
+      if (dataToUpdate['sitePosts']) {
+        await manager.delete(SitePost, { post_id: id });
+        await manager.insert(SitePost, dataToUpdate['sitePosts']);
+      }
+      await manager.save(Post, {
+        ...dataToUpdate,
+        id: id,
+        sitePosts: undefined,
+      });
+    });
+
+    const result = await this.postRepository.findOne({
+      where: { id: id },
+      relations: [
+        'user',
+        'thumbnail',
+        'article.trending',
+        'categories',
+        'sitePosts',
+        'sitePosts.site',
+        'article.thumbnail',
+        'article.trending.thumbnail',
+        'article.trending.articles',
+      ],
+    });
+
+    return {
+      ...result,
+
+      categories: await this.categoryRepository.find({
+        where: {
+          posts: { id: id }, // Liên kết qua bài viết
+          created_by: user.id, // Điều kiện lọc theo user
+        },
+        relations: ['posts'], // Nếu cần quan hệ với bài viết
+      }),
+      sitePosts: null,
+      sites: await this.siteRepository.find({
+        where: {
+          id: In(result?.sitePosts?.map((st) => st.site_id)), // Liên kết qua bài viết
+        },
+      }),
+    };
   }
 
   async delete(post: Post) {

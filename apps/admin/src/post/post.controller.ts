@@ -152,8 +152,10 @@ export class PostController {
       }),
     )
     post: PostEntity,
+
+    @UserParam() user: User,
   ) {
-    return this.postService.getPostBySlug(post);
+    return this.postService.getPostBySlug(post, user);
   }
 
   @Post()
@@ -176,7 +178,7 @@ export class PostController {
     return this.postService.create(body, file);
   }
 
-  @Patch(':id')
+  @Post('create/:id')
   @ApiBody({
     type: PickType(PostEntity, [
       'content',
@@ -187,6 +189,7 @@ export class PostController {
     ]),
   })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  @UseInterceptors(FileInterceptor('thumbnail'))
   updatePost(
     @Param(
       'id',
@@ -194,6 +197,7 @@ export class PostController {
       IsIDExistPipe({
         entity: PostEntity,
         filterField: 'id',
+        // checkOwner: true,
         relations: [
           'user',
           'thumbnail',
@@ -205,15 +209,17 @@ export class PostController {
       }),
     )
     post: PostEntity,
-    @Body(
+    @BodyWithUser(
       new ValidationPipe({
         ...validationOptions,
         groups: [ValidationGroup.UPDATE],
       }),
     )
-    updateDto: PostEntity & PostBodyDto,
+    updateDto: CreatePostDto,
+    @UserParam() user: User,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.postService.update(post, updateDto);
+    return this.postService.update(post.id, updateDto, user, file);
   }
 
   @Delete(':id')

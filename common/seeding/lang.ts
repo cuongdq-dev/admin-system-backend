@@ -120,6 +120,7 @@ export const languages = [
       blog_site_item: 'Sites',
       blog_category_item: 'Categories',
       blog_detail_slug: 'Slug',
+      blog_status_item: 'Status',
 
       blog_title_item: 'Title',
       blog_description_item: 'Description',
@@ -444,6 +445,7 @@ export const languages = [
       blog_site_item: 'Trang web',
       blog_category_item: 'Danh mục',
       blog_detail_slug: 'Slug',
+      blog_status_item: 'Trạng thái',
 
       blog_title_item: 'Tiêu đề',
       blog_description_item: 'Mô tả',
