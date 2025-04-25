@@ -1,4 +1,4 @@
-import { configLoads } from '@app/modules';
+import { configLoads, MediaModule } from '@app/modules';
 import { TypeORMConfigFactory } from '@app/modules/database/typeorm.factory';
 import { MailerConfigClass } from '@app/modules/mail/mailerConfig.service';
 import { MailerModule } from '@nestjs-modules/mailer';
@@ -38,6 +38,7 @@ const modules = [
   DropdownModule,
   AnalyticsModule,
   SettingModule,
+  MediaModule,
   RepositoryModule,
   NotificationModule,
   CategoryModule,

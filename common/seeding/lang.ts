@@ -38,6 +38,9 @@ export const languages = [
       user_profile_title: 'Profile',
       user_tab_profile: 'Profile',
 
+      user_upload_avatar: 'Upload Avatar',
+      user_upload_banner: 'Upload Banner',
+
       user_my_post_title: 'Your Posts',
       user_input_post_title: 'Click to add new post',
       user_manage_post: 'Manage Posts',
@@ -315,6 +318,7 @@ export const languages = [
       blog_archived_description: 'Old blogs not indexed or removed from index',
       blog_trending_description: 'Trending blogs from search data',
 
+      user_edit_profile_title: 'Update profile',
       user_email_item: 'Email',
       user_name_item: 'Name',
       user_username_item: 'Username',
@@ -322,6 +326,8 @@ export const languages = [
       user_avatar_item: 'Avatar',
       user_banner_item: 'Banner',
       user_site_item: 'Sites',
+      user_address_item: 'Address',
+      user_phone_item: 'Phone',
       user_created_item: 'Created At',
     },
   },
@@ -363,6 +369,8 @@ export const languages = [
       user_detail_title: 'Chi tiết người dùng',
       user_profile_title: 'Hồ sơ',
       user_tab_profile: 'Hồ sơ',
+      user_upload_avatar: 'Cập nhật ảnh đại diện',
+      user_upload_banner: 'Cập nhật ảnh bìa',
 
       user_my_post_title: 'Bài viết của bạn',
       user_input_post_title: 'Nhấn vào để nhập bài viết mới',
@@ -639,6 +647,7 @@ export const languages = [
       blog_trending_description: 'Blog xu hướng từ dữ liệu tìm kiếm',
 
       user_email_item: 'Email',
+      user_edit_profile_title: 'Chỉnh sửa trang cá nhân',
       user_name_item: 'Họ & Tên',
       user_username_item: 'Tên Đăng Nhập',
       user_password_item: 'Mật Khẩu',
@@ -646,6 +655,8 @@ export const languages = [
       user_banner_item: 'Ảnh bìa',
       user_site_item: 'Sites',
       user_created_item: 'Cập nhất mới nhất',
+      user_address_item: 'Address',
+      user_phone_item: 'Phone',
     },
   },
 ];

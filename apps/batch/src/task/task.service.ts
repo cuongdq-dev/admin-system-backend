@@ -565,7 +565,9 @@ export class TaskService {
         const success = await submitToGoogleIndex(
           `${site.domain}/bai-viet/${savedPost.slug}`,
         );
-
+        // const siteCategories = await this.categoryRepository.find({
+        //   where: { sites: { id: site.id } },
+        // });
         await this.sitePostRepository.upsert(
           {
             site_id: site.id,

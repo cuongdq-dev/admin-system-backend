@@ -1,19 +1,15 @@
-import { Category, Post, Site, SitePost, User } from '@app/entities';
-import { MediaModule, MulterConfigService } from '@app/modules';
+import { Category, Media, Post, Site, SitePost, User } from '@app/entities';
 import { Module } from '@nestjs/common';
-import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MediaModule } from '../media/media.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Site, Post, Category, SitePost]),
-
+    TypeOrmModule.forFeature([User, Site, Post, Category, SitePost, Media]),
+    // MulterModule.registerAsync({ useClass: MulterConfigService }),
     MediaModule,
-    MulterModule.registerAsync({
-      useClass: MulterConfigService,
-    }),
   ],
   controllers: [UserController],
   providers: [UserService],

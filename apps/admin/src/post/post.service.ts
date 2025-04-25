@@ -17,7 +17,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import * as path from 'path';
 import { DataSource, In, LessThan, Repository } from 'typeorm';
-import { CreatePostDto, PostBodyDto } from './post.dto';
+import { CreatePostDto } from './post.dto';
 import { postArchivedPaginateConfig } from './post.pagination';
 
 @Injectable()
@@ -655,19 +655,16 @@ export class PostService {
       { status: PostStatus.DRAFT },
     );
     const categories = await this.categoryRepository.find({
-      where: {
-        posts: { id: post.id }, // Liên kết qua bài viết
-        created_by: user.id, // Điều kiện lọc theo user
-      },
-      relations: ['posts'], // Nếu cần quan hệ với bài viết
+      where: { posts: { id: post.id }, created_by: user.id },
+      relations: ['posts'],
     });
 
     const sites =
       post?.sitePosts &&
       (await this.siteRepository.find({
         where: {
-          id: In(post?.sitePosts?.map((st) => st.site_id)), // Liên kết qua bài viết
-          created_by: user.id, // Điều kiện lọc theo user
+          id: In(post?.sitePosts?.map((st) => st.site_id)),
+          created_by: user.id,
         },
       }));
 

@@ -4,7 +4,6 @@ import { Post as PostEntity, SitePost, Trending, User } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
 import validationOptions from '@app/utils/validation-options';
 import {
-  Body,
   Controller,
   Delete,
   Get,
@@ -34,7 +33,7 @@ import {
   Paginate,
   PaginateQuery,
 } from 'nestjs-paginate';
-import { CreatePostDto, PostBodyDto } from './post.dto';
+import { CreatePostDto } from './post.dto';
 import { postPaginateConfig, trendingPaginateConfig } from './post.pagination';
 import { PostService } from './post.service';
 
@@ -178,7 +177,7 @@ export class PostController {
     return this.postService.create(body, file);
   }
 
-  @Post('update/:id')
+  @Patch('update/:id')
   @ApiBody({
     type: PickType(PostEntity, [
       'content',

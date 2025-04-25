@@ -14,10 +14,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
-  ApiConsumes,
+  ApiBody,
   ApiOperation,
   ApiResponse,
   ApiTags,
+  PickType,
 } from '@nestjs/swagger';
 import {
   ApiOkPaginatedResponse,
@@ -32,10 +33,7 @@ import { UserService } from './user.service';
 
 @ApiTags('User')
 @ApiBearerAuth()
-@Controller({
-  path: 'users',
-  version: '1',
-})
+@Controller({ path: 'users', version: '1' })
 @UseGuards(AuthGuard('jwt'))
 export class UserController {
   constructor(private userService: UserService) {}
@@ -67,14 +65,29 @@ export class UserController {
 
   @Patch('/me')
   @ApiResponse({ status: HttpStatus.OK, description: 'Update logged in user' })
-  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'update logged in user' })
+  async update(@UserParam() user: User, @Body() updateDto: UserUpdateDto) {
+    return this.userService.update(user, updateDto);
+  }
+
+  @Patch('/me/avatar')
+  @ApiResponse({ status: HttpStatus.OK, description: 'Update logged in user' })
   @UseInterceptors(FileInterceptor('avatar'))
-  async update(
+  async uploadAvatar(
     @UserParam() user: User,
     @UploadedFile() avatar: Express.Multer.File,
-    @Body() updateDto: UserUpdateDto,
   ) {
-    return this.userService.update(user, avatar, updateDto);
+    return this.userService.uploadAvatar(user, avatar);
+  }
+
+  @Patch('/me/banner')
+  @ApiBody({ type: PickType(User, []) })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Update logged in user' })
+  @UseInterceptors(FileInterceptor('banner'))
+  async uploadBanner(
+    @UserParam() user: User,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.userService.uploadBanner(user, file);
   }
 }

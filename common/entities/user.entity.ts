@@ -74,6 +74,15 @@ export class User extends BaseEntity {
   avatar_id: string;
 
   @ApiHideProperty()
+  @ManyToOne('Media', 'avatars')
+  @JoinColumn({ name: 'banner_id' })
+  banner: Relation<Media>;
+
+  @ApiHideProperty()
+  @Column({ type: 'uuid', nullable: true })
+  banner_id: string;
+
+  @ApiHideProperty()
   @OneToMany('Session', 'user')
   sessions: Relation<Session[]>;
 

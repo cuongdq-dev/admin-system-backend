@@ -1,12 +1,11 @@
 import { Category, Post, Site, User } from '@app/entities';
-import { MediaService } from '@app/modules';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { plainToInstance } from 'class-transformer';
+import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
 import { RegisterDto } from '../auth-email/email.dto';
+import { MediaService } from '../media/media.service';
 import { UserUpdateDto } from './user.dto';
-import { paginate, PaginateQuery } from 'nestjs-paginate';
 
 @Injectable()
 export class UserService {
@@ -33,20 +32,29 @@ export class UserService {
       this.userRepository
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.avatar', 'avatar')
+        .leftJoinAndSelect('user.banner', 'banner')
         .where('user.id = :userId', { userId: user.id })
         .select([
           'user.id',
           'user.name',
           'user.email',
+          'user.address',
+          'user.phoneNumber',
           'user.is_active',
           'user.created_at',
           'user.updated_at',
+
           'avatar.id',
           'avatar.url',
           'avatar.filename',
+
+          'banner.id',
+          'banner.url',
+          'banner.filename',
         ])
         .groupBy('user.id')
         .addGroupBy('avatar.id')
+        .addGroupBy('banner.id')
         .getOne(),
       this.siteRepository
         .createQueryBuilder('site')
@@ -70,28 +78,26 @@ export class UserService {
     return { ...profile, sites, categories, posts };
   }
 
-  async update(
-    user: User,
-    avatar: Express.Multer.File,
-    updateDto: UserUpdateDto,
-  ) {
-    const updateData: Record<string, string> = {
-      ...updateDto,
-    };
-    const previousImage = user.avatar_id;
-    if (avatar) {
-      updateData.avatar_id = (await this.mediaService.update(avatar)).id;
-    }
-
-    await this.userRepository.update(user.id, updateData);
-    if (avatar && previousImage && updateData.avatar_id !== previousImage) {
-      await this.mediaService.deleteMedia(previousImage);
-    }
-
-    return plainToInstance(User, {
-      ...user,
-      ...updateData,
+  async update(user: User, updateDto: UserUpdateDto) {
+    const findUser = await this.userRepository.findOne({
+      where: [{ id: user.id }, { created_by: user.id }],
+      select: [
+        'id',
+        'name',
+        'email',
+        'phoneNumber',
+        'address',
+        'is_active',
+        'created_at',
+        'updated_at',
+      ],
     });
+
+    if (!findUser) throw new NotFoundException('User not found.');
+
+    await this.userRepository.update({ id: findUser.id }, updateDto);
+
+    return { ...findUser, ...updateDto };
   }
 
   async getPostByUser(query: PaginateQuery & Record<string, any>, user: User) {
@@ -173,5 +179,56 @@ export class UserService {
       maxLimit: 500,
       defaultLimit: 23,
     });
+  }
+
+  async uploadBanner(user: User, file: Express.Multer.File) {
+    const findUser = await this.userRepository.findOne({
+      where: [{ id: user.id }, { created_by: user.id }],
+      select: [
+        'id',
+        'name',
+        'email',
+        'address',
+        'phoneNumber',
+        'is_active',
+        'created_at',
+        'updated_at',
+      ],
+    });
+
+    if (!findUser) throw new NotFoundException('User not found.');
+    const media = await this.mediaService.uploadMedia(file, user);
+    if (media.id) {
+      await this.userRepository.update(
+        { id: findUser.id },
+        { banner_id: media.id },
+      );
+      return { ...user, banner: media };
+    }
+  }
+
+  async uploadAvatar(user: User, file: Express.Multer.File) {
+    const findUser = await this.userRepository.findOne({
+      where: [{ id: user.id }, { created_by: user.id }],
+      select: [
+        'id',
+        'name',
+        'email',
+        'address',
+        'phoneNumber',
+        'is_active',
+        'created_at',
+        'updated_at',
+      ],
+    });
+    if (!findUser) throw new NotFoundException('User not found.');
+    const media = await this.mediaService.uploadMedia(file, user);
+    if (media.id) {
+      await this.userRepository.update(
+        { id: findUser.id },
+        { avatar_id: media.id },
+      );
+      return { ...user, avatar: media };
+    }
   }
 }
