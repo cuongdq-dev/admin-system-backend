@@ -112,6 +112,8 @@ export const languages = [
       blog_all_nav: 'All Blog',
       blog_trending_nav: 'Trending',
 
+      image_nav: 'Image',
+
       blog_archived_nav: 'Archived',
       blog_list_page: 'Blog List',
       blog_detail_page: 'Blog Detail',
@@ -641,6 +643,8 @@ export const languages = [
       google_indexing_nav: 'Google Indexing',
       google_console_list_page: 'Danh sách Google Console',
       google_logs_nav: 'Google Logs',
+
+      image_nav: 'Hình ảnh',
 
       blog_unsed_description: 'Blog không còn được dùng ở bất kỳ site nào',
       blog_archived_description: 'Blog cũ không còn index hoặc đã bị gỡ bỏ',

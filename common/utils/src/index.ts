@@ -180,6 +180,19 @@ export async function uploadImageCdn(mediaEntity: Record<string, any>) {
     });
 }
 
+export async function getListCdn() {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+
+  return await fetch(process.env.CDN_DOMAIN, {
+    headers: myHeaders,
+    method: 'get',
+  })
+    .then(async (response) => response.json())
+    .then((result) => result)
+    .catch((error) => undefined);
+}
+
 export async function generatePostFromHtml(body: {
   url: string;
   title: string;

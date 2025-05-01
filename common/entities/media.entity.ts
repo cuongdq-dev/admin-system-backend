@@ -37,20 +37,20 @@ export class Media extends BaseEntity {
   size: number;
 
   @OneToMany(() => User, (user) => user.avatar)
-  avatars: Relation<User>;
+  avatars: Relation<User[]>;
 
   @OneToMany(() => User, (user) => user.banner)
-  banners: Relation<User>;
+  banners: Relation<User[]>;
 
-  @OneToMany(() => Trending, (trending) => trending.thumbnail_id)
-  trendings: Relation<Trending>;
+  @OneToMany(() => Trending, (trending) => trending.thumbnail)
+  trendings: Relation<Trending[]>;
 
-  @OneToMany(() => TrendingArticle, (article) => article.thumbnail_id)
-  articles: Relation<TrendingArticle>;
+  @OneToMany(() => TrendingArticle, (article) => article.thumbnail)
+  articles: Relation<TrendingArticle[]>;
 
-  @OneToMany(() => Post, (post) => post.thumbnail_id)
-  posts: Relation<Post>;
+  @OneToMany(() => Post, (post) => post.thumbnail)
+  posts: Relation<Post[]>;
 
   @OneToMany(() => ProductVariantMedia, (variant) => variant.media)
-  variants: Relation<ProductVariantMedia>;
+  variants: Relation<ProductVariantMedia[]>;
 }

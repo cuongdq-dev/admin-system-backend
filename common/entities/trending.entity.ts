@@ -23,7 +23,9 @@ export class Trending extends BaseEntity {
   @Column({ type: 'jsonb', nullable: true })
   relatedQueries: { query?: string; slug?: string }[];
 
-  @ManyToOne(() => Media, { nullable: true })
+  @ManyToOne(() => Media, (thumbnail) => thumbnail.trendings, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'thumbnail_id' })
   thumbnail: Relation<Media>;
 

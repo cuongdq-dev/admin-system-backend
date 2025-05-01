@@ -74,7 +74,7 @@ export class User extends BaseEntity {
   avatar_id: string;
 
   @ApiHideProperty()
-  @ManyToOne('Media', 'avatars')
+  @ManyToOne('Media', 'banners')
   @JoinColumn({ name: 'banner_id' })
   banner: Relation<Media>;
 

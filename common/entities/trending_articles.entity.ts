@@ -36,7 +36,7 @@ export class TrendingArticle extends BaseEntity {
   @Column({ type: 'uuid', nullable: false })
   trending_id: string;
 
-  @ManyToOne(() => Media, { nullable: true })
+  @ManyToOne(() => Media, (thumbnail) => thumbnail.articles, { nullable: true })
   @JoinColumn({ name: 'thumbnail_id' })
   thumbnail: Relation<Media>;
 

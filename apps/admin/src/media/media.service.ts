@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Media, StorageType, User } from '@app/entities';
-import { generateSlug, uploadImageCdn } from '@app/utils';
+import { generateSlug, getListCdn, uploadImageCdn } from '@app/utils';
 import { Repository } from 'typeorm';
 import * as path from 'path';
 
@@ -42,5 +42,51 @@ export class MediaService {
     return this.mediaRepository.findOne({
       where: { id: thumbnailResult.generatedMaps[0]?.id },
     });
+  }
+
+  async getMedia(slug: string) {
+    const result = await this.mediaRepository
+      .createQueryBuilder('media')
+      .leftJoinAndSelect('media.banners', 'banners')
+      .leftJoinAndSelect('media.avatars', 'avatars')
+      .leftJoinAndSelect('media.posts', 'posts')
+      .leftJoinAndSelect('media.articles', 'articles')
+      .leftJoinAndSelect('media.trendings', 'trendings')
+      .where('media.slug = :slug', { slug })
+      .select([
+        'media.id',
+        'media.slug',
+        'media.filename',
+        'media.size',
+        'media.created_at',
+        'media.url',
+        'media.storage_type',
+
+        'posts.id',
+        'posts.title',
+        'posts.slug',
+
+        'banners.id',
+        'banners.name',
+        'banners.email',
+
+        'trendings.id',
+        'trendings.titleQuery',
+
+        'articles.id',
+        'articles.slug',
+
+        'avatars.id',
+        'avatars.name',
+        'avatars.email',
+      ])
+      .getOne();
+
+    return result;
+  }
+
+  async getAllMedia() {
+    const listCdn = await getListCdn();
+    return { data: listCdn?.files, totalRecords: listCdn?.files?.length };
   }
 }
