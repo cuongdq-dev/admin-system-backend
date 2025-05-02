@@ -1,11 +1,12 @@
 // media.controller.ts
 import { UserParam } from '@app/decorators';
-import { User } from '@app/entities';
+import { StorageType, User } from '@app/entities';
 import {
   Controller,
   Get,
   Param,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -23,8 +24,8 @@ export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @Get()
-  async getAllMedia() {
-    return this.mediaService.getAllMedia();
+  async getAllMedia(@Query() query: { storage_type?: StorageType }) {
+    return this.mediaService.getAllMedia(query);
   }
 
   @Get(':slug')

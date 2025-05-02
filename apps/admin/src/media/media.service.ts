@@ -85,8 +85,25 @@ export class MediaService {
     return result;
   }
 
-  async getAllMedia() {
+  async getAllMedia(query: { storage_type?: StorageType }) {
+    if (query.storage_type != StorageType.LOCAL) {
+      const result = await this.mediaRepository.find({
+        where: { storage_type: query.storage_type },
+        select: ['url', 'slug'],
+      });
+      return {
+        data: result.map((r) => {
+          return { url: r.url, filename: r?.slug };
+        }),
+        totalRecords: result.length,
+      };
+    }
     const listCdn = await getListCdn();
-    return { data: listCdn?.files, totalRecords: listCdn?.files?.length };
+    return {
+      data: listCdn?.files.map((f) => {
+        return { url: process.env.CDN_DOMAIN + f?.url, filename: f.name };
+      }),
+      totalRecords: listCdn?.files?.length,
+    };
   }
 }
