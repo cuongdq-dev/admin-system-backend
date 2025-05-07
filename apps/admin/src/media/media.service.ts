@@ -85,10 +85,14 @@ export class MediaService {
     return result;
   }
 
-  async getAllMedia(query: { storage_type?: StorageType }) {
-    if (query.storage_type != StorageType.LOCAL) {
+  async getAllMedia({
+    storage_type = StorageType.LOCAL,
+  }: {
+    storage_type?: StorageType;
+  }) {
+    if (storage_type != StorageType.LOCAL) {
       const result = await this.mediaRepository.find({
-        where: { storage_type: query.storage_type },
+        where: { storage_type: storage_type },
         select: ['url', 'slug'],
       });
       return {

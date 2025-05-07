@@ -407,12 +407,12 @@ async function createNotification() {
     console.error('Error seeding full notifications:', error.message);
   }
 }
-void createLanguages();
+// void createLanguages();
 
-// void createService();
-// void create();
-// void createUser();
-// void createServer();
-// void createNotification();
+void createService();
+void create();
+void createUser();
+void createServer();
+void createNotification();
 
-// void createCategory();
+void createCategory();
