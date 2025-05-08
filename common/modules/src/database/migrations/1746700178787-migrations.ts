@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Migrations1746695277847 implements MigrationInterface {
-    name = 'Migrations1746695277847'
+export class Migrations1746700178787 implements MigrationInterface {
+    name = 'Migrations1746700178787'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "site_books" ALTER COLUMN "indexState" SET DEFAULT '[]'::jsonb`);
