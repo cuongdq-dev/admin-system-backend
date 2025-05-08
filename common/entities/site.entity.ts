@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 import { BaseEntity } from './base';
 import { Category } from './category.entity';
-import { Post } from './post.entity';
+import { SiteBook } from './site_books.entity';
 import { SitePost } from './site_posts.entity';
 
 export type AdSlotType =
@@ -59,6 +59,9 @@ export class Site extends BaseEntity {
 
   @OneToMany(() => SitePost, (sitePost) => sitePost.site)
   sitePosts: Relation<SitePost[]>; // Quan hệ với bảng trung gian SitePost
+
+  @OneToMany(() => SiteBook, (siteBook) => siteBook.site)
+  siteBooks: Relation<SiteBook[]>; // Quan hệ với bảng trung gian SiteBook
 
   @ManyToMany(() => Category, (category) => category.sites, { cascade: true })
   @JoinTable({

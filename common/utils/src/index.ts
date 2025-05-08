@@ -281,7 +281,7 @@ export async function generatePostFromHtml(body: {
   }
 }
 
-async function fetchWithRetry(
+export async function fetchWithRetry(
   url: string,
   retries = 3,
 ): Promise<Response | null> {

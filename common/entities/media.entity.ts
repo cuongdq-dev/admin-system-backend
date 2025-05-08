@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, Relation, Unique } from 'typeorm';
 import { BaseEntity } from './base';
+import { Book } from './book.entity';
 import { Post } from './post.entity';
 import { ProductVariantMedia } from './product_variant_media.entity';
 import { Trending } from './trending.entity';
@@ -50,6 +51,9 @@ export class Media extends BaseEntity {
 
   @OneToMany(() => Post, (post) => post.thumbnail)
   posts: Relation<Post[]>;
+
+  @OneToMany(() => Book, (book) => book.thumbnail)
+  books: Relation<Book[]>;
 
   @OneToMany(() => ProductVariantMedia, (variant) => variant.media)
   variants: Relation<ProductVariantMedia[]>;

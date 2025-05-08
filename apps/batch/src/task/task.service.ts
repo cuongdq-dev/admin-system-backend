@@ -1,4 +1,5 @@
 import {
+  Book,
   Category,
   GoogleIndexRequest,
   Media,
@@ -20,6 +21,7 @@ import { IndexStatus } from '@app/entities/site_posts.entity';
 import { TelegramService } from '@app/modules/telegram/telegram.service';
 import {
   fetchTrendings,
+  fetchWithRetry,
   generatePostFromHtml,
   generateSlug,
   getMetaDataGoogleConsole,
@@ -28,6 +30,7 @@ import {
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as cheerio from 'cheerio';
 import {
   DataSource,
   In,
@@ -68,6 +71,9 @@ export class TaskService {
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
 
+    @InjectRepository(Book)
+    private readonly bookRepository: Repository<Book>,
+
     @InjectRepository(SitePost)
     private readonly sitePostRepository: Repository<SitePost>,
 
@@ -81,11 +87,80 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    // await this.handleCrawlerArticles();
+    // await this.handleCrawlerBook();
     // await this.handleCleanupOldPosts();
     // await this.googleIndex();
     // await this.googleMetaData();
   }
+
+  @Cron('0 5 * * *')
+  async handleCrawlerBook() {
+    this.logger.debug('START - Crawler Books.');
+    const result: any[] = [];
+    let pageBook = 1;
+    const limitBook = 10;
+    while (result.length <= limitBook) {
+      const url = `https://truyenfull.vision/top-truyen/duoi-100-chuong/trang-${pageBook}/`;
+      const response = await fetchWithRetry(url);
+      if (!response?.ok) break;
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+
+      const itemsOnPage: any[] = [];
+      const elements = $(
+        '.list.list-truyen .row[itemtype="https://schema.org/Book"]',
+      );
+      for (const el of elements) {
+        const element = $(el);
+        const titleEl = element.find('h3.truyen-title a');
+        const title = titleEl.text().trim();
+
+        //
+        const checkExist = await this.bookRepository.findOne({
+          where: { title: title },
+        });
+        if (checkExist) continue;
+
+        const link = titleEl.attr('href');
+
+        const full = element.find('.label-title.label-full').length > 0;
+        const hot = element.find('.label-title.label-hot').length > 0;
+        const isNew = element.find('.label-title.label-new').length > 0;
+
+        const totalChapter = element
+          .find('.col-xs-2 a')
+          .text()
+          .replace(/[^0-9]/g, '')
+          .trim();
+
+        itemsOnPage.push({
+          title,
+          slug: generateSlug(title),
+          source_url: link,
+          // author,
+          is_full: full,
+          is_hot: hot,
+          is_new: isNew,
+          total_chapter: parseInt(totalChapter, 10) || 0,
+        });
+      }
+
+      if (itemsOnPage.length === 0) break; // nếu không còn dữ liệu
+
+      result.push(...itemsOnPage);
+
+      if (result.length >= limitBook) {
+        result.length = limitBook; // cắt bớt nếu dư
+        break;
+      }
+
+      pageBook++;
+    }
+    console.log(result);
+    await this.bookRepository.insert(result);
+  }
+
   @Cron('10 */2 * * *')
   async googleIndex() {
     this.logger.debug('START - Request Google Index.');

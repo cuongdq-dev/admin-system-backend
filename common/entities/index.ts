@@ -1,4 +1,6 @@
 import { Address } from './address.entity';
+import { Book } from './book.entity';
+import { Chapter } from './book_chapter.entity';
 import { Cart } from './cart.entity';
 import { CartItem } from './cart_item.entity';
 import { Category } from './category.entity';
@@ -24,6 +26,7 @@ import { Server } from './server.entity';
 import { Service } from './service.entity';
 import { ServerService } from './service_service.entity';
 import { Site } from './site.entity';
+import { SiteBook } from './site_books.entity';
 import { SitePost } from './site_posts.entity';
 import { Trending } from './trending.entity';
 import { TrendingArticle } from './trending_articles.entity';
@@ -61,11 +64,14 @@ export {
   Service,
   Session,
   Site,
+  SiteBook,
+  Book,
   StorageType,
   Token,
   Trending,
   TrendingArticle,
   GoogleIndexRequest,
+  Chapter,
   User,
   UserTokenType,
 };
@@ -76,8 +82,11 @@ export const loadEntities = [
   Post,
   Category,
   Site,
+  Chapter,
   Session,
   Token,
+  SiteBook,
+  Book,
   User,
   Customer,
   Address,

@@ -1,5 +1,7 @@
 import {
+  Book,
   Category,
+  Chapter,
   GoogleIndexRequest,
   Media,
   Notification,
@@ -25,6 +27,8 @@ import { TaskService } from './task.service';
       Media,
       Category,
       Post,
+      Book,
+      Chapter,
       SitePost,
       Site,
       Notification,

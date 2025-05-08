@@ -23,6 +23,7 @@ import { Server } from './server.entity';
 import { Site } from './site.entity';
 import type { Session } from './user_session.entity';
 import { Token } from './user_token.entity';
+import { Book } from './book.entity';
 
 @Entity({ name: 'users' })
 @Unique(['name', 'email'])
@@ -89,6 +90,10 @@ export class User extends BaseEntity {
   @ApiHideProperty()
   @OneToMany('Post', 'user')
   posts: Relation<Post[]>;
+
+  @ApiHideProperty()
+  @OneToMany('Book', 'user')
+  books: Relation<Book[]>;
 
   @ApiHideProperty()
   @OneToMany('Site', 'user')
