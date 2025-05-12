@@ -5,6 +5,7 @@ import {
   JoinTable,
   ManyToMany,
   Relation,
+  Unique,
 } from 'typeorm';
 import { BaseEntity } from './base';
 import { Book } from './book.entity';
@@ -16,6 +17,7 @@ export enum CategoryType {
   BOOK = 'BOOK',
 }
 @Entity({ name: 'categories' })
+@Unique(['name', 'slug'])
 export class Category extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   name: string;
