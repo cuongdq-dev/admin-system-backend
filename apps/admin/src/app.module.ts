@@ -4,9 +4,13 @@ import { MailerConfigClass } from '@app/modules/mail/mailerConfig.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import * as multer from 'multer';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { EmailAuthModule } from './auth-email/email.module';
 import { AuthModule } from './auth/auth.module';
+import { BookModule } from './book/book.module';
 import { CategoryModule } from './category/category.module';
 import { DockerModule } from './docker/docker.module';
 import { DropdownModule } from './dropdown/dropdown.module';
@@ -20,14 +24,12 @@ import { SettingModule } from './setting/setting.module';
 import { SiteModule } from './site/site.module';
 import { UserModule } from './user/user.module';
 import { WebhookModule } from './webhook/webhook.module';
-import { AnalyticsModule } from './analytics/analytics.module';
-import { MulterModule } from '@nestjs/platform-express';
-import * as multer from 'multer';
 
 const modules = [
   AuthModule,
   UserModule,
   PostModule,
+  BookModule,
   EmailAuthModule,
   I18nModule,
   GoogleModule,

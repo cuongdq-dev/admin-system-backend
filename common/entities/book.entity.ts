@@ -21,6 +21,7 @@ export enum BookStatus {
   NEW = 'NEW',
   DRAFT = 'DRAFT',
   PUBLISHED = 'PUBLISHED',
+  CRAWLER = 'CRAWLER',
   DELETED = 'DELETED',
 }
 
@@ -38,10 +39,13 @@ export class Book extends BaseEntity {
   content: string;
 
   @Column({ nullable: true, type: 'text' })
-  meta_description: string;
+  description: string;
 
   @Column({ nullable: true, type: 'text' })
-  keywords: string;
+  meta_description: string;
+
+  @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
+  keywords: { query?: string; slug?: string }[];
 
   @Column({ nullable: true, default: true })
   is_new: boolean;
@@ -61,6 +65,9 @@ export class Book extends BaseEntity {
   @OneToMany(() => Chapter, (chapter) => chapter.book)
   chapters: Relation<Chapter[]>;
 
+  @Column({ type: 'enum', enum: BookStatus, default: BookStatus.NEW })
+  @Index()
+  status: BookStatus;
   //
   @ManyToOne(() => Media, (thumbnail) => thumbnail.books, {
     nullable: true,

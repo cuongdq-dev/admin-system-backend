@@ -1,6 +1,7 @@
 import {
   Book,
   Category,
+  Chapter,
   GoogleIndexRequest,
   Media,
   Notification,
@@ -74,6 +75,9 @@ export class TaskService {
     @InjectRepository(Book)
     private readonly bookRepository: Repository<Book>,
 
+    @InjectRepository(Chapter)
+    private readonly chapterRepository: Repository<Chapter>,
+
     @InjectRepository(SitePost)
     private readonly sitePostRepository: Repository<SitePost>,
 
@@ -87,18 +91,19 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    // await this.handleCrawlerBook();
+    await this.handleCrawlerBook();
+    // await this.handleCrawlerBooks();
     // await this.handleCleanupOldPosts();
     // await this.googleIndex();
     // await this.googleMetaData();
   }
 
   @Cron('0 5 * * *')
-  async handleCrawlerBook() {
+  async handleCrawlerBooks() {
     this.logger.debug('START - Crawler Books.');
     const result: any[] = [];
     let pageBook = 1;
-    const limitBook = 10;
+    const limitBook = 30;
     while (result.length <= limitBook) {
       const url = `https://truyenfull.vision/top-truyen/duoi-100-chuong/trang-${pageBook}/`;
       const response = await fetchWithRetry(url);
@@ -115,53 +120,137 @@ export class TaskService {
         const element = $(el);
         const titleEl = element.find('h3.truyen-title a');
         const title = titleEl.text().trim();
+        console.log(title);
 
-        //
         const checkExist = await this.bookRepository.findOne({
           where: { title: title },
         });
-        if (checkExist) continue;
 
         const link = titleEl.attr('href');
 
         const full = element.find('.label-title.label-full').length > 0;
         const hot = element.find('.label-title.label-hot').length > 0;
         const isNew = element.find('.label-title.label-new').length > 0;
-
         const totalChapter = element
           .find('.col-xs-2 a')
           .text()
           .replace(/[^0-9]/g, '')
           .trim();
 
+        if (checkExist) {
+          await this.bookRepository.update(
+            { id: checkExist.id },
+            {
+              is_full: full,
+              is_hot: hot,
+              is_new: isNew,
+              total_chapter: parseInt(totalChapter, 10) || 0,
+            },
+          );
+          continue;
+        }
+
         itemsOnPage.push({
           title,
           slug: generateSlug(title),
           source_url: link,
-          // author,
           is_full: full,
           is_hot: hot,
           is_new: isNew,
           total_chapter: parseInt(totalChapter, 10) || 0,
         });
       }
-
-      if (itemsOnPage.length === 0) break; // nếu không còn dữ liệu
+      if (itemsOnPage.length === 0) break;
 
       result.push(...itemsOnPage);
 
       if (result.length >= limitBook) {
-        result.length = limitBook; // cắt bớt nếu dư
+        result.length = limitBook;
         break;
       }
 
       pageBook++;
     }
-    console.log(result);
+
     await this.bookRepository.insert(result);
+    this.logger.debug('END - Crawler Books.');
+  }
+  @Cron('0 6 * * *')
+  async handleCrawlerBook() {
+    const books = await this.bookRepository
+      .createQueryBuilder('book')
+      .leftJoinAndSelect('book.chapters', 'chapter')
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('1')
+          .from('chapters', 'chapter')
+          .where('chapter.book_id = book.id')
+          .getQuery();
+        return `NOT EXISTS ${subQuery}`;
+      })
+      .getMany();
+
+    for (const book of books) {
+      this.logger.debug('START - Crawler Book: ' + book.title);
+      const bookHome = await fetchWithRetry(book.source_url);
+      if (bookHome.ok) {
+        const bookHtml = await bookHome.text();
+        const el = cheerio.load(bookHtml);
+        const description = el('.desc-text.desc-text-full').html();
+        await this.bookRepository.update(
+          { id: book.id },
+          { description: description },
+        );
+
+        if (book.source_url && Number(book.total_chapter) > 0) {
+          for (let index = 1; index <= book.total_chapter; index++) {
+            const chapter = book.chapters.find(
+              (chapter) => chapter.chapter_number == index,
+            );
+            if (!chapter || !chapter?.content) {
+              const chapterUrl = book.source_url + `chuong-${index}`;
+              const response = await fetchWithRetry(chapterUrl);
+              if (!response.ok) break;
+              const html = await response.text();
+              const $ = cheerio.load(html);
+              $('[class^="ads-"]').remove();
+              $('[class*=" ads-"], [class^="ads-"], [class$=" ads-"]').remove();
+              const meta_description =
+                $('meta[name="description"]').attr('content') ||
+                $('meta[property="og:description"]').attr('content');
+
+              const keywords = $('meta[name="keywords"]')
+                .attr('content')
+                .split(',')
+                .map((keyword) => ({
+                  query: keyword.trim(),
+                  slug: generateSlug(keyword.trim()),
+                }));
+
+              const chapterTitle = $('a.chapter-title').text().trim();
+              const chapterContent = $('#chapter-c').html();
+              this.logger.debug('START - Crawler Chapter: ' + chapterTitle);
+
+              await this.chapterRepository.insert({
+                book_id: book.id,
+                chapter_number: index,
+                content: chapterContent,
+                meta_description: meta_description,
+                title: chapterTitle,
+                slug: generateSlug(book.title + '-' + chapterTitle),
+                keywords: keywords,
+                source_url: chapterUrl,
+              });
+            }
+          }
+        }
+      }
+    }
+    this.logger.debug('END - Crawler Book.');
   }
 
-  @Cron('10 */2 * * *')
+  // @Cron('10 */2 * * *')
   async googleIndex() {
     this.logger.debug('START - Request Google Index.');
 
@@ -222,7 +311,7 @@ export class TaskService {
     this.logger.debug('END - Request Google Index.');
   }
 
-  @Cron('30 */2 * * *')
+  // @Cron('30 */2 * * *')
   async googleMetaData() {
     this.logger.debug('START - Get Google Meta Data.');
 
@@ -286,7 +375,7 @@ export class TaskService {
     this.logger.debug('END - Get Google Meta Data.');
   }
 
-  @Cron('0 1 * * *')
+  // @Cron('0 1 * * *')
   async googleMetaDataPassed() {
     this.logger.debug('START - Get Google Meta Data.');
 
@@ -345,7 +434,7 @@ export class TaskService {
     this.logger.debug('END - Get Google Meta Data.');
   }
 
-  @Cron('0 2 * * *')
+  // @Cron('0 2 * * *')
   async handleCleanupOldPosts() {
     this.logger.debug('START - Cleanup Old Posts.');
 
@@ -409,7 +498,7 @@ export class TaskService {
     this.logger.debug('END - Cleanup Old Posts.');
   }
 
-  @Cron('0 */2 * * *')
+  // @Cron('0 */2 * * *')
   async handleCrawlerArticles() {
     this.logger.debug('START - Crawler Articles.');
 

@@ -1,10 +1,20 @@
-import { ValidationGroup } from '@app/crud/validation-group';
-import { Column, Entity, JoinTable, ManyToMany, Relation } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinTable,
+  ManyToMany,
+  Relation,
+} from 'typeorm';
 import { BaseEntity } from './base';
+import { Book } from './book.entity';
 import { Post } from './post.entity';
 import { Site } from './site.entity';
-import { Book } from './book.entity';
 
+export enum CategoryType {
+  POST = 'POST',
+  BOOK = 'BOOK',
+}
 @Entity({ name: 'categories' })
 export class Category extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
@@ -37,4 +47,8 @@ export class Category extends BaseEntity {
   // Một category có thể được sử dụng bởi nhiều site
   @ManyToMany(() => Site, (site) => site.categories)
   sites: Relation<Site[]>;
+
+  @Column({ type: 'enum', enum: CategoryType, nullable: true })
+  @Index()
+  status: CategoryType;
 }

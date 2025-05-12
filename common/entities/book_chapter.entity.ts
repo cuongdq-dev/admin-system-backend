@@ -1,13 +1,32 @@
-import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  Relation,
+} from 'typeorm';
 import { BaseEntity } from './base';
 import { Book } from './book.entity';
 
 @Entity({ name: 'chapters' })
 export class Chapter extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
+  @Index()
   title: string;
 
+  @Column({ type: 'text' })
+  meta_description: string;
+
+  @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
+  keywords: { query?: string; slug?: string }[];
+
+  @Column({ type: 'varchar', length: 255, unique: true })
+  @Index()
+  slug: string;
+
   @Column({ type: 'int' })
+  @Index()
   chapter_number: number;
 
   @Column({ type: 'text' })
@@ -25,4 +44,7 @@ export class Chapter extends BaseEntity {
 
   @Column({ type: 'uuid' })
   book_id: string;
+
+  @Column({ nullable: true, type: 'text' })
+  source_url: string;
 }
