@@ -13,6 +13,7 @@ import {
   TrendingArticle,
   User,
 } from '@app/entities';
+import { CategoryType } from '@app/entities/category.entity';
 import {
   NotificationStatus,
   NotificationType,
@@ -91,7 +92,7 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    // await this.handleCrawlerBook();
+    await this.handleCrawlerBook();
     // await this.handleCrawlerBooks();
     // await this.handleCleanupOldPosts();
     // await this.googleIndex();
@@ -198,10 +199,33 @@ export class TaskService {
         const bookHtml = await bookHome.text();
         const el = cheerio.load(bookHtml);
         const description = el('.desc-text.desc-text-full').html();
-        await this.bookRepository.update(
-          { id: book.id },
-          { description: description },
+
+        const genreElements = el('div.info h3:contains("Thể loại:")').nextAll(
+          'a[itemprop="genre"]',
         );
+
+        const categories: Category[] = [];
+
+        for (let i = 0; i < genreElements.length; i++) {
+          const genreEl = genreElements[i];
+          const name = el(genreEl).text().trim();
+          const slug = generateSlug(name);
+
+          await this.categoryRepository.upsert(
+            { name, slug, status: CategoryType.BOOK },
+            { conflictPaths: ['name', 'slug'] },
+          );
+
+          const category = await this.categoryRepository.findOneOrFail({
+            where: { name },
+          });
+
+          categories.push(category);
+        }
+
+        book.description = description;
+        book.categories = categories;
+        await this.bookRepository.save(book);
 
         if (book.source_url && Number(book.total_chapter) > 0) {
           for (let index = 1; index <= book.total_chapter; index++) {

@@ -55,7 +55,7 @@ export class SettingService {
         .getRawMany(),
       this.categoryRepository
         .createQueryBuilder('category')
-        .where('category.created_by = :createdBy', { createdBy: user.id })
+        // .where('category.created_by = :createdBy', { createdBy: user.id })
         .select(['category.id AS id', 'category.name AS title'])
         .getRawMany(),
     ]);

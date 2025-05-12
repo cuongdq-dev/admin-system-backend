@@ -114,6 +114,7 @@ export class BookService {
     const query = this.bookRepository
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.chapters', 'chapter')
+      .leftJoinAndSelect('book.categories', 'category')
       .leftJoinAndSelect('book.thumbnail', 'thumbnail')
       .where(
         isUUID(slugOrId) ? 'book.id = :slugOrId' : 'book.slug = :slugOrId',
@@ -132,6 +133,7 @@ export class BookService {
       where: { id: id },
       relations: ['chapters', 'thumbnail'],
     });
+
     // TODO FETCH CHAPTER
 
     // if (book.source_url && Number(book.total_chapter) > 0) {
