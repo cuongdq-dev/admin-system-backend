@@ -91,7 +91,7 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    await this.handleCrawlerBook();
+    // await this.handleCrawlerBook();
     // await this.handleCrawlerBooks();
     // await this.handleCleanupOldPosts();
     // await this.googleIndex();
@@ -250,7 +250,7 @@ export class TaskService {
     this.logger.debug('END - Crawler Book.');
   }
 
-  // @Cron('10 */2 * * *')
+  @Cron('10 */2 * * *')
   async googleIndex() {
     this.logger.debug('START - Request Google Index.');
 
@@ -311,7 +311,7 @@ export class TaskService {
     this.logger.debug('END - Request Google Index.');
   }
 
-  // @Cron('30 */2 * * *')
+  @Cron('30 */2 * * *')
   async googleMetaData() {
     this.logger.debug('START - Get Google Meta Data.');
 
@@ -375,7 +375,7 @@ export class TaskService {
     this.logger.debug('END - Get Google Meta Data.');
   }
 
-  // @Cron('0 1 * * *')
+  @Cron('0 1 * * *')
   async googleMetaDataPassed() {
     this.logger.debug('START - Get Google Meta Data.');
 
@@ -434,7 +434,7 @@ export class TaskService {
     this.logger.debug('END - Get Google Meta Data.');
   }
 
-  // @Cron('0 2 * * *')
+  @Cron('0 2 * * *')
   async handleCleanupOldPosts() {
     this.logger.debug('START - Cleanup Old Posts.');
 
@@ -498,7 +498,7 @@ export class TaskService {
     this.logger.debug('END - Cleanup Old Posts.');
   }
 
-  // @Cron('0 */2 * * *')
+  @Cron('0 */2 * * *')
   async handleCrawlerArticles() {
     this.logger.debug('START - Crawler Articles.');
 
