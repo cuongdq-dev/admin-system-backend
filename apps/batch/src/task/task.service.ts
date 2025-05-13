@@ -92,19 +92,19 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    await this.handleCrawlerBook();
+    // await this.handleCrawlerBook();
     // await this.handleCrawlerBooks();
     // await this.handleCleanupOldPosts();
     // await this.googleIndex();
     // await this.googleMetaData();
   }
 
-  @Cron('0 5 * * *')
+  @Cron('0 * * * *')
   async handleCrawlerBooks() {
     this.logger.debug('START - Crawler Books.');
     const result: any[] = [];
     let pageBook = 1;
-    const limitBook = 30;
+    const limitBook = 3;
     while (result.length <= limitBook) {
       const url = `https://truyenfull.vision/top-truyen/duoi-100-chuong/trang-${pageBook}/`;
       const response = await fetchWithRetry(url);
@@ -176,7 +176,7 @@ export class TaskService {
     await this.bookRepository.insert(result);
     this.logger.debug('END - Crawler Books.');
   }
-  @Cron('0 6 * * *')
+  @Cron('0 */2 * * *')
   async handleCrawlerBook() {
     const books = await this.bookRepository
       .createQueryBuilder('book')
