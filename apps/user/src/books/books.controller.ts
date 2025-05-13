@@ -1,0 +1,132 @@
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
+import { BooksTokenGuard } from './guards/books-token.guard';
+import { booksPaginateConfig } from './books.pagination';
+import { BooksService } from './books.service';
+
+@Controller('book')
+export class BooksController {
+  constructor(private readonly booksService: BooksService) {}
+
+  @Get()
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  getHome(@Req() req) {
+    return this.booksService.getHome(req?.site);
+  }
+
+  @Get('/adsense')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  getAdsense(@Req() req) {
+    return this.booksService.getAdsense(req?.site);
+  }
+
+  @Get('/tags')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  getListTags(@Req() req) {
+    return this.booksService.getRelateQuery(req?.site);
+  }
+
+  @Get('tags/:slug')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  @ApiParam({ name: 'slug', type: 'varchar' })
+  @ApiPaginationQuery(booksPaginateConfig)
+  getBooksByTag(
+    @Req() req,
+    @Paginate() query: PaginateQuery,
+    @Param() { slug }: { slug: string },
+  ) {
+    return this.booksService.getBooksByTag(req.site, slug, query);
+  }
+
+  @Get('/relate')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  getRelate(@Req() req, @Query() query: { book_slug: string }) {
+    return this.booksService.getBookRelates(req?.site, query.book_slug);
+  }
+
+  @Get('/recent')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  getRecent(@Req() req, @Query() query: { book_slug: string }) {
+    return this.booksService.getBookRecents(req?.site, query.book_slug);
+  }
+
+  @Get('categories')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  getCategories(@Req() req) {
+    return this.booksService.getCategories(req.site);
+  }
+
+  @Get('list')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  @ApiPaginationQuery(booksPaginateConfig)
+  getAllBooks(@Req() req, @Paginate() query: PaginateQuery) {
+    return this.booksService.getAllBooks(req.site, query);
+  }
+
+  @Get('list/category/:slug')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  @ApiParam({ name: 'slug', type: 'varchar' })
+  @ApiPaginationQuery(booksPaginateConfig)
+  getBooksByCategory(
+    @Req() req,
+    @Paginate() query: PaginateQuery,
+    @Param() { slug }: { slug: string },
+  ) {
+    return this.booksService.getBooksByCategory(req.site, slug, query);
+  }
+
+  @Get('detail/:slug')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  @ApiParam({ name: 'slug', type: 'varchar' })
+  async getBookBySlug(@Req() req, @Param() { slug }: { slug: string }) {
+    return this.booksService.getBookBySlug(req.site, slug);
+  }
+
+  //rss
+  @Get('rss')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  getRss(@Req() req) {
+    return this.booksService.getRss(req.site);
+  }
+
+  //site map
+  @Get('sitemap-categories')
+  async getSitemapCategories(@Query('domain') domain: string) {
+    if (!domain) throw new NotFoundException('Domain is required');
+    return await this.booksService.getSitemapCategories(domain);
+  }
+  @Get('sitemap-total-books')
+  async getSitemapBooks(@Query('domain') domain: string) {
+    if (!domain) throw new NotFoundException('Domain is required');
+    return await this.booksService.getSitemapBooks(domain);
+  }
+
+  @Get('sitemap-books')
+  async getSitemapBooksByPage(
+    @Query('domain') domain: string,
+    @Query('page') page: number,
+  ) {
+    if (!domain) throw new NotFoundException('Domain is required');
+    return await this.booksService.getSitemapBooksByPage(domain, page);
+  }
+}
