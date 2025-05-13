@@ -124,7 +124,6 @@ export class TaskService {
         const element = $(el);
         const titleEl = element.find('h3.truyen-title a');
         const title = titleEl.text().trim();
-        console.log(title);
 
         const checkExist = await this.bookRepository.findOne({
           where: { title: title },
