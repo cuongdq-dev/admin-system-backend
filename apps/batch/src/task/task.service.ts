@@ -22,11 +22,14 @@ import { PostStatus } from '@app/entities/post.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
 import { TelegramService } from '@app/modules/telegram/telegram.service';
 import {
+  extractMetaDescription,
+  extractMetaKeywords,
   fetchTrendings,
   fetchWithRetry,
   generatePostFromHtml,
   generateSlug,
   getMetaDataGoogleConsole,
+  saveImageAsBase64,
   submitToGoogleIndex,
 } from '@app/utils';
 import { Injectable, Logger } from '@nestjs/common';
@@ -92,8 +95,8 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    // await this.handleCrawlerBook();
     // await this.handleCrawlerBooks();
+    // await this.handleCrawlerBook();
     // await this.handleCleanupOldPosts();
     // await this.googleIndex();
     // await this.googleMetaData();
@@ -104,7 +107,7 @@ export class TaskService {
     this.logger.debug('START - Crawler Books.');
     const result: any[] = [];
     let pageBook = 1;
-    const limitBook = 3;
+    const limitBook = 10;
     while (result.length <= limitBook) {
       const url = `https://truyenfull.vision/top-truyen/duoi-100-chuong/trang-${pageBook}/`;
       const response = await fetchWithRetry(url);
@@ -195,16 +198,43 @@ export class TaskService {
     for (const book of books) {
       this.logger.debug('START - Crawler Book: ' + book.title);
       const bookHome = await fetchWithRetry(book.source_url);
+
       if (bookHome.ok) {
         const bookHtml = await bookHome.text();
         const el = cheerio.load(bookHtml);
         const description = el('.desc-text.desc-text-full').html();
+        const meta_description = extractMetaDescription(el);
+        const keywords = extractMetaKeywords(el);
 
         const genreElements = el('div.info h3:contains("Thể loại:")').nextAll(
           'a[itemprop="genre"]',
         );
 
         const categories: Category[] = [];
+
+        const thumbnailUrl = el('.col-xs-12.col-sm-4.col-md-4.info-holder')
+          .find('.book img')
+          .attr('src');
+        const thumbnailData = await saveImageAsBase64(
+          'book image ' + book.title,
+          'book thumbnail ' + book.title,
+          thumbnailUrl,
+        );
+
+        const thumbnail = await this.mediaRepository.upsert(
+          {
+            filename: thumbnailData.filename,
+            slug: generateSlug(`thumbnail book ${book.title}`),
+            storage_type: StorageType.URL,
+            url: thumbnailData.url,
+            mimetype: 'url',
+            deleted_at: null,
+            deleted_by: null,
+          },
+          {
+            conflictPaths: ['slug'],
+          },
+        );
 
         for (let i = 0; i < genreElements.length; i++) {
           const genreEl = genreElements[i];
@@ -225,7 +255,12 @@ export class TaskService {
 
         book.description = description;
         book.categories = categories;
-        await this.bookRepository.save(book);
+        await this.bookRepository.save({
+          ...book,
+          meta_description,
+          keywords,
+          thumbnail_id: thumbnail.generatedMaps[0].id,
+        });
 
         if (book.source_url && Number(book.total_chapter) > 0) {
           for (let index = 1; index <= book.total_chapter; index++) {

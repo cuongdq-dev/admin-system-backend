@@ -131,7 +131,6 @@ export async function saveImageAsBase64(
   imageUrl: string,
 ) {
   const response = await fetch(imageUrl);
-
   if (!response.ok) {
     console.error('ERROR:', 'Fetch Image ' + slug + ':' + filename);
     return undefined;
@@ -301,14 +300,18 @@ export async function fetchWithRetry(
   return null;
 }
 
-function extractMetaDescription($: cheerio.CheerioAPI): string | undefined {
+export function extractMetaDescription(
+  $: cheerio.CheerioAPI,
+): string | undefined {
   return (
     $('meta[name="description"]').attr('content') ||
     $('meta[property="og:description"]').attr('content')
   );
 }
 
-function extractMetaKeywords($: cheerio.CheerioAPI): { query: string }[] {
+export function extractMetaKeywords(
+  $: cheerio.CheerioAPI,
+): { query: string }[] {
   const keywordsContent = $('meta[name="keywords"]').attr('content');
   return keywordsContent
     ? keywordsContent.split(',').map((keyword) => ({ query: keyword.trim() }))
@@ -488,7 +491,7 @@ function getHtml(hostname: string, $: cheerio.CheerioAPI): GetHtmlProps {
   return { content, status };
 }
 
-async function processImages(
+export async function processImages(
   contentHtml: string,
   title: string,
 ): Promise<{ content: string; thumbnail: Media }> {

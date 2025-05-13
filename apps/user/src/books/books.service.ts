@@ -272,7 +272,7 @@ export class BooksService {
         updated_at: true,
         meta_description: true,
       },
-      relations: ['thumbnail', 'categories', 'article', 'siteBooks'],
+      relations: ['thumbnail', 'categories', 'siteBooks'],
     });
 
     return { data: book };
