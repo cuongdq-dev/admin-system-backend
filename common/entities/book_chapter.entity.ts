@@ -10,6 +10,7 @@ import { BaseEntity } from './base';
 import { Book } from './book.entity';
 
 @Entity({ name: 'chapters' })
+@Index(['slug', 'title', 'book_id'], { unique: true }) // Đảm bảo không có trùng lặp
 export class Chapter extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   @Index()

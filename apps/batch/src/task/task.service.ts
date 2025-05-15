@@ -100,8 +100,8 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    await this.handleCrawlerBooks();
-    await this.handleCrawlerBook();
+    // await this.handleCrawlerBooks();
+    // await this.handleCrawlerBook();
     // await this.handleCleanupOldPosts();
     // await this.googleIndex();
     // await this.googleMetaData();
@@ -304,16 +304,19 @@ export class TaskService {
               const chapterContent = $('#chapter-c').html();
               this.logger.debug('START - Crawler Chapter: ' + chapterTitle);
 
-              await this.chapterRepository.insert({
-                book_id: book.id,
-                chapter_number: index,
-                content: chapterContent,
-                meta_description: meta_description,
-                title: chapterTitle,
-                slug: generateSlug(book.title + '-' + chapterTitle),
-                keywords: keywords,
-                source_url: chapterUrl,
-              });
+              await this.chapterRepository.upsert(
+                {
+                  book_id: book.id,
+                  chapter_number: index,
+                  content: chapterContent,
+                  meta_description: meta_description,
+                  title: chapterTitle,
+                  slug: generateSlug(book.title + '-' + chapterTitle),
+                  keywords: keywords,
+                  source_url: chapterUrl,
+                },
+                { conflictPaths: ['slug', 'title', 'book_id'] },
+              );
             }
           }
 
