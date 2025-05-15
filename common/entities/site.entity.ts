@@ -16,6 +16,11 @@ import { Category } from './category.entity';
 import { SiteBook } from './site_books.entity';
 import { SitePost } from './site_posts.entity';
 
+export enum SiteType {
+  POST = 'POST',
+  BOOK = 'BOOK',
+}
+
 export type AdSlotType =
   | 'horizontal'
   | 'vertical'
@@ -96,4 +101,8 @@ export class Site extends BaseEntity {
   generateToken() {
     this.token = randomBytes(32).toString('hex'); // 64 ký tự hex
   }
+
+  @Column({ type: 'enum', enum: SiteType, nullable: true })
+  @Index()
+  type: SiteType;
 }

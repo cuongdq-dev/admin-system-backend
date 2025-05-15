@@ -20,6 +20,7 @@ import {
   NotificationType,
 } from '@app/entities/notification.entity';
 import { PostStatus } from '@app/entities/post.entity';
+import { SiteType } from '@app/entities/site.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
 import { TelegramService } from '@app/modules/telegram/telegram.service';
 import {
@@ -99,8 +100,8 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    // await this.handleCrawlerBooks();
-    // await this.handleCrawlerBook();
+    await this.handleCrawlerBooks();
+    await this.handleCrawlerBook();
     // await this.handleCleanupOldPosts();
     // await this.googleIndex();
     // await this.googleMetaData();
@@ -111,7 +112,7 @@ export class TaskService {
     this.logger.debug('START - Crawler Books.');
     const result: any[] = [];
     let pageBook = 1;
-    const limitBook = 10;
+    const limitBook = 5;
     while (result.length <= limitBook) {
       const url = `https://truyenfull.vision/top-truyen/duoi-100-chuong/trang-${pageBook}/`;
       const response = await fetchWithRetry(url);
@@ -126,13 +127,13 @@ export class TaskService {
       );
       for (const el of elements) {
         const element = $(el);
+
         const titleEl = element.find('h3.truyen-title a');
         const title = titleEl.text().trim();
 
         const checkExist = await this.bookRepository.findOne({
           where: { title: title },
         });
-
         const link = titleEl.attr('href');
 
         const full = element.find('.label-title.label-full').length > 0;
@@ -167,15 +168,17 @@ export class TaskService {
           total_chapter: parseInt(totalChapter, 10) || 0,
         });
       }
-      if (itemsOnPage.length === 0) break;
+
+      if (itemsOnPage.length === 0) {
+        pageBook++;
+        continue;
+      }
 
       result.push(...itemsOnPage);
-
       if (result.length >= limitBook) {
         result.length = limitBook;
         break;
       }
-
       pageBook++;
     }
 
@@ -315,7 +318,7 @@ export class TaskService {
           }
 
           const autoPostSites = await this.siteRepository.find({
-            where: { autoPost: true },
+            where: { autoPost: true, type: SiteType.BOOK },
             relations: ['categories'],
             select: ['categories', 'autoPost', 'id', 'domain'],
           });
@@ -795,7 +798,7 @@ export class TaskService {
 
     if (savedPost.status === PostStatus.PUBLISHED) {
       const autoPostSites = await this.siteRepository.find({
-        where: { autoPost: true },
+        where: { autoPost: true, type: SiteType.POST },
         relations: ['categories'],
         select: [
           'categories',
