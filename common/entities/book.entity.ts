@@ -47,6 +47,9 @@ export class Book extends BaseEntity {
   @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
   keywords: { query?: string; slug?: string }[];
 
+  @Column({ type: 'jsonb', nullable: true, default: () => "'{}'::jsonb" })
+  author: { slug?: string; name?: string };
+
   @Column({ nullable: true, default: true })
   is_new: boolean;
 

@@ -9,9 +9,9 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
-import { BooksTokenGuard } from './guards/books-token.guard';
 import { booksPaginateConfig } from './books.pagination';
 import { BooksService } from './books.service';
+import { BooksTokenGuard } from './guards/books-token.guard';
 
 @Controller('book')
 export class BooksController {
@@ -99,6 +99,17 @@ export class BooksController {
   @ApiParam({ name: 'slug', type: 'varchar' })
   async getBookBySlug(@Req() req, @Param() { slug }: { slug: string }) {
     return this.booksService.getBookBySlug(req.site, slug);
+  }
+
+  @Get('detail/:slug/chapter/:chapter')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  @ApiParam({ name: 'slug', type: 'varchar' })
+  async getChapterContent(
+    @Req() req,
+    @Param() { slug, chapter }: { slug: string; chapter: string },
+  ) {
+    return this.booksService.getChapterContent(req.site, slug, chapter);
   }
 
   //rss

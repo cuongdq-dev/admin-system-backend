@@ -1,37 +1,89 @@
-import { Book, Category, Site, SiteBook } from '@app/entities';
+import { Book, Category, Chapter, Site, SiteBook } from '@app/entities';
 import { BookStatus } from '@app/entities/book.entity';
+import { CategoryType } from '@app/entities/category.entity';
 import { generateSlug } from '@app/utils';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { Like, Not, Raw, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { booksPaginateConfig } from './books.pagination';
 @Injectable()
 export class BooksService {
   constructor(
     @InjectRepository(Site) private readonly siteRepo: Repository<Site>,
     @InjectRepository(Book) private readonly bookRepo: Repository<Book>,
+    @InjectRepository(Chapter)
+    private readonly chapterRepo: Repository<Chapter>,
     @InjectRepository(SiteBook)
     private readonly siteBookRepo: Repository<SiteBook>,
     @InjectRepository(Category)
     private readonly categoryRepo: Repository<Category>,
   ) {}
 
+  getBooksList = (limit: number, siteId: string) =>
+    this.siteBookRepo
+      .createQueryBuilder('siteBook')
+      .leftJoin('siteBook.book', 'book')
+      .leftJoin('siteBook.site', 'site')
+      .leftJoin('book.thumbnail', 'thumbnail')
+      .leftJoin('book.chapters', 'chapter')
+      .leftJoin('book.categories', 'categories')
+      .where('site.id = :siteId', { siteId: siteId })
+      // .andWhere('book.status = :status', { status: 'PUBLISHED' })
+      .select([
+        'book.id AS id',
+        'book.title AS title',
+        'book.slug AS slug',
+        'book.meta_description AS meta_description',
+        'book.description AS description',
+        'book.is_new AS is_new',
+        'book.is_hot AS is_hot',
+        'book.is_full AS is_full',
+        'book.total_chapter AS total_chapter',
+        'book.author AS author',
+        'book.keywords AS keywords',
+        'book.status AS status',
+        'siteBook.created_at as created_at',
+        "jsonb_build_object('url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
+        `COALESCE(
+            jsonb_agg(DISTINCT jsonb_build_object(
+              'id', categories.id, 
+              'name', categories.name, 
+              'slug', categories.slug
+            )) FILTER (WHERE categories.id IS NOT NULL), '[]'
+          ) AS categories`,
+      ])
+      .groupBy(
+        'book.id, thumbnail.id, thumbnail.url, thumbnail.slug, siteBook.created_at',
+      )
+      .orderBy('RANDOM()')
+      .having('COUNT(chapter.id) > 5')
+      .limit(limit)
+      .getRawMany();
+
   async getHome(site: Site) {
-    const getBooksList = (limit: number) =>
+    const [top, data, categories] = await Promise.all([
       this.siteBookRepo
         .createQueryBuilder('siteBook')
         .leftJoin('siteBook.book', 'book')
         .leftJoin('siteBook.site', 'site')
         .leftJoin('book.thumbnail', 'thumbnail')
         .leftJoin('book.categories', 'categories')
+        .leftJoin('book.chapters', 'chapter')
         .where('site.id = :siteId', { siteId: site.id })
-        .andWhere('book.status = :status', { status: 'PUBLISHED' })
+        .andWhere('book.is_hot = true')
+        .andWhere('book.is_new = true')
         .select([
           'book.id AS id',
           'book.title AS title',
           'book.slug AS slug',
           'book.meta_description AS meta_description',
+          'book.description AS description',
+          'book.is_new AS is_new',
+          'book.is_hot AS is_hot',
+          'book.is_full AS is_full',
+          'book.total_chapter AS total_chapter',
+          'book.author AS author',
           'book.keywords AS keywords',
           'book.status AS status',
           'siteBook.created_at as created_at',
@@ -47,18 +99,19 @@ export class BooksService {
         .groupBy(
           'book.id, thumbnail.id, thumbnail.url, thumbnail.slug, siteBook.created_at',
         )
-        .orderBy('created_at', 'DESC')
-        .limit(limit)
-        .getRawMany();
+        .orderBy('RANDOM()')
+        .having('COUNT(chapter.id) > 15')
+        .getRawOne(),
 
-    const [data, categories] = await Promise.all([
-      getBooksList(20),
+      this.getBooksList(17, site.id),
+
       this.categoryRepo
         .createQueryBuilder('categories')
         .leftJoin('categories.books', 'book')
         .leftJoin('categories.sites', 'sites')
         .leftJoin('book.siteBooks', 'siteBooks')
         .where('sites.id = :siteId', { siteId: site.id })
+        .andWhere('categories.status = :status', { status: CategoryType.BOOK })
         .andWhere('siteBooks.site_id = :siteId', { siteId: site.id })
         .select(['categories.id', 'categories.slug', 'categories.name'])
         .loadRelationCountAndMap(
@@ -73,26 +126,24 @@ export class BooksService {
         )
         .getMany(),
     ]);
-
     const [recentBooks, featureBooks, otherBooks] = await Promise.all([
-      data.slice(0, 4),
-      data.slice(4, 13),
-      data.slice(14, 20),
+      data.slice(0, 5),
+      data.slice(6, 11),
+      data.slice(12, 17),
     ]);
 
     return {
-      home: { recentBooks, featureBooks, otherBooks },
+      categories: categories,
       adsense: {
         adsense_ga: site.adsense_ga,
         adsense_client: site.adsense_client,
         adsense_slots: site.adsense_slots,
       },
-      categories: categories,
+      home: { top: top, recentBooks, featureBooks, otherBooks },
     };
   }
 
   async getAdsense(site: Site) {
-    console.log(site.adsense_ga);
     return {
       adsense_ga: site.adsense_ga,
       adsense_client: site.adsense_client,
@@ -103,49 +154,50 @@ export class BooksService {
   async getBookRelates(site: Site, book_slug?: string) {
     const currentBook = await this.bookRepo.findOne({
       where: { slug: book_slug },
+      relations: ['categories'],
     });
 
-    if (!currentBook || !currentBook.keywords) {
+    if (!currentBook || !currentBook.categories.length) {
       return [];
     }
 
-    const relatedQueryStrings = currentBook.keywords
-      .map((q) => q.query)
-      .filter(Boolean);
+    const categoryIds = currentBook.categories.map((cat) => cat.id);
 
-    if (relatedQueryStrings.length === 0) {
+    if (!categoryIds.length) {
       return [];
     }
 
-    const relatedBooks = await this.bookRepo.find({
-      relations: ['thumbnail', 'siteBooks'],
-      where: {
-        slug: Not(Like(book_slug)),
-        siteBooks: { site_id: site.id },
-        keywords: Raw(
-          (alias) =>
-            `EXISTS (SELECT 1 FROM jsonb_array_elements(${alias}) elem WHERE elem->>'query' IN (:...queries))`,
-          { queries: relatedQueryStrings },
-        ),
-      },
-      select: {
-        id: true,
-        status: true,
-        meta_description: true,
-        keywords: true,
-        created_at: true,
-        title: true,
-        slug: true,
-        thumbnail: {
-          id: true,
-          url: true,
-          storage_type: true,
-          slug: true,
-          filename: true,
-        },
-      },
-      take: 3,
-    });
+    const relatedBooks = await this.bookRepo
+      .createQueryBuilder('book')
+      .leftJoinAndSelect('book.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('book.siteBooks', 'siteBook')
+      .leftJoin('book.categories', 'category')
+      .where('book.slug != :slug', { slug: book_slug })
+      .andWhere('siteBook.site_id = :siteId', { siteId: site.id })
+      .andWhere('category.id IN (:...categoryIds)', { categoryIds })
+      .select([
+        'book.id',
+        'book.status',
+        'book.meta_description',
+        'book.description',
+        'book.author',
+        'book.is_new AS is_new',
+        'book.is_hot AS is_hot',
+        'book.is_full AS is_full',
+        'book.total_chapter AS total_chapter',
+        'book.keywords',
+        'book.created_at',
+        'book.title',
+        'book.slug',
+        'thumbnail.id',
+        'thumbnail.url',
+        'thumbnail.storage_type',
+        'thumbnail.slug',
+        'thumbnail.filename',
+      ])
+      .groupBy('book.id, thumbnail.id, siteBook.id') // tránh duplicate
+      .take(3)
+      .getMany();
 
     return relatedBooks;
   }
@@ -155,6 +207,7 @@ export class BooksService {
       .createQueryBuilder('book')
       .innerJoin('book.siteBooks', 'siteBooks')
       .innerJoin('book.thumbnail', 'thumbnail')
+      .innerJoin('book.chapters', 'chapter')
       .leftJoin('book.categories', 'categories')
       .where('siteBooks.site_id = :siteId', { siteId: site.id })
       .andWhere('book.slug != :bookSlug', { bookSlug: book_slug || '' })
@@ -164,6 +217,10 @@ export class BooksService {
         'book.meta_description AS meta_description',
         'book.keywords AS "keywords"',
         'book.created_at AS created_at',
+        'book.is_new AS is_new',
+        'book.is_hot AS is_hot',
+        'book.is_full AS is_full',
+        'book.total_chapter AS total_chapter',
         'book.slug AS slug',
         'book.status AS status',
         "jsonb_build_object('url', thumbnail.url, 'slug', thumbnail.slug) AS thumbnail",
@@ -171,6 +228,7 @@ export class BooksService {
       ])
       .groupBy('book.id, thumbnail.url, thumbnail.slug')
       .orderBy('created_at', 'DESC')
+      .having('COUNT(chapter.id) > 5')
       .limit(4)
       .getRawMany();
     return recents;
@@ -233,9 +291,12 @@ export class BooksService {
         'book.title',
         'book.keywords',
         'book.meta_description',
+        'book.description',
+        'book.total_chapter',
         'book.created_at',
         'book.slug',
         'book.status',
+        'book.author',
         'thumbnail.id',
         'thumbnail.url',
         'thumbnail.slug',
@@ -270,12 +331,35 @@ export class BooksService {
         keywords: true,
         created_at: true,
         updated_at: true,
+        description: true,
+        author: { name: true, slug: true },
         meta_description: true,
+        chapters: true,
+        is_full: true,
+        is_hot: true,
+        is_new: true,
+        total_chapter: true,
       },
-      relations: ['thumbnail', 'categories', 'siteBooks'],
+      relations: ['thumbnail', 'categories', 'siteBooks', 'chapters'],
     });
 
-    return { data: book };
+    const recommence = await this.getBooksList(4, site.id);
+    return { data: book, recommence };
+  }
+
+  async getChapterContent(site: Site, slug: string, chapterNumber: string) {
+    return await this.chapterRepo.findOne({
+      where: {
+        book: { slug: slug, siteBooks: { site_id: site.id } },
+        chapter_number: Number(chapterNumber),
+      },
+      relations: [
+        'book',
+        'book.thumbnail',
+        'book.categories',
+        'book.siteBooks',
+      ],
+    });
   }
 
   async getSitemapBooks(domain: string) {

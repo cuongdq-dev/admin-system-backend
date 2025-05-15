@@ -58,6 +58,7 @@ export class BookService {
         'book.total_chapter',
         'book.source_url',
         'book.description',
+        'book.author',
         'book.created_at',
         'thumbnail.id',
         'thumbnail.url',

@@ -7,6 +7,7 @@ import {
   Notification,
   Post,
   Site,
+  SiteBook,
   SitePost,
   StorageType,
   Trending,
@@ -84,6 +85,9 @@ export class TaskService {
 
     @InjectRepository(SitePost)
     private readonly sitePostRepository: Repository<SitePost>,
+
+    @InjectRepository(SiteBook)
+    private readonly siteBookRepository: Repository<SiteBook>,
 
     @InjectRepository(GoogleIndexRequest)
     private readonly googleIndexRequestRepository: Repository<GoogleIndexRequest>,
@@ -209,6 +213,12 @@ export class TaskService {
           'a[itemprop="genre"]',
         );
 
+        const authorName = el('div.info h3:contains("Tác giả:")')
+          .parent()
+          .find('a[itemprop="author"]')
+          .text()
+          .trim();
+
         const categories: Category[] = [];
 
         const thumbnailUrl = el('.col-xs-12.col-sm-4.col-md-4.info-holder')
@@ -258,6 +268,7 @@ export class TaskService {
           ...book,
           meta_description,
           keywords,
+          author: { name: authorName, slug: generateSlug(authorName) },
           thumbnail_id: thumbnail.generatedMaps[0].id,
         });
 
@@ -301,6 +312,19 @@ export class TaskService {
                 source_url: chapterUrl,
               });
             }
+          }
+
+          const autoPostSites = await this.siteRepository.find({
+            where: { autoPost: true },
+            relations: ['categories'],
+            select: ['categories', 'autoPost', 'id', 'domain'],
+          });
+
+          for (const site of autoPostSites) {
+            await this.siteBookRepository.upsert(
+              { site_id: site.id, book_id: book.id },
+              { conflictPaths: ['site_id', 'book_id'] },
+            );
           }
         }
       }
