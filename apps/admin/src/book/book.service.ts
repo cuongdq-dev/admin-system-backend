@@ -1,4 +1,3 @@
-import * as cheerio from 'cheerio';
 import {
   Book,
   Category,
@@ -12,7 +11,7 @@ import {
 import { BookStatus } from '@app/entities/book.entity';
 
 import { IndexStatus } from '@app/entities/site_books.entity';
-import { fetchWithRetry, generateSlug, uploadImageCdn } from '@app/utils';
+import { generateSlug, uploadImageCdn } from '@app/utils';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isUUID } from 'class-validator';
@@ -45,6 +44,7 @@ export class BookService {
       .leftJoinAndSelect('book.thumbnail', 'thumbnail')
       .leftJoinAndSelect('book.categories', 'categories')
       .leftJoinAndSelect('book.siteBooks', 'siteBooks')
+      .leftJoinAndSelect('book.chapters', 'chapters')
       .leftJoinAndSelect('siteBooks.site', 'sb_site')
       .leftJoinAndSelect('siteBooks.book', 'sb_book')
       .loadRelationCountAndMap('book.chapter_count', 'book.chapters') // ✅ đếm số chương
@@ -77,9 +77,15 @@ export class BookService {
         'sb_book.title',
         'sb_book.slug',
         'sb_book.created_at',
+
+        'chapters.id',
+        'chapters.slug',
+        'chapters.title',
+        'chapters.content',
       ])
       .groupBy('book.id')
       .addGroupBy('thumbnail.id')
+      .addGroupBy('chapters.id')
       .addGroupBy('siteBooks.id')
       .addGroupBy('categories.id')
       .addGroupBy('sb_site.id')
@@ -102,13 +108,33 @@ export class BookService {
         categoriesIds,
       });
     }
+    const data = await paginate(
+      { ...query, filter: { ...query.filter } },
+      bookQb,
+      {
+        sortableColumns: ['created_at'],
+        defaultSortBy: [['created_at', 'DESC']],
+        maxLimit: 500,
+        defaultLimit: 20,
+      },
+    );
 
-    return paginate({ ...query, filter: { ...query.filter } }, bookQb, {
-      sortableColumns: ['created_at'],
-      defaultSortBy: [['created_at', 'DESC']],
-      maxLimit: 500,
-      defaultLimit: 10,
-    });
+    return {
+      ...data,
+      data: data.data.map((book) => {
+        const word_count = book.chapters.reduce((total, chapter) => {
+          const wordCount = chapter.content
+            ? chapter.content.trim().split(/\s+/).length
+            : 0;
+          return total + wordCount;
+        }, 0);
+
+        return {
+          ...book,
+          word_count,
+        };
+      }),
+    };
   }
 
   async getBookBySlug(slugOrId: string, user: User) {
@@ -136,7 +162,13 @@ export class BookService {
         },
       }));
 
-    return { ...result, sites: sites };
+    return {
+      ...result,
+      sites: sites,
+      chapters: result?.chapters?.map((chapter) => {
+        return { ...chapter, word_count: chapter?.content?.length || 0 };
+      }),
+    };
   }
 
   async crawlerBook(id: string) {

@@ -7,7 +7,7 @@ export const booksPaginateConfig: PaginateConfig<Book> = {
   defaultSortBy: [['created_at', 'DESC']],
   searchableColumns: ['title', 'content'],
   maxLimit: 50,
-  defaultLimit: 12,
+  defaultLimit: 30,
   select: [
     'id',
     'title',

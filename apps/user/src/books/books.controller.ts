@@ -31,40 +31,6 @@ export class BooksController {
     return this.booksService.getAdsense(req?.site);
   }
 
-  @Get('/tags')
-  @ApiBearerAuth()
-  @UseGuards(BooksTokenGuard)
-  getListTags(@Req() req) {
-    return this.booksService.getRelateQuery(req?.site);
-  }
-
-  @Get('tags/:slug')
-  @ApiBearerAuth()
-  @UseGuards(BooksTokenGuard)
-  @ApiParam({ name: 'slug', type: 'varchar' })
-  @ApiPaginationQuery(booksPaginateConfig)
-  getBooksByTag(
-    @Req() req,
-    @Paginate() query: PaginateQuery,
-    @Param() { slug }: { slug: string },
-  ) {
-    return this.booksService.getBooksByTag(req.site, slug, query);
-  }
-
-  @Get('/relate')
-  @ApiBearerAuth()
-  @UseGuards(BooksTokenGuard)
-  getRelate(@Req() req, @Query() query: { book_slug: string }) {
-    return this.booksService.getBookRelates(req?.site, query.book_slug);
-  }
-
-  @Get('/recent')
-  @ApiBearerAuth()
-  @UseGuards(BooksTokenGuard)
-  getRecent(@Req() req, @Query() query: { book_slug: string }) {
-    return this.booksService.getBookRecents(req?.site, query.book_slug);
-  }
-
   @Get('categories')
   @ApiBearerAuth()
   @UseGuards(BooksTokenGuard)

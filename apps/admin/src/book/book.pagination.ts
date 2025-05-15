@@ -9,9 +9,6 @@ export const bookPaginateConfig: PaginateConfig<Book> = {
   maxLimit: 50,
   defaultLimit: 23,
   select: [
-    'article.source',
-    'article.slug',
-
     'id',
     'title',
     'meta_description',
@@ -22,9 +19,6 @@ export const bookPaginateConfig: PaginateConfig<Book> = {
     'categories.id',
     'categories.slug',
     'categories.name',
-
-    'article_id',
-
     'slug',
     'status',
   ],
