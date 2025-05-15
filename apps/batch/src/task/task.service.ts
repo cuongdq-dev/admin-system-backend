@@ -101,7 +101,7 @@ export class TaskService {
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
     // await this.handleCrawlerBooks();
-    // await this.handleCrawlerBook();
+    await this.handleCrawlerBook();
     // await this.handleCleanupOldPosts();
     // await this.googleIndex();
     // await this.googleMetaData();
@@ -190,15 +190,15 @@ export class TaskService {
     const books = await this.bookRepository
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.chapters', 'chapter')
-      .where((qb) => {
-        const subQuery = qb
-          .subQuery()
-          .select('1')
-          .from('chapters', 'chapter')
-          .where('chapter.book_id = book.id')
-          .getQuery();
-        return `NOT EXISTS ${subQuery}`;
-      })
+      // .where((qb) => {
+      //   const subQuery = qb
+      //     .subQuery()
+      //     .select('1')
+      //     .from('chapters', 'chapter')
+      //     .where('chapter.book_id = book.id')
+      //     .getQuery();
+      //   return `NOT EXISTS ${subQuery}`;
+      // })
       .getMany();
 
     for (const book of books) {
@@ -315,7 +315,10 @@ export class TaskService {
                   keywords: keywords,
                   source_url: chapterUrl,
                 },
-                { conflictPaths: ['slug', 'title', 'book_id'] },
+                {
+                  conflictPaths: ['slug', 'title', 'book_id'],
+                  skipUpdateIfNoValuesChanged: true,
+                },
               );
             }
           }
