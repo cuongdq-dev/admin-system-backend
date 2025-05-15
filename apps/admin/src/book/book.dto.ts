@@ -55,11 +55,7 @@ export class CreateBookDto {
 
   @IsOptional()
   @IsArray()
-  relatedQueries?: { id: string; title: string }[];
-
-  @IsOptional()
-  @IsString()
-  content?: string;
+  keywords?: { id: string; title: string }[];
 
   @IsOptional()
   @IsArray()

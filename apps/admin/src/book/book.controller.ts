@@ -66,7 +66,7 @@ export class BookController {
 
   @Post()
   @ApiBody({
-    type: PickType(Book, ['content', 'title', 'meta_description', 'thumbnail']),
+    type: PickType(Book, ['title', 'meta_description', 'thumbnail']),
   })
   @UseInterceptors(FileInterceptor('thumbnail'))
   @ApiCreatedResponse({ type: Book })
@@ -87,7 +87,7 @@ export class BookController {
 
   @Patch('update/:id')
   @ApiBody({
-    type: PickType(Book, ['content', 'title', 'meta_description']),
+    type: PickType(Book, ['title', 'meta_description', 'keywords']),
   })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   @UseInterceptors(FileInterceptor('thumbnail'))
@@ -98,17 +98,11 @@ export class BookController {
       IsIDExistPipe({
         entity: Book,
         filterField: 'id',
-        relations: [
-          'user',
-          'thumbnail',
-          'article.trending',
-          'article.thumbnail',
-          'article.trending.thumbnail',
-          'article.trending.articles',
-        ],
+        relations: ['user', 'thumbnail'],
       }),
     )
     book: Book,
+
     @BodyWithUser(
       new ValidationPipe({
         ...validationOptions,

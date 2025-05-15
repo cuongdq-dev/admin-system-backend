@@ -115,6 +115,7 @@ export class BookService {
     const query = this.bookRepository
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.chapters', 'chapter')
+      .leftJoinAndSelect('book.siteBooks', 'sites')
       .leftJoinAndSelect('book.categories', 'category')
       .leftJoinAndSelect('book.thumbnail', 'thumbnail')
       .where(
@@ -126,7 +127,16 @@ export class BookService {
       .orderBy('chapter.chapter_number', 'ASC');
 
     const result = await query.getOne();
-    return result;
+    const sites =
+      result?.siteBooks &&
+      (await this.siteRepository.find({
+        where: {
+          id: In(result?.siteBooks?.map((st) => st.site_id)),
+          created_by: user.id,
+        },
+      }));
+
+    return { ...result, sites: sites };
   }
 
   async crawlerBook(id: string) {
@@ -219,8 +229,6 @@ export class BookService {
       slug: generateSlug(body.title),
       created_by: body?.created_by,
       meta_description: body?.meta_description,
-
-      content: body?.content || '',
       categories: categories,
       user_id: body?.created_by,
     } as Book;
@@ -275,7 +283,7 @@ export class BookService {
     user: User,
     thumbnail?: Express.Multer.File,
   ) {
-    const { categories, status, sites, relatedQueries, ...values } = body;
+    const { categories, status, sites, keywords, ...values } = body;
     const dataToUpdate = {
       ...values,
       updated_by: body.updated_by,
@@ -306,8 +314,8 @@ export class BookService {
         };
       });
     }
-    if (relatedQueries) {
-      dataToUpdate['relatedQueries'] = body?.relatedQueries.map((query) => {
+    if (keywords) {
+      dataToUpdate['keywords'] = body?.keywords.map((query) => {
         return { slug: generateSlug(query.title), query: query.title };
       });
     }
@@ -340,8 +348,6 @@ export class BookService {
       dataToUpdate['thumbnail_id'] = thumbnailResult.generatedMaps[0].id;
     }
 
-    console.log(dataToUpdate);
-
     await this.dataSource.transaction(async (manager) => {
       if (dataToUpdate['siteBooks']) {
         await manager.delete(SiteBook, { book_id: id });
@@ -359,7 +365,6 @@ export class BookService {
       relations: [
         'user',
         'thumbnail',
-        'article.trending',
         'categories',
         'siteBooks',
         'siteBooks.site',
