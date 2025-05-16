@@ -143,6 +143,40 @@ export class BooksService {
 
     return categories;
   }
+  async getSiteSetting(site: Site) {
+    const siteId = site.id;
+    const categories = await this.categoryRepo
+      .createQueryBuilder('categories')
+      .leftJoin('categories.books', 'book')
+      .leftJoin('categories.sites', 'sites')
+      .leftJoin('book.siteBooks', 'siteBooks')
+      .where('sites.id = :siteId', { siteId })
+      .andWhere('siteBooks.site_id = :siteId', { siteId })
+      .select(['categories.id', 'categories.slug', 'categories.name'])
+      .loadRelationCountAndMap(
+        'categories.bookCount',
+        'categories.books',
+        'book',
+        (qb) => {
+          return qb
+            .leftJoin('book.siteBooks', 'filteredSite')
+            .where('filteredSite.site_id = :siteId', { siteId });
+        },
+      )
+      .getMany();
+    categories.forEach((category: any) => {
+      if (!category.bookCount) category.bookCount = 0;
+    });
+
+    return {
+      categories: categories,
+      adsense: {
+        adsense_ga: site.adsense_ga,
+        adsense_client: site.adsense_client,
+        adsense_slots: site.adsense_slots,
+      },
+    };
+  }
 
   async getBooksByCategory(site: Site, slug: string, query: PaginateQuery) {
     const qb = this.bookRepo

@@ -24,6 +24,13 @@ export class BooksController {
     return this.booksService.getHome(req?.site);
   }
 
+  @Get('site-setting')
+  @ApiBearerAuth()
+  @UseGuards(BooksTokenGuard)
+  getSiteSetting(@Req() req) {
+    return this.booksService.getSiteSetting(req.site);
+  }
+
   @Get('/adsense')
   @ApiBearerAuth()
   @UseGuards(BooksTokenGuard)
