@@ -33,6 +33,9 @@ export class Chapter extends BaseEntity {
   @Column({ type: 'text' })
   content: string;
 
+  @Column({ nullable: true, type: 'text' })
+  voice_content: string;
+
   @Column({ type: 'boolean', default: false })
   is_published: boolean;
 

@@ -44,7 +44,7 @@ export class BookService {
       .leftJoinAndSelect('book.thumbnail', 'thumbnail')
       .leftJoinAndSelect('book.categories', 'categories')
       .leftJoinAndSelect('book.siteBooks', 'siteBooks')
-      .leftJoinAndSelect('book.chapters', 'chapters')
+      .innerJoinAndSelect('book.chapters', 'chapters')
       .leftJoinAndSelect('siteBooks.site', 'sb_site')
       .leftJoinAndSelect('siteBooks.book', 'sb_book')
       .loadRelationCountAndMap('book.chapter_count', 'book.chapters') // ✅ đếm số chương

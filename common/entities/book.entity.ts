@@ -101,4 +101,13 @@ export class Book extends BaseEntity {
 
   @OneToMany(() => SiteBook, (siteBook) => siteBook.book)
   siteBooks: Relation<SiteBook[]>;
+
+  @Column({ nullable: true, type: 'text' })
+  youtube_url: string;
+
+  @Column({ nullable: true, type: 'text' })
+  tiktok_url: string;
+
+  @Column({ nullable: true, type: 'text' })
+  facebook_url: string;
 }
