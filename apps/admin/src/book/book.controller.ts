@@ -116,6 +116,35 @@ export class BookController {
     return this.BookService.update(book.id, updateDto, user, file);
   }
 
+  @Post('generate-gemini/:id')
+  @ApiBody({
+    type: PickType(Book, ['title', 'meta_description', 'keywords']),
+  })
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  generateGemini(
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      IsIDExistPipe({
+        entity: Book,
+        filterField: 'id',
+        relations: ['chapters'],
+      }),
+    )
+    book: Book,
+
+    @BodyWithUser(
+      new ValidationPipe({
+        ...validationOptions,
+        groups: [ValidationGroup.UPDATE],
+      }),
+    )
+    updateDto: { chapterSlug: string },
+    @UserParam() user: User,
+  ) {
+    return this.BookService.generateGemini(book, user, updateDto.chapterSlug);
+  }
+
   @Delete(':id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   deleteBook(
@@ -128,13 +157,9 @@ export class BookController {
         relations: [
           'user',
           'thumbnail',
-          'article.trending',
           'categories',
           'siteBooks',
           'siteBooks.site',
-          'article.thumbnail',
-          'article.trending.thumbnail',
-          'article.trending.articles',
         ],
       }),
     )

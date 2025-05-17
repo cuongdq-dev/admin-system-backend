@@ -23,6 +23,7 @@ export enum BookStatus {
   PUBLISHED = 'PUBLISHED',
   CRAWLER = 'CRAWLER',
   DELETED = 'DELETED',
+  AI_GENERATE = 'AI_GENERATE',
 }
 
 @Entity({ name: 'books' })

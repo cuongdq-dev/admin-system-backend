@@ -1,3 +1,4 @@
+import * as cheerio from 'cheerio';
 import {
   Book,
   Category,
@@ -11,7 +12,7 @@ import {
 import { BookStatus } from '@app/entities/book.entity';
 
 import { IndexStatus } from '@app/entities/site_books.entity';
-import { generateSlug, uploadImageCdn } from '@app/utils';
+import { callGeminiApi, generateSlug, uploadImageCdn } from '@app/utils';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isUUID } from 'class-validator';
@@ -166,9 +167,95 @@ export class BookService {
       ...result,
       sites: sites,
       chapters: result?.chapters?.map((chapter) => {
-        return { ...chapter, word_count: chapter?.content?.length || 0 };
+        return {
+          ...chapter,
+          word_count: chapter?.content?.length || 0,
+          voice_count: chapter?.voice_content?.length || 0,
+        };
       }),
     };
+  }
+
+  async generateGemini(book: Book, user: User, chapterSlug?: string) {
+    // Cập nhật trạng thái bắt đầu generate
+    await this.bookRepository.update(
+      { id: book.id },
+      { status: BookStatus.AI_GENERATE },
+    );
+
+    // Chạy dưới nền
+    setImmediate(async () => {
+      try {
+        const chapters = book.chapters;
+
+        if (!chapters.length) {
+          console.warn(`Book ${book.id} has no chapters`);
+          return;
+        }
+
+        // Nếu có chapterSlug → chỉ xử lý 1 chương
+        const targetChapters = chapterSlug
+          ? chapters.filter((ch) => ch.slug === chapterSlug)
+          : chapters;
+
+        if (!targetChapters.length) {
+          console.warn(
+            `Chapter with slug "${chapterSlug}" not found in book ${book.id}`,
+          );
+          return;
+        }
+
+        for (const chapter of targetChapters) {
+          const content = cheerio.load(chapter.content).text();
+
+          const requestBody = `
+          Hãy chuyển đổi đoạn truyện dưới đây thành văn bản kể chuyện tự nhiên, sinh động, có cảm xúc, phù hợp để dùng làm giọng đọc cho truyện audio (dạng kể chuyện cho người nghe).
+          🔧 Quy tắc chuyển đổi:
+          1. Giữ nội dung gốc, nhưng viết lại theo phong cách kể chuyện (như đang kể lại 1 cách tự nhiên).
+          2. Đối thoại cần được viết lại như hội thoại đời thực, có cảm xúc và ngắt nghỉ phù hợp.
+          3. Các biểu cảm dưới dạng kí tự đặc biệt (emoticon/text face) phải được chuyển thành diễn đạt bằng lời. Ví dụ:
+              - TT, T_T, QAQ → nhân vật đang khóc, rưng rưng nước mắt, hoặc giọng nghẹn lại
+              - O.O, O_O, :O, !? → ngạc nhiên, tròn mắt kinh ngạc, hoặc giật mình
+              - =_=, -_-, :| → chán nản, bất lực, hoặc lườm nhẹ
+              - ^^, :3, :D → mỉm cười, cười tươi, vui vẻ
+              - ... trong đối thoại → chuyển thành "ừm...", "ờ...", "hmm..." tùy ngữ cảnh
+          4. Không cần các giải thích mô tả hướng dẫn cho người đọc.
+
+          Đầu vào:
+          ${content}
+        `;
+
+          try {
+            const geminiResponse = await callGeminiApi(requestBody);
+
+            const voiceContent =
+              geminiResponse?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+            await this.chapterRepository.update(
+              { id: chapter.id },
+              { voice_content: voiceContent },
+            );
+          } catch (chapterError) {
+            console.error(
+              `Failed to generate Gemini for chapter ${chapter.id}`,
+              chapterError,
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Gemini generation failed:', error);
+      } finally {
+        // ✅ Luôn cập nhật lại status về PUBLISHED (kể cả lỗi)
+        await this.bookRepository.update(
+          { id: book.id },
+          { status: BookStatus.PUBLISHED },
+        );
+      }
+    });
+
+    // Trả về dữ liệu book hiện tại
+    const data = await this.getBookBySlug(book.id, user);
+    return { ...data };
   }
 
   async crawlerBook(id: string) {
@@ -176,71 +263,6 @@ export class BookService {
       where: { id: id },
       relations: ['chapters', 'thumbnail'],
     });
-
-    // TODO FETCH CHAPTER
-
-    // if (book.source_url && Number(book.total_chapter) > 0) {
-    //   for (let index = 1; index <= book.total_chapter; index++) {
-    //     const chapter = book.chapters.find(
-    //       (chapter) => chapter.chapter_number == index,
-    //     );
-    //     if (!chapter || !chapter?.content) {
-    //       const chapterUrl = book.source_url + `chuong-${index}`;
-    //       const response = await fetchWithRetry(chapterUrl);
-    //       if (!response.ok) break;
-    //       const html = await response.text();
-    //       const $ = cheerio.load(html);
-    //       $('[class^="ads-"]').remove();
-    //       $('[class*=" ads-"], [class^="ads-"], [class$=" ads-"]').remove();
-    //       const meta_description =
-    //         $('meta[name="description"]').attr('content') ||
-    //         $('meta[property="og:description"]').attr('content');
-
-    //       const keywords = $('meta[name="keywords"]')
-    //         .attr('content')
-    //         .split(',')
-    //         .map((keyword) => ({
-    //           query: keyword.trim(),
-    //           slug: generateSlug(keyword.trim()),
-    //         }));
-
-    //       const chapterTitle = $('a.chapter-title').text().trim();
-    //       const chapterContent = $('#chapter-c').html();
-
-    //       await this.chapterRepository.insert({
-    //         book_id: book.id,
-    //         chapter_number: index,
-    //         content: chapterContent,
-    //         meta_description: meta_description,
-    //         title: chapterTitle,
-    //         slug: generateSlug(book.title + '-' + chapterTitle),
-    //         keywords: keywords,
-    //         source_url: chapterUrl,
-    //       });
-
-    //       //         const requestBody = `Bạn là một hệ thống xử lý nội dung thông minh.
-    //       // Dưới đây là dữ liệu đầu vào gồm tiêu đề, nội dung HTML (hãy sửa nội dung - text trong các thẻ html thôi nhé, không được phép sửa các class, style, cấu trúc các thẻ html), mô tả và từ khóa, hãy chọn 1 category phù hợp từ category ở dữ liệu nhập vào.
-    //       // Hãy tối ưu nội dung này để rõ ràng, hấp dẫn và chuyên nghiệp hơn, đồng thời giữ nguyên các từ khóa. Trả về một object JSON có dạng:
-    //       //       {
-    //       //         "title": "Tiêu đề mới đã tối ưu",
-    //       //         "content": "Nội dung HTML đã được cải thiện",
-    //       //         "description": "Mô tả mới đã được cải thiện",
-    //       //         "keywords": "${JSON.stringify(keywords)}",
-    //       //         "category": {name: 'category name', slug: 'category slug'}
-    //       //       }
-
-    //       //       Dữ liệu đầu vào:
-    //       //       - Tiêu đề: "${body.title}"
-    //       //       - Nội dung: "${contentHtml}"
-    //       //       - Mô tả: "${description}"
-    //       //       - Từ khóa: "${JSON.stringify(keywords)}"
-    //       //       - List Category: ${JSON.stringify(body.categories)}
-    //       //     Hãy chỉ trả về JSON, không cần bất kỳ văn bản nào khác.`;
-
-    //       //         const geminiResponse = await callGeminiApi(requestBody);
-    //     }
-    //   }
-    // }
 
     const result = await this.bookRepository.findOne({
       where: { id: id },
@@ -436,7 +458,6 @@ export class BookService {
         'Some Books in this trending are currently in use by sites. Cannot delete!',
       );
     }
-    // TODO
     // await this.deletePostUnused(post);
   }
 }

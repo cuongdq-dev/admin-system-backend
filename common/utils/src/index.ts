@@ -537,7 +537,7 @@ export async function processImages(
   };
 }
 
-async function callGeminiApi(prompt: string) {
+export async function callGeminiApi(prompt: string) {
   try {
     const myHeaders = new Headers();
     myHeaders.append('Content-Type', 'application/json');
