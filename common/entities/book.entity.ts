@@ -27,6 +27,7 @@ export enum BookStatus {
 }
 
 @Entity({ name: 'books' })
+@Index(['slug', 'title'], { unique: true }) // Đảm bảo không có trùng lặp
 export class Book extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   @Index()

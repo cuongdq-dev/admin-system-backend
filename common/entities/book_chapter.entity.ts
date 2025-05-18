@@ -16,7 +16,7 @@ export class Chapter extends BaseEntity {
   @Index()
   title: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   meta_description: string;
 
   @Column({ type: 'jsonb', nullable: true, default: () => "'[]'::jsonb" })
@@ -26,11 +26,11 @@ export class Chapter extends BaseEntity {
   @Index()
   slug: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   @Index()
   chapter_number: number;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   content: string;
 
   @Column({ nullable: true, type: 'text' })
