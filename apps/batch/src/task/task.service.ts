@@ -580,34 +580,6 @@ export class TaskService {
     }
   }
 
-  async countWord() {
-    const books = await this.bookRepository.find();
-
-    for (const book of books) {
-      console.log(book.id);
-      const result = await this.chapterRepository
-        .createQueryBuilder('chapter')
-        .select(`SUM(LENGTH(COALESCE(chapter.content, '')))`, 'contentLength')
-        .addSelect(
-          `SUM(LENGTH(COALESCE(chapter.voice_content, '')))`,
-          'voiceContentLength',
-        )
-        .where('chapter.book_id = :bookId', { bookId: book.id })
-        .getRawOne();
-
-      const contentLength = parseInt(result.contentLength, 10) || 0;
-      const voiceContentLength = parseInt(result.voiceContentLength, 10) || 0;
-
-      await this.bookRepository.update(
-        { id: book.id },
-        {
-          word_count: contentLength,
-          voice_count: voiceContentLength,
-        },
-      );
-    }
-  }
-
   @Cron('10 */2 * * *')
   async googleIndex() {
     this.logger.debug('START - Request Google Index.');
