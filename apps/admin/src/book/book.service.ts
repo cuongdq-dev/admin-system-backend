@@ -153,23 +153,24 @@ export class BookService {
           const content = cheerio.load(chapter.content).text();
 
           const requestBody = `
-              Yêu cầu: Chuyển thể câu chuyện gốc dưới đây thành một câu chuyện kể lại sinh động, cảm xúc, gần gũi, phù hợp để dùng trong video hoạt hình dạng kể chuyện hoặc giọng đọc truyện audio.
+              Bạn là một chuyên gia kể chuyện chuyên nghiệp. Hãy giúp tôi **chuyển truyện gốc dưới đây** thành một **câu chuyện kể lại sinh động, cảm xúc**, phù hợp để dùng trong **video hoạt hình dạng kể chuyện hoặc giọng đọc truyện audio**.
 
-              Hướng dẫn chi tiết:
-              1. Phong cách kể chuyện: Viết lại truyện theo văn kể chuyện tự nhiên, giống như đang thuật lại cho người nghe. Sử dụng ngôn ngữ đời thường, tránh các cấu trúc câu phức tạp hoặc văn phong trang trọng quá mức. Ưu tiên sự trôi chảy và tự nhiên, sử dụng từ cảm thán một cách tiết chế và có mục đích để tăng hiệu quả biểu cảm, tránh lặp lại quá nhiều.
+              📌 **Yêu cầu bắt buộc:**
+              1. Viết lại truyện theo **văn kể chuyện tự nhiên** như đang thuật lại cho người nghe.
+              2. **Giữ nguyên cốt truyện và mạch nội dung chính**, chỉ thay đổi cách viết và diễn đạt.
+              3. Đối thoại cần được viết lại tự nhiên, giống như hội thoại trong đời thực — thêm nhấn nhá, ngắt nghỉ, biểu cảm phù hợp.
+              4. Nếu trong truyện gốc có ký hiệu cảm xúc như '^^', 'T_T', ':D', ':O', v.v... thì **hãy chuyển thành mô tả cảm xúc bằng lời** như:
+                - ^^ → mỉm cười nhẹ nhàng
+                - T_T → giọng nghẹn ngào, bật khóc
+                - :O, O_O → tròn mắt ngạc nhiên, sửng sốt
+              5. Không chèn giải thích kỹ thuật, không viết ghi chú ngoài truyện.
+              🔐 Đặc biệt:  
+              - Trước nội dung truyện, hãy chèn đoạn mở đầu sau:
 
-              2. Bảo toàn nội dung: Giữ nguyên cốt truyện và mạch nội dung chính của truyện gốc. Chỉ thay đổi cách viết và diễn đạt để tăng tính hấp dẫn và gần gũi.
+              > **Bạn đang nghe truyện tại Vùng Đất Truyện — website truyện audio dành riêng cho bạn yêu thích giọng kể truyền cảm.**
 
-              3. Đối thoại tự nhiên: Viết lại các đoạn đối thoại sao cho tự nhiên, giống như hội thoại trong đời thực. Thêm vào các yếu tố nhấn nhá, ngắt nghỉ, và biểu cảm phù hợp với tình huống và tính cách nhân vật. Cân nhắc sử dụng các từ ngữ thông dụng trong giao tiếp hàng ngày. Sử dụng từ cảm thán trong đối thoại một cách tự nhiên nhưng không lạm dụng.
-
-              4. Chuyển đổi biểu cảm: Nếu trong truyện gốc có ký hiệu cảm xúc như '^^', 'T_T', ':D', ':O', v.v..., hãy chuyển chúng thành mô tả cảm xúc bằng lời. Ví dụ:^^ → mỉm cười nhẹ nhàng, T_T → giọng nghẹn ngào, bật khóc, :O, O_O → tròn mắt ngạc nhiên, sửng sốt,... 
-
-              5. Loại bỏ yếu tố không cần thiết: Không chèn giải thích kỹ thuật, không viết ghi chú ngoài nội dung truyện đã chuyển thể. Chỉ tập trung vào việc kể lại câu chuyện một cách hấp dẫn.
-
-              6. Đoạn mở đầu bắt buộc: Luôn chèn đoạn mở đầu sau TRƯỚC nội dung truyện đã chuyển thể:
-                Bạn đang nghe truyện tại Vùng Đất Truyện — website truyện audio dành riêng cho bạn yêu thích giọng kể truyền cảm.
-
-              Nội dung truyện gốc: ${content}
+              Chỉ xuất ra phần nội dung kể chuyện đã được chuyển thể
+              Truyện cần convert: ${content}
         `;
 
           try {
