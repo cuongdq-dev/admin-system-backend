@@ -43,11 +43,7 @@ export class BookService {
     const bookQb = await this.bookRepository
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.thumbnail', 'thumbnail')
-      .leftJoinAndSelect('book.categories', 'categories')
-      .leftJoinAndSelect('book.siteBooks', 'siteBooks')
       .innerJoin('book.chapters', 'chapters')
-      .leftJoinAndSelect('siteBooks.site', 'sb_site')
-      .leftJoinAndSelect('siteBooks.book', 'sb_book')
       .loadRelationCountAndMap('book.chapter_count', 'book.chapters') // ✅ đếm số chương
       .select([
         'book.id',
@@ -66,29 +62,9 @@ export class BookService {
         'thumbnail.id',
         'thumbnail.url',
         'thumbnail.slug',
-
-        'categories.id',
-        'categories.slug',
-        'categories.name',
-
-        'sb_site.id',
-        'sb_site.name',
-        'sb_site.domain',
-        'sb_site.created_at',
-
-        'sb_book.id',
-        'sb_book.title',
-        'sb_book.slug',
-        'sb_book.created_at',
       ])
       .groupBy('book.id')
-      .addGroupBy('thumbnail.id')
-      .addGroupBy('siteBooks.id')
-      .addGroupBy('categories.id')
-      .addGroupBy('sb_site.id')
-      .addGroupBy('sb_book.id');
-    if (query?.site_id)
-      bookQb.andWhere('sb_site.id = :site_id', { site_id: query.site_id });
+      .addGroupBy('thumbnail.id');
 
     if (query?.status?.length) {
       bookQb.andWhere('book.status IN (:...status)', { status: query.status });
@@ -97,14 +73,7 @@ export class BookService {
         status: ['NEW', 'DRAFT', 'PUBLISHED'],
       });
     }
-    if (query?.categories_id) {
-      const categoriesIds = query.categories_id
-        .split(',')
-        .map((id) => id.trim());
-      bookQb.andWhere('categories.id IN (:...categoriesIds)', {
-        categoriesIds,
-      });
-    }
+
     return await paginate({ ...query, filter: { ...query.filter } }, bookQb, {
       sortableColumns: ['created_at'],
       defaultSortBy: [['created_at', 'DESC']],
