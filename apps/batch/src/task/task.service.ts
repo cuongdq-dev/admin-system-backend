@@ -101,7 +101,7 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    await this.handleCrawlerDaoTruyen();
+    // await this.handleCrawlerDaoTruyen();
     // await this.handleCrawlerBooks();
     // await this.handleCrawlerBook();
     // await this.handleCleanupOldPosts();
