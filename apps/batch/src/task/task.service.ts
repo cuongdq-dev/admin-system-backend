@@ -101,7 +101,7 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    // await this.handleCrawlerDaoTruyen();
+    // await this.countWord();
     // await this.handleCrawlerBooks();
     // await this.handleCrawlerBook();
     // await this.handleCleanupOldPosts();
@@ -347,7 +347,6 @@ export class TaskService {
   async handleCrawlerDaoTruyen() {
     let page = 0;
     const pageSize = 2;
-    const allStories = [];
 
     while (true) {
       const response = await fetchWithRetry(
@@ -483,7 +482,7 @@ export class TaskService {
 
             const content = chapterDetail?.chapter?.paragraph || '';
             const requestBody = `
-              Bạn là một chuyên gia kể chuyện chuyên nghiệp. Hãy giúp tôi **chuyển truyện gốc dưới đây** thành một **câu chuyện kể lại sinh động, cảm xúc, gần gũi**, phù hợp để dùng trong **video hoạt hình dạng kể chuyện hoặc giọng đọc truyện audio**.
+              Bạn là một chuyên gia kể chuyện chuyên nghiệp. Hãy giúp tôi **chuyển truyện gốc dưới đây** thành một **câu chuyện kể lại sinh động, cảm xúc**, phù hợp để dùng trong **video hoạt hình dạng kể chuyện hoặc giọng đọc truyện audio**.
 
               📌 **Yêu cầu bắt buộc:**
               1. Viết lại truyện theo **văn kể chuyện tự nhiên** như đang thuật lại cho người nghe.
@@ -538,6 +537,36 @@ export class TaskService {
               'END - Crawler Book Chapter: ' + chapter.chapterNumber,
             );
           }
+
+          this.logger.debug('START - Đếm Word: ' + book.title);
+
+          const result = await this.chapterRepository
+            .createQueryBuilder('chapter')
+            .select(
+              `SUM(LENGTH(COALESCE(chapter.content, '')))`,
+              'contentLength',
+            )
+            .addSelect(
+              `SUM(LENGTH(COALESCE(chapter.voice_content, '')))`,
+              'voiceContentLength',
+            )
+            .where('chapter.book_id = :bookId', { bookId: bookAfterUpsert.id })
+            .getRawOne();
+
+          const contentLength = parseInt(result.contentLength, 10) || 0;
+          const voiceContentLength =
+            parseInt(result.voiceContentLength, 10) || 0;
+
+          await this.bookRepository.update(
+            { id: bookAfterUpsert.id },
+            {
+              word_count: contentLength,
+              voice_count: voiceContentLength,
+            },
+          );
+
+          this.logger.debug('END - Đếm Word: ' + book.title);
+
           this.logger.debug('END - Crawler Book Chapter: ' + book.title);
         }
       }
@@ -549,170 +578,34 @@ export class TaskService {
 
       page++; // Sang trang tiếp theo
     }
+  }
 
-    // console.log('Tổng số truyện:', allStories.length);
-    // for (const book of allStories) {
-    //   this.logger.debug('START - Crawler Book: ' + book.title);
+  async countWord() {
+    const books = await this.bookRepository.find();
 
-    //   const bookDetailResponse = await fetchWithRetry(
-    //     `https://daotruyen.me/api/public/v2/${book?.slug}`,
-    //   );
-    //   if (!bookDetailResponse?.ok) break;
+    for (const book of books) {
+      console.log(book.id);
+      const result = await this.chapterRepository
+        .createQueryBuilder('chapter')
+        .select(`SUM(LENGTH(COALESCE(chapter.content, '')))`, 'contentLength')
+        .addSelect(
+          `SUM(LENGTH(COALESCE(chapter.voice_content, '')))`,
+          'voiceContentLength',
+        )
+        .where('chapter.book_id = :bookId', { bookId: book.id })
+        .getRawOne();
 
-    //   const bookDetail = await bookDetailResponse.json();
+      const contentLength = parseInt(result.contentLength, 10) || 0;
+      const voiceContentLength = parseInt(result.voiceContentLength, 10) || 0;
 
-    //   const thumbnailData = await saveImageAsBase64(
-    //     'book image ' + book.title,
-    //     'book thumbnail ' + book.title,
-    //     `https://daotruyen.me${bookDetail?.story?.image}`,
-    //   );
-
-    //   const thumbnail = await this.mediaRepository.upsert(
-    //     {
-    //       filename: thumbnailData.filename,
-    //       slug: generateSlug(`thumbnail book ${book.title}`),
-    //       storage_type: StorageType.URL,
-    //       url: thumbnailData.url,
-    //       mimetype: 'url',
-    //       deleted_at: null,
-    //       deleted_by: null,
-    //     },
-    //     {
-    //       conflictPaths: ['slug'],
-    //     },
-    //   );
-
-    //   const bookResult = {
-    //     ...book,
-    //     thumbnail_id: thumbnail.generatedMaps[0].id,
-    //   };
-
-    //   await this.bookRepository.upsert(bookResult, {
-    //     conflictPaths: ['title', 'slug'],
-    //     skipUpdateIfNoValuesChanged: true,
-    //   });
-
-    //   const bookAfterUpsert = await this.bookRepository.findOne({
-    //     where: { slug: book.slug },
-    //     relations: ['categories', 'chapters'],
-    //   });
-    //   const newCategories: Category[] = [];
-
-    //   for (let i = 0; i < bookDetail?.categories.length; i++) {
-    //     await this.categoryRepository.upsert(
-    //       {
-    //         name: bookDetail?.categories[i]?.categoryName,
-    //         slug: bookDetail?.categories[i]?.categoryName,
-    //         status: CategoryType.BOOK,
-    //       },
-    //       { conflictPaths: ['name', 'slug'] },
-    //     );
-
-    //     const category = await this.categoryRepository.findOneOrFail({
-    //       where: { name: bookDetail?.categories[i]?.categoryName },
-    //     });
-
-    //     newCategories.push(category);
-    //   }
-    //   await this.bookRepository.save({
-    //     ...bookAfterUpsert,
-    //     categories: newCategories,
-    //   });
-
-    //   const autoPostSites = await this.siteRepository.find({
-    //     where: { autoPost: true, type: SiteType.BOOK },
-    //     relations: ['categories'],
-    //     select: ['categories', 'autoPost', 'id', 'domain'],
-    //   });
-
-    //   for (const site of autoPostSites) {
-    //     await this.siteBookRepository.upsert(
-    //       { site_id: site.id, book_id: bookAfterUpsert.id },
-    //       { conflictPaths: ['site_id', 'book_id'] },
-    //     );
-    //   }
-
-    //   for (const chapter of bookDetail?.chapters) {
-    //     const findChapter = await this.chapterRepository.findOne({
-    //       where: {
-    //         slug: generateSlug(
-    //           book.title + '-' + `Chương ${chapter?.chapterNumber}`,
-    //         ),
-    //         voice_content: null,
-    //       },
-    //     });
-
-    //     if (findChapter) {
-    //       continue;
-    //     }
-    //     this.logger.debug(
-    //       'START - Crawler Book Chapter: ' + chapter.chapterNumber,
-    //     );
-
-    //     const chapterResponse = await fetchWithRetry(
-    //       `https://daotruyen.me/api/public/v2/${book?.slug}/${chapter?.chapterNumber}`,
-    //     );
-    //     if (!chapterResponse.ok) continue;
-    //     const chapterDetail = await chapterResponse.json();
-
-    //     const content = chapterDetail?.chapter?.paragraph || '';
-    //     const requestBody = `
-    //           Bạn là một chuyên gia kể chuyện chuyên nghiệp. Hãy giúp tôi **chuyển truyện gốc dưới đây** thành một **câu chuyện kể lại sinh động, cảm xúc, gần gũi**, phù hợp để dùng trong **video hoạt hình dạng kể chuyện hoặc giọng đọc truyện audio**.
-
-    //           📌 **Yêu cầu bắt buộc:**
-    //           1. Viết lại truyện theo **văn kể chuyện tự nhiên** như đang thuật lại cho người nghe.
-    //           2. **Giữ nguyên cốt truyện và mạch nội dung chính**, chỉ thay đổi cách viết và diễn đạt.
-    //           3. Đối thoại cần được viết lại tự nhiên, giống như hội thoại trong đời thực — thêm nhấn nhá, ngắt nghỉ, biểu cảm phù hợp.
-    //           4. Nếu trong truyện gốc có ký hiệu cảm xúc như '^^', 'T_T', ':D', ':O', v.v... thì **hãy chuyển thành mô tả cảm xúc bằng lời** như:
-    //             - ^^ → mỉm cười nhẹ nhàng
-    //             - T_T → giọng nghẹn ngào, bật khóc
-    //             - :O, O_O → tròn mắt ngạc nhiên, sửng sốt
-    //           5. Không chèn giải thích kỹ thuật, không viết ghi chú ngoài truyện.
-    //           🔐 Đặc biệt:
-    //           - Trước nội dung truyện, hãy chèn đoạn mở đầu sau:
-
-    //           > **Bạn đang nghe truyện tại Vùng Đất Truyện — website truyện audio dành riêng cho bạn yêu thích giọng kể truyền cảm.**
-
-    //           Chỉ xuất ra phần nội dung kể chuyện đã được chuyển thể
-    //           Truyện cần convert:
-    //           ${content}
-    //         `;
-
-    //     try {
-    //       const geminiResponse = await callGeminiApi(requestBody);
-    //       const voiceContent =
-    //         geminiResponse?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    //       // Cập nhật voice_content vào chapter trong DB
-    //       const chapterData = {
-    //         book_id: bookAfterUpsert.id,
-    //         chapter_number: chapter?.chapterNumber,
-    //         content: content,
-    //         voice_content: voiceContent,
-    //         slug: generateSlug(
-    //           book.title + '-' + `Chương ${chapter?.chapterNumber}`,
-    //         ),
-    //         source_url: `https://daotruyen.me/api/public/v2/${book?.slug}/${chapter?.chapterNumber}`,
-    //         title: `Chương ${chapter?.chapterNumber}`,
-    //       };
-
-    //       await this.chapterRepository.upsert(
-    //         { ...chapterData },
-    //         { conflictPaths: ['title', 'slug', 'book_id'] },
-    //       );
-    //     } catch (chapterError) {
-    //       console.error(
-    //         `Failed to generate Gemini for chapter ${chapter.id}`,
-    //         chapterError,
-    //       );
-    //       continue;
-    //     }
-    //     this.logger.debug(
-    //       'END - Crawler Book Chapter: ' + chapter.chapterNumber,
-    //     );
-    //   }
-    //   this.logger.debug('END - Crawler Book Chapter: ' + book.title);
-    // }
+      await this.bookRepository.update(
+        { id: book.id },
+        {
+          word_count: contentLength,
+          voice_count: voiceContentLength,
+        },
+      );
+    }
   }
 
   @Cron('10 */2 * * *')

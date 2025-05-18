@@ -112,4 +112,13 @@ export class Book extends BaseEntity {
 
   @Column({ nullable: true, type: 'text' })
   facebook_url: string;
+
+  @Column({ nullable: true, type: 'int', default: 0 })
+  word_count: number;
+
+  @Column({ nullable: true, type: 'int', default: 0 })
+  voice_count: number;
+
+  @Column({ nullable: true, type: 'boolean', default: false })
+  is_ai_generate: boolean;
 }

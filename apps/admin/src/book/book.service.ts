@@ -1,4 +1,3 @@
-import * as cheerio from 'cheerio';
 import {
   Book,
   Category,
@@ -10,6 +9,7 @@ import {
   User,
 } from '@app/entities';
 import { BookStatus } from '@app/entities/book.entity';
+import * as cheerio from 'cheerio';
 
 import { IndexStatus } from '@app/entities/site_books.entity';
 import { callGeminiApi, generateSlug, uploadImageCdn } from '@app/utils';
@@ -45,7 +45,7 @@ export class BookService {
       .leftJoinAndSelect('book.thumbnail', 'thumbnail')
       .leftJoinAndSelect('book.categories', 'categories')
       .leftJoinAndSelect('book.siteBooks', 'siteBooks')
-      .innerJoinAndSelect('book.chapters', 'chapters')
+      .innerJoin('book.chapters', 'chapters')
       .leftJoinAndSelect('siteBooks.site', 'sb_site')
       .leftJoinAndSelect('siteBooks.book', 'sb_book')
       .loadRelationCountAndMap('book.chapter_count', 'book.chapters') // ✅ đếm số chương
@@ -55,6 +55,8 @@ export class BookService {
         'book.slug',
         'book.is_new',
         'book.is_hot',
+        'book.word_count',
+        'book.voice_count',
         'book.is_full',
         'book.total_chapter',
         'book.source_url',
@@ -78,15 +80,9 @@ export class BookService {
         'sb_book.title',
         'sb_book.slug',
         'sb_book.created_at',
-
-        'chapters.id',
-        'chapters.slug',
-        'chapters.title',
-        'chapters.content',
       ])
       .groupBy('book.id')
       .addGroupBy('thumbnail.id')
-      .addGroupBy('chapters.id')
       .addGroupBy('siteBooks.id')
       .addGroupBy('categories.id')
       .addGroupBy('sb_site.id')
@@ -109,33 +105,12 @@ export class BookService {
         categoriesIds,
       });
     }
-    const data = await paginate(
-      { ...query, filter: { ...query.filter } },
-      bookQb,
-      {
-        sortableColumns: ['created_at'],
-        defaultSortBy: [['created_at', 'DESC']],
-        maxLimit: 500,
-        defaultLimit: 20,
-      },
-    );
-
-    return {
-      ...data,
-      data: data.data.map((book) => {
-        const word_count = book.chapters.reduce((total, chapter) => {
-          const wordCount = chapter.content
-            ? chapter.content.trim().split(/\s+/).length
-            : 0;
-          return total + wordCount;
-        }, 0);
-
-        return {
-          ...book,
-          word_count,
-        };
-      }),
-    };
+    return await paginate({ ...query, filter: { ...query.filter } }, bookQb, {
+      sortableColumns: ['created_at'],
+      defaultSortBy: [['created_at', 'DESC']],
+      maxLimit: 500,
+      defaultLimit: 20,
+    });
   }
 
   async getBookBySlug(slugOrId: string, user: User) {
@@ -209,20 +184,23 @@ export class BookService {
           const content = cheerio.load(chapter.content).text();
 
           const requestBody = `
-          Hãy chuyển đổi đoạn truyện dưới đây thành văn bản kể chuyện tự nhiên, sinh động, có cảm xúc, phù hợp để dùng làm giọng đọc cho truyện audio (dạng kể chuyện cho người nghe).
-          🔧 Quy tắc chuyển đổi:
-          1. Giữ nội dung gốc, nhưng viết lại theo phong cách kể chuyện (như đang kể lại 1 cách tự nhiên).
-          2. Đối thoại cần được viết lại như hội thoại đời thực, có cảm xúc và ngắt nghỉ phù hợp.
-          3. Các biểu cảm dưới dạng kí tự đặc biệt (emoticon/text face) phải được chuyển thành diễn đạt bằng lời. Ví dụ:
-              - TT, T_T, QAQ → nhân vật đang khóc, rưng rưng nước mắt, hoặc giọng nghẹn lại
-              - O.O, O_O, :O, !? → ngạc nhiên, tròn mắt kinh ngạc, hoặc giật mình
-              - =_=, -_-, :| → chán nản, bất lực, hoặc lườm nhẹ
-              - ^^, :3, :D → mỉm cười, cười tươi, vui vẻ
-              - ... trong đối thoại → chuyển thành "ừm...", "ờ...", "hmm..." tùy ngữ cảnh
-          4. Không cần các giải thích mô tả hướng dẫn cho người đọc.
+              Yêu cầu: Chuyển thể câu chuyện gốc dưới đây thành một câu chuyện kể lại sinh động, cảm xúc, gần gũi, phù hợp để dùng trong video hoạt hình dạng kể chuyện hoặc giọng đọc truyện audio.
 
-          Đầu vào:
-          ${content}
+              Hướng dẫn chi tiết:
+              1. Phong cách kể chuyện: Viết lại truyện theo văn kể chuyện tự nhiên, giống như đang thuật lại cho người nghe. Sử dụng ngôn ngữ đời thường, tránh các cấu trúc câu phức tạp hoặc văn phong trang trọng quá mức. Ưu tiên sự trôi chảy và tự nhiên, sử dụng từ cảm thán một cách tiết chế và có mục đích để tăng hiệu quả biểu cảm, tránh lặp lại quá nhiều.
+
+              2. Bảo toàn nội dung: Giữ nguyên cốt truyện và mạch nội dung chính của truyện gốc. Chỉ thay đổi cách viết và diễn đạt để tăng tính hấp dẫn và gần gũi.
+
+              3. Đối thoại tự nhiên: Viết lại các đoạn đối thoại sao cho tự nhiên, giống như hội thoại trong đời thực. Thêm vào các yếu tố nhấn nhá, ngắt nghỉ, và biểu cảm phù hợp với tình huống và tính cách nhân vật. Cân nhắc sử dụng các từ ngữ thông dụng trong giao tiếp hàng ngày. Sử dụng từ cảm thán trong đối thoại một cách tự nhiên nhưng không lạm dụng.
+
+              4. Chuyển đổi biểu cảm: Nếu trong truyện gốc có ký hiệu cảm xúc như '^^', 'T_T', ':D', ':O', v.v..., hãy chuyển chúng thành mô tả cảm xúc bằng lời. Ví dụ:^^ → mỉm cười nhẹ nhàng, T_T → giọng nghẹn ngào, bật khóc, :O, O_O → tròn mắt ngạc nhiên, sửng sốt,... 
+
+              5. Loại bỏ yếu tố không cần thiết: Không chèn giải thích kỹ thuật, không viết ghi chú ngoài nội dung truyện đã chuyển thể. Chỉ tập trung vào việc kể lại câu chuyện một cách hấp dẫn.
+
+              6. Đoạn mở đầu bắt buộc: Luôn chèn đoạn mở đầu sau TRƯỚC nội dung truyện đã chuyển thể:
+                Bạn đang nghe truyện tại Vùng Đất Truyện — website truyện audio dành riêng cho bạn yêu thích giọng kể truyền cảm.
+
+              Nội dung truyện gốc: ${content}
         `;
 
           try {
