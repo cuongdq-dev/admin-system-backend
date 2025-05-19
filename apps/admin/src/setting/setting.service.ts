@@ -60,7 +60,10 @@ export class SettingService {
         .getRawMany(),
     ]);
     return {
-      lang,
+      lang: [
+        { code: 'vn', name: 'Việt Nam' },
+        { code: 'en', name: 'English' },
+      ],
       user: u,
       notifyNew,
       dropdown: { sites, posts, categories },
