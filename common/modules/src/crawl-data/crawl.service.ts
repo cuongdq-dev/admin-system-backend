@@ -7,6 +7,7 @@ import {
   SiteBook,
   StorageType,
 } from '@app/entities';
+import { VideoStatus } from '@app/entities/book.entity';
 import { CategoryType } from '@app/entities/category.entity';
 import { SiteType } from '@app/entities/site.entity';
 import {
@@ -56,7 +57,7 @@ export class CrawlService {
       const data = await response.json();
       if (Array.isArray(data.content)) {
         const stories = this.transformStories(data.content);
-
+        console.log(stories);
         for (const story of stories) {
           await this.processBook(story);
         }
@@ -94,6 +95,7 @@ export class CrawlService {
 
     const bookResult = {
       ...book,
+
       thumbnail_id: thumbnail.generatedMaps[0].id,
     };
 
@@ -197,13 +199,24 @@ export class CrawlService {
 
       if (findChapter) continue;
 
+      const content = await this.getChapterContentDaoTruyen(
+        book.slug,
+        chapter.chapter_number,
+      );
+
       const generateAI = await this.generateGeminiBook(
         book,
+        content,
         chapter?.chapter_number,
+        `https://daotruyen.me/api/public/v2/${book?.slug}/${chapter.chapter_number}`,
       );
 
       if (!generateAI) continue;
     }
+    await this.bookRepository.update(
+      { id: book.id },
+      { video_status: VideoStatus.AI_GENERATE },
+    );
   }
 
   async fetchChapters() {
@@ -246,7 +259,17 @@ export class CrawlService {
           `Generating chapter ${chapterNumber} for book ${book.title}`,
         );
 
-        const result = await this.generateGeminiBook(book, chapterNumber);
+        const content = await this.getChapterContentDaoTruyen(
+          book.slug,
+          chapterNumber,
+        );
+
+        const result = await this.generateGeminiBook(
+          book,
+          content,
+          chapterNumber,
+          `https://daotruyen.me/api/public/v2/${book?.slug}/${chapterNumber}`,
+        );
 
         if (!result) {
           this.logger.warn(
@@ -257,16 +280,21 @@ export class CrawlService {
     }
   }
 
-  async generateGeminiBook(book: Book, chapterNumber: number) {
-    this.logger.debug('START - Crawler Book Chapter: ' + chapterNumber);
-
+  async getChapterContentDaoTruyen(slug: string, chapterNumber: number) {
     const chapterResponse = await fetchWithRetry(
-      `https://daotruyen.me/api/public/v2/${book?.slug}/${chapterNumber}`,
+      `https://daotruyen.me/api/public/v2/${slug}/${chapterNumber}`,
     );
     if (!chapterResponse.ok) return false;
     const chapterDetail = await chapterResponse.json();
-
-    const content = chapterDetail?.chapter?.paragraph || '';
+    return chapterDetail?.chapter?.paragraph || '';
+  }
+  async generateGeminiBook(
+    book: Book,
+    content: string,
+    chapterNumber: number,
+    source_url: string,
+  ) {
+    this.logger.debug('START - Crawler Book Chapter: ' + chapterNumber);
 
     const requestBody = `
               Bạn là một chuyên gia kể chuyện chuyên nghiệp. Hãy giúp tôi **chuyển truyện gốc dưới đây** thành một **câu chuyện kể lại sinh động, cảm xúc**, phù hợp để dùng trong **video hoạt hình dạng kể chuyện hoặc giọng đọc truyện audio**.
@@ -302,7 +330,7 @@ export class CrawlService {
         content: content,
         voice_content: voiceContent,
         slug: generateSlug(book.title + '-' + `Chương ${chapterNumber}`),
-        source_url: `https://daotruyen.me/api/public/v2/${book?.slug}/${chapterNumber}`,
+        source_url: source_url,
         title: `Chương ${chapterNumber}`,
       };
 

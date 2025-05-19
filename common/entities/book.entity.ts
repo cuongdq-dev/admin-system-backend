@@ -26,6 +26,13 @@ export enum BookStatus {
   AI_GENERATE = 'AI_GENERATE',
 }
 
+export enum VideoStatus {
+  NEW = 'NEW',
+  AI_GENERATE = 'AI_GENERATE',
+  VOICE = 'VOICE',
+  RENDERED = 'RENDERED',
+}
+
 @Entity({ name: 'books' })
 @Index(['slug', 'title'], { unique: true }) // Đảm bảo không có trùng lặp
 export class Book extends BaseEntity {
@@ -121,4 +128,8 @@ export class Book extends BaseEntity {
 
   @Column({ nullable: true, type: 'boolean', default: false })
   is_ai_generate: boolean;
+
+  @Column({ type: 'enum', enum: VideoStatus, default: VideoStatus.NEW })
+  @Index()
+  video_status: VideoStatus;
 }

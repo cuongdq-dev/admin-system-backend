@@ -20,6 +20,7 @@ import { paginate, PaginateQuery } from 'nestjs-paginate';
 import * as path from 'path';
 import { DataSource, In, Repository } from 'typeorm';
 import { CreateBookDto } from './book.dto';
+import { CrawlService } from '@app/modules/crawl-data/crawl.service';
 
 @Injectable()
 export class BookService {
@@ -37,6 +38,8 @@ export class BookService {
     private siteBookRepository: Repository<SiteBook>,
 
     private readonly dataSource: DataSource,
+
+    private readonly crawlService: CrawlService,
   ) {}
 
   async getAll(query: PaginateQuery & Record<string, any>) {
@@ -151,44 +154,13 @@ export class BookService {
 
         for (const chapter of targetChapters) {
           const content = cheerio.load(chapter.content).text();
-
-          const requestBody = `
-              Bạn là một chuyên gia kể chuyện chuyên nghiệp. Hãy giúp tôi **chuyển truyện gốc dưới đây** thành một **câu chuyện kể lại sinh động, cảm xúc**, phù hợp để dùng trong **video hoạt hình dạng kể chuyện hoặc giọng đọc truyện audio**.
-
-              📌 **Yêu cầu bắt buộc:**
-              1. Viết lại truyện theo **văn kể chuyện tự nhiên** như đang thuật lại cho người nghe.
-              2. **Giữ nguyên cốt truyện và mạch nội dung chính**, chỉ thay đổi cách viết và diễn đạt.
-              3. Đối thoại cần được viết lại tự nhiên, giống như hội thoại trong đời thực — thêm nhấn nhá, ngắt nghỉ, biểu cảm phù hợp.
-              4. Nếu trong truyện gốc có ký hiệu cảm xúc như '^^', 'T_T', ':D', ':O', v.v... thì **hãy chuyển thành mô tả cảm xúc bằng lời** như:
-                - ^^ → mỉm cười nhẹ nhàng
-                - T_T → giọng nghẹn ngào, bật khóc
-                - :O, O_O → tròn mắt ngạc nhiên, sửng sốt
-              5. Không chèn giải thích kỹ thuật, không viết ghi chú ngoài truyện.
-              🔐 Đặc biệt:  
-              - Trước nội dung truyện, hãy chèn đoạn mở đầu sau:
-
-              > **Bạn đang nghe truyện tại Vùng Đất Truyện — website truyện audio dành riêng cho bạn yêu thích giọng kể truyền cảm.**
-
-              Chỉ xuất ra phần nội dung kể chuyện đã được chuyển thể
-              Truyện cần convert: ${content}
-        `;
-
-          try {
-            const geminiResponse = await callGeminiApi(requestBody);
-
-            const voiceContent =
-              geminiResponse?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-            await this.chapterRepository.update(
-              { id: chapter.id },
-              { voice_content: voiceContent },
-            );
-          } catch (chapterError) {
-            console.error(
-              `Failed to generate Gemini for chapter ${chapter.id}`,
-              chapterError,
-            );
-          }
+          const geminiResult = await this.crawlService.generateGeminiBook(
+            book,
+            content,
+            chapter.chapter_number,
+            book.source_url,
+          );
+          if (!geminiResult) continue;
         }
       } catch (error) {
         console.error('Gemini generation failed:', error);

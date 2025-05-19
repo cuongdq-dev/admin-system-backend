@@ -104,6 +104,7 @@ export class TaskService {
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
     // await this.crawlService.fetchChapters();
+    // await this.handleCrawlerDaotruyen();
     // await this.handleCrawlerBooks();
     // await this.handleCrawlerBook();
     // await this.handleCleanupOldPosts();
@@ -352,6 +353,10 @@ export class TaskService {
   }
 
   @Cron('0 6 * * *')
+  async handleCrawlerDaotruyen() {
+    await this.crawlService.handleCrawlerDaoTruyen();
+  }
+
   @Cron('0 8 * * *')
   async fetchChapterMissing() {
     await this.crawlService.fetchChapters();
