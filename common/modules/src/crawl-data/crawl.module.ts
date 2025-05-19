@@ -4,25 +4,23 @@ import {
   Chapter,
   GoogleIndexRequest,
   Media,
-  Notification,
   Post,
   Site,
   SiteBook,
   SitePost,
   Trending,
   TrendingArticle,
+  Notification,
   User,
 } from '@app/entities';
-import { TelegramModule } from '@app/modules/telegram/telegram.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TaskService } from './task.service';
-import { CrawlModule } from '@app/modules/crawl-data/crawl.module';
+import { TelegramModule } from '../telegram/telegram.module';
+import { CrawlService } from './crawl.service';
 
 @Module({
   imports: [
     TelegramModule,
-    CrawlModule,
     TypeOrmModule.forFeature([
       Trending,
       TrendingArticle,
@@ -39,6 +37,7 @@ import { CrawlModule } from '@app/modules/crawl-data/crawl.module';
       GoogleIndexRequest,
     ]),
   ],
-  providers: [TaskService],
+  providers: [CrawlService],
+  exports: [CrawlService],
 })
-export class TaskModule {}
+export class CrawlModule {}

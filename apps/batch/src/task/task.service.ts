@@ -22,9 +22,9 @@ import {
 import { PostStatus } from '@app/entities/post.entity';
 import { SiteType } from '@app/entities/site.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
+import { CrawlService } from '@app/modules/crawl-data/crawl.service';
 import { TelegramService } from '@app/modules/telegram/telegram.service';
 import {
-  callGeminiApi,
   extractMetaDescription,
   extractMetaKeywords,
   fetchTrendings,
@@ -96,12 +96,14 @@ export class TaskService {
 
     private readonly telegramService: TelegramService,
 
+    private readonly crawlService: CrawlService,
+
     private readonly dataSource: DataSource,
   ) {}
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    // await this.countWord();
+    // await this.crawlService.fetchChapters();
     // await this.handleCrawlerBooks();
     // await this.handleCrawlerBook();
     // await this.handleCleanupOldPosts();
@@ -136,6 +138,7 @@ export class TaskService {
         const checkExist = await this.bookRepository.findOne({
           where: { title: title },
         });
+
         const link = titleEl.attr('href');
 
         const full = element.find('.label-title.label-full').length > 0;
@@ -148,6 +151,8 @@ export class TaskService {
           .trim();
 
         if (checkExist) {
+          await this.crawlService.countWord(checkExist?.id, checkExist?.title);
+
           await this.bookRepository.update(
             { id: checkExist.id },
             {
@@ -187,6 +192,7 @@ export class TaskService {
     await this.bookRepository.insert(result);
     this.logger.debug('END - Crawler Books.');
   }
+
   @Cron('0 */2 * * *')
   async handleCrawlerBook() {
     const books = await this.bookRepository
@@ -339,245 +345,16 @@ export class TaskService {
           }
         }
       }
+      await this.crawlService.countWord(book.id, book.title);
     }
+
     this.logger.debug('END - Crawler Book.');
   }
 
   @Cron('0 6 * * *')
-  async handleCrawlerDaoTruyen() {
-    let page = 0;
-    const pageSize = 2;
-
-    while (true) {
-      const response = await fetchWithRetry(
-        `https://daotruyen.me/api/public/stories?pageNo=${page}&pageSize=${pageSize}`,
-      );
-
-      if (!response?.ok) break;
-
-      const data = await response.json();
-
-      // Lưu dữ liệu stories của trang hiện tại
-      if (Array.isArray(data.content)) {
-        const convertArr = data?.content?.map((book) => {
-          return {
-            title: book?.story?.name,
-            description: book?.story?.description,
-            slug: generateSlug(book?.story?.name),
-            author: {
-              name: book?.story.authorName,
-              slug: generateSlug(book?.story?.authorName),
-            },
-            created_at: book?.story?.createdAt,
-            total_chapter: parseInt(book?.totalChapter, 10) || 0,
-            source_url: `https://daotruyen.me/api/public/v2/${book?.slug}`,
-            is_new: true,
-          };
-        });
-        // allStories.push(...convertArr);
-
-        for (const book of convertArr) {
-          this.logger.debug('START - Crawler Book: ' + book.title);
-
-          const bookDetailResponse = await fetchWithRetry(
-            `https://daotruyen.me/api/public/v2/${book?.slug}`,
-          );
-          if (!bookDetailResponse?.ok) break;
-
-          const bookDetail = await bookDetailResponse.json();
-
-          const thumbnailData = await saveImageAsBase64(
-            'book image ' + book.title,
-            'book thumbnail ' + book.title,
-            `https://daotruyen.me${bookDetail?.story?.image}`,
-          );
-
-          const thumbnail = await this.mediaRepository.upsert(
-            {
-              filename: thumbnailData.filename,
-              slug: generateSlug(`thumbnail book ${book.title}`),
-              storage_type: StorageType.URL,
-              url: thumbnailData.url,
-              mimetype: 'url',
-              deleted_at: null,
-              deleted_by: null,
-            },
-            {
-              conflictPaths: ['slug'],
-            },
-          );
-
-          const bookResult = {
-            ...book,
-            thumbnail_id: thumbnail.generatedMaps[0].id,
-          };
-
-          await this.bookRepository.upsert(bookResult, {
-            conflictPaths: ['title', 'slug'],
-            skipUpdateIfNoValuesChanged: true,
-          });
-
-          const bookAfterUpsert = await this.bookRepository.findOne({
-            where: { slug: book.slug },
-            relations: ['categories', 'chapters'],
-          });
-          const newCategories: Category[] = [];
-
-          for (let i = 0; i < bookDetail?.categories.length; i++) {
-            await this.categoryRepository.upsert(
-              {
-                name: bookDetail?.categories[i]?.categoryName,
-                slug: bookDetail?.categories[i]?.categoryName,
-                status: CategoryType.BOOK,
-              },
-              { conflictPaths: ['name', 'slug'] },
-            );
-
-            const category = await this.categoryRepository.findOneOrFail({
-              where: { name: bookDetail?.categories[i]?.categoryName },
-            });
-
-            newCategories.push(category);
-          }
-          await this.bookRepository.save({
-            ...bookAfterUpsert,
-            categories: newCategories,
-          });
-
-          const autoPostSites = await this.siteRepository.find({
-            where: { autoPost: true, type: SiteType.BOOK },
-            relations: ['categories'],
-            select: ['categories', 'autoPost', 'id', 'domain'],
-          });
-
-          for (const site of autoPostSites) {
-            await this.siteBookRepository.upsert(
-              { site_id: site.id, book_id: bookAfterUpsert.id },
-              { conflictPaths: ['site_id', 'book_id'] },
-            );
-          }
-
-          for (const chapter of bookDetail?.chapters) {
-            const findChapter = await this.chapterRepository.findOne({
-              where: {
-                slug: generateSlug(
-                  book.title + '-' + `Chương ${chapter?.chapterNumber}`,
-                ),
-                voice_content: null,
-              },
-            });
-
-            if (findChapter) {
-              continue;
-            }
-            this.logger.debug(
-              'START - Crawler Book Chapter: ' + chapter.chapterNumber,
-            );
-
-            const chapterResponse = await fetchWithRetry(
-              `https://daotruyen.me/api/public/v2/${book?.slug}/${chapter?.chapterNumber}`,
-            );
-            if (!chapterResponse.ok) continue;
-            const chapterDetail = await chapterResponse.json();
-
-            const content = chapterDetail?.chapter?.paragraph || '';
-            const requestBody = `
-              Bạn là một chuyên gia kể chuyện chuyên nghiệp. Hãy giúp tôi **chuyển truyện gốc dưới đây** thành một **câu chuyện kể lại sinh động, cảm xúc**, phù hợp để dùng trong **video hoạt hình dạng kể chuyện hoặc giọng đọc truyện audio**.
-
-              📌 **Yêu cầu bắt buộc:**
-              1. Viết lại truyện theo **văn kể chuyện tự nhiên** như đang thuật lại cho người nghe.
-              2. **Giữ nguyên cốt truyện và mạch nội dung chính**, chỉ thay đổi cách viết và diễn đạt.
-              3. Đối thoại cần được viết lại tự nhiên, giống như hội thoại trong đời thực — thêm nhấn nhá, ngắt nghỉ, biểu cảm phù hợp.
-              4. Nếu trong truyện gốc có ký hiệu cảm xúc như '^^', 'T_T', ':D', ':O', v.v... thì **hãy chuyển thành mô tả cảm xúc bằng lời** như:
-                - ^^ → mỉm cười nhẹ nhàng
-                - T_T → giọng nghẹn ngào, bật khóc
-                - :O, O_O → tròn mắt ngạc nhiên, sửng sốt
-              5. Không chèn giải thích kỹ thuật, không viết ghi chú ngoài truyện.
-              🔐 Đặc biệt:  
-              - Trước nội dung truyện, hãy chèn đoạn mở đầu sau:
-
-              > **Bạn đang nghe truyện tại Vùng Đất Truyện — website truyện audio dành riêng cho bạn yêu thích giọng kể truyền cảm.**
-
-              Chỉ xuất ra phần nội dung kể chuyện đã được chuyển thể
-              Truyện cần convert:
-              ${content}
-            `;
-
-            try {
-              const geminiResponse = await callGeminiApi(requestBody);
-              const voiceContent =
-                geminiResponse?.candidates?.[0]?.content?.parts?.[0]?.text ||
-                '';
-
-              // Cập nhật voice_content vào chapter trong DB
-              const chapterData = {
-                book_id: bookAfterUpsert.id,
-                chapter_number: chapter?.chapterNumber,
-                content: content,
-                voice_content: voiceContent,
-                slug: generateSlug(
-                  book.title + '-' + `Chương ${chapter?.chapterNumber}`,
-                ),
-                source_url: `https://daotruyen.me/api/public/v2/${book?.slug}/${chapter?.chapterNumber}`,
-                title: `Chương ${chapter?.chapterNumber}`,
-              };
-
-              await this.chapterRepository.upsert(
-                { ...chapterData },
-                { conflictPaths: ['title', 'slug', 'book_id'] },
-              );
-            } catch (chapterError) {
-              console.error(
-                `Failed to generate Gemini for chapter ${chapter.id}`,
-                chapterError,
-              );
-              continue;
-            }
-            this.logger.debug(
-              'END - Crawler Book Chapter: ' + chapter.chapterNumber,
-            );
-          }
-
-          this.logger.debug('START - Đếm Word: ' + book.title);
-
-          const result = await this.chapterRepository
-            .createQueryBuilder('chapter')
-            .select(
-              `SUM(LENGTH(COALESCE(chapter.content, '')))`,
-              'contentLength',
-            )
-            .addSelect(
-              `SUM(LENGTH(COALESCE(chapter.voice_content, '')))`,
-              'voiceContentLength',
-            )
-            .where('chapter.book_id = :bookId', { bookId: bookAfterUpsert.id })
-            .getRawOne();
-
-          const contentLength = parseInt(result.contentLength, 10) || 0;
-          const voiceContentLength =
-            parseInt(result.voiceContentLength, 10) || 0;
-
-          await this.bookRepository.update(
-            { id: bookAfterUpsert.id },
-            {
-              word_count: contentLength,
-              voice_count: voiceContentLength,
-            },
-          );
-
-          this.logger.debug('END - Đếm Word: ' + book.title);
-
-          this.logger.debug('END - Crawler Book Chapter: ' + book.title);
-        }
-      }
-
-      // Dừng nếu đã đến trang cuối cùng
-      if (data.last) {
-        break;
-      }
-
-      page++; // Sang trang tiếp theo
-    }
+  @Cron('0 8 * * *')
+  async fetchChapterMissing() {
+    await this.crawlService.fetchChapters();
   }
 
   @Cron('10 */2 * * *')
