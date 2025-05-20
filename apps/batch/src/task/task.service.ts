@@ -103,7 +103,7 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    // await this.crawlService.fetchChapters();
+    await this.fetchCeoBook();
     // await this.handleCrawlerDaotruyen();
     // await this.handleCrawlerBooks();
     // await this.handleCrawlerBook();
@@ -360,6 +360,31 @@ export class TaskService {
   @Cron('0 8 * * *')
   async fetchChapterMissing() {
     await this.crawlService.fetchChapters();
+  }
+
+  @Cron('0 */2 * * *')
+  async fetchCeoBook() {
+    const books = await this.bookRepository.find({
+      where: { social_description: null },
+      select: ['description', 'title', 'id', 'slug', 'author'],
+      take: 30,
+    });
+    for (const book of books) {
+      const geminiData = await this.crawlService.generateGeminiBook(book);
+      await this.bookRepository.upsert(
+        {
+          social_description: geminiData,
+          title: book.title,
+          id: book.id,
+          slug: book.slug,
+        },
+        {
+          conflictPaths: ['title', 'slug'],
+          skipUpdateIfNoValuesChanged: true,
+        },
+      );
+      this.logger.debug('END: ', book.title);
+    }
   }
 
   @Cron('10 */4 * * *')
