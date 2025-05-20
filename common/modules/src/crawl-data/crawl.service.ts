@@ -64,8 +64,7 @@ export class CrawlService {
 
       if (data.last) break;
 
-      // page++;
-      return false;
+      page++;
     }
   }
 
