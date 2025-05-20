@@ -365,7 +365,7 @@ export class TaskService {
   @Cron('0 */2 * * *')
   async fetchCeoBook() {
     const books = await this.bookRepository.find({
-      where: { social_description: null },
+      where: { social_description: {} },
       select: ['description', 'title', 'id', 'slug', 'author'],
       take: 30,
     });
