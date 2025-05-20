@@ -546,7 +546,7 @@ export class TaskService {
     this.logger.debug('END - Get Google Meta Data.');
   }
 
-  @Cron('0 2 * * *')
+  @Cron('30 2 * * *')
   async handleCleanupOldPosts() {
     this.logger.debug('START - Cleanup Old Posts.');
 
@@ -610,7 +610,7 @@ export class TaskService {
     this.logger.debug('END - Cleanup Old Posts.');
   }
 
-  @Cron('0 */2 * * *')
+  @Cron('30 */2 * * *')
   async handleCrawlerArticles() {
     this.logger.debug('START - Crawler Articles.');
 
