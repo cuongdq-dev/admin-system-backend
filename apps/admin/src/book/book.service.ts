@@ -60,6 +60,7 @@ export class BookService {
         'book.total_chapter',
         'book.source_url',
         'book.description',
+        'book.social_description',
         'book.author',
         'book.created_at',
         'thumbnail.id',
@@ -159,7 +160,7 @@ export class BookService {
 
         for (const chapter of targetChapters) {
           const content = cheerio.load(chapter.content).text();
-          const geminiResult = await this.crawlService.generateGeminiBook(
+          const geminiResult = await this.crawlService.generateGeminiChapter(
             book,
             content,
             chapter.chapter_number,

@@ -64,7 +64,8 @@ export class CrawlService {
 
       if (data.last) break;
 
-      page++;
+      // page++;
+      return false;
     }
   }
 
@@ -92,11 +93,14 @@ export class CrawlService {
 
     const thumbnail = await this.saveBookThumbnail(book, bookDetail);
 
+    // 1. Get Gemini-generated data
+    const geminiData = await this.generateGeminiBook(book);
     const bookResult = {
       ...book,
+      social_description: geminiData,
       thumbnail_id: thumbnail.generatedMaps[0].id,
     };
-
+    console.log(bookResult);
     await this.bookRepository.upsert(bookResult, {
       conflictPaths: ['title', 'slug'],
       skipUpdateIfNoValuesChanged: true,
@@ -113,6 +117,59 @@ export class CrawlService {
     await this.countWord(bookAfterUpsert.id, bookAfterUpsert.title);
 
     this.logger.debug('END - Crawler Book Chapter: ' + book.title);
+  }
+
+  async generateGeminiBook(book: Book) {
+    this.logger.debug('START - gemini book: ' + book.title);
+
+    const requestBody = `
+            🎯 Bạn là một chuyên gia kể chuyện & tiếp thị nội dung chuyên nghiệp, có kinh nghiệm tạo nội dung hấp dẫn để đăng truyện audio hoặc video hoạt hình lên các nền tảng như **Facebook, YouTube, TikTok**.
+
+            Tôi có một truyện cần bạn phân tích và tạo nội dung truyền thông để thu hút người xem.
+
+            📚 **Thông tin truyện:**
+            - Tên truyện: ${book.title}
+            - Mô tả gốc (nếu có): ${book.description || 'Không có mô tả'}
+            - Tác giả: ${book.author.name || 'Không rõ'}
+
+            📝 **Yêu cầu của bạn:**
+
+            1. ✨ **description_social**: Viết một đoạn mô tả hấp dẫn, lôi cuốn người đọc/nghe. Phù hợp để đặt trong phần mô tả khi đăng video lên **Facebook hoặc YouTube**. Văn phong gợi cảm xúc, kích thích tò mò, truyền cảm hứng — độ dài dưới 1000 ký tự, có thể sử dụng các icon, cần xuống dòng cho hợp lý, kết hợp kêu gọi mọi người like share, theo dõi.... .
+
+            2. 🎬 **title_social**: Viết tiêu đề ngắn (dưới 100 ký tự) để làm caption hoặc tiêu đề video. Cần gây ấn tượng mạnh, gợi sự tò mò hoặc cảm xúc ngay lập tức.
+
+            3. 🔍 **keywords**: Tạo danh sách các từ khóa liên quan đến nội dung truyện — bao gồm **tên truyện**, **thể loại**, **description vừa tạo ra** , **tình huống cảm xúc chính**, và các yếu tố đặc trưng giúp người dùng tìm thấy video. Viết dưới dạng mảng JSON gồm 10-20 từ khóa, nhớ từ khoá tốt nhất cho SEO nhé.
+
+            💡 **Lưu ý:**
+            - Văn phong đậm chất kể chuyện, cảm xúc, kích thích trí tò mò.
+            - Không liệt kê lại nội dung truyện, chỉ viết theo hướng truyền cảm hứng hoặc giới thiệu hấp dẫn.
+
+            🔖 **Định dạng kết quả mong muốn:**  
+            Xuất ra **một đối tượng JSON duy nhất**, đúng theo mẫu sau:
+            {
+              "description_social": "string",
+              "title_social": "string",
+              "keywords": ["string", "string", ...]
+            }
+            `;
+
+    try {
+      const geminiResponse = await callGeminiApi(requestBody);
+      const SeoContent =
+        geminiResponse?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      // Cập nhật voice_content vào chapter trong DB
+
+      return this.extractJsonFromText(SeoContent);
+    } catch (chapterError) {
+      console.error(
+        `Failed to generate Gemini SEO: ${book.title}`,
+        chapterError,
+      );
+      this.logger.debug('END - generate Gemini SEO: ' + book.title);
+
+      return false;
+    }
   }
 
   private async fetchBookDetail(slug: string) {
@@ -204,7 +261,7 @@ export class CrawlService {
         chapter?.chapterNumber,
       );
 
-      const generateAI = await this.generateGeminiBook(
+      const generateAI = await this.generateGeminiChapter(
         book,
         content,
         chapter?.chapterNumber,
@@ -264,7 +321,7 @@ export class CrawlService {
           chapterNumber,
         );
 
-        const result = await this.generateGeminiBook(
+        const result = await this.generateGeminiChapter(
           book,
           content,
           chapterNumber,
@@ -288,7 +345,8 @@ export class CrawlService {
     const chapterDetail = await chapterResponse.json();
     return chapterDetail?.chapter?.paragraph || '';
   }
-  async generateGeminiBook(
+
+  async generateGeminiChapter(
     book: Book,
     content: string,
     chapterNumber: number,
@@ -379,5 +437,15 @@ export class CrawlService {
     );
 
     this.logger.debug('END - Đếm Word: ' + bookTitle);
+  }
+
+  private extractJsonFromText(text: string): any {
+    try {
+      const match = text.match(/{[\s\S]+}/);
+      if (match) return JSON.parse(match[0]);
+    } catch (err) {
+      this.logger.warn('Failed to parse Gemini JSON:', err);
+    }
+    return {};
   }
 }
