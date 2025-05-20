@@ -57,7 +57,6 @@ export class CrawlService {
       const data = await response.json();
       if (Array.isArray(data.content)) {
         const stories = this.transformStories(data.content);
-        console.log(stories);
         for (const story of stories) {
           await this.processBook(story);
         }
@@ -95,7 +94,6 @@ export class CrawlService {
 
     const bookResult = {
       ...book,
-
       thumbnail_id: thumbnail.generatedMaps[0].id,
     };
 
@@ -187,28 +185,30 @@ export class CrawlService {
     }
   }
 
-  private async handleChapters(book: Book, chapters: Chapter[]) {
+  private async handleChapters(
+    book: Book,
+    chapters: (Chapter & { chapterNumber: number })[],
+  ) {
     for (const chapter of chapters) {
       const findChapter = await this.chapterRepository.findOne({
         where: {
-          chapter_number: chapter?.chapter_number,
+          chapter_number: chapter?.chapterNumber,
           book_id: book.id,
           voice_content: null,
         },
       });
-
       if (findChapter) continue;
 
       const content = await this.getChapterContentDaoTruyen(
         book.slug,
-        chapter.chapter_number,
+        chapter?.chapterNumber,
       );
 
       const generateAI = await this.generateGeminiBook(
         book,
         content,
-        chapter?.chapter_number,
-        `https://daotruyen.me/api/public/v2/${book?.slug}/${chapter.chapter_number}`,
+        chapter?.chapterNumber,
+        `https://daotruyen.me/api/public/v2/${book?.slug}/${chapter.chapterNumber}`,
       );
 
       if (!generateAI) continue;
