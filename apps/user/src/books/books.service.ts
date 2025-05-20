@@ -55,7 +55,7 @@ export class BooksService {
       .getMany();
 
   async getHome(site: Site) {
-    const [top, data] = await Promise.all([
+    const [top, data, categories] = await Promise.all([
       this.bookRepo
         .createQueryBuilder('book')
         .leftJoinAndSelect('book.thumbnail', 'thumbnail')
@@ -91,6 +91,26 @@ export class BooksService {
         .getOne(),
 
       this.getBooksList(17, site.id),
+
+      this.categoryRepo
+        .createQueryBuilder('categories')
+        .leftJoin('categories.books', 'book')
+        .leftJoin('categories.sites', 'sites')
+        .leftJoin('book.siteBooks', 'siteBooks')
+        .where('sites.id = :siteId', { siteId: site.id })
+        .andWhere('siteBooks.site_id = :siteId', { siteId: site.id })
+        .select(['categories.id', 'categories.slug', 'categories.name'])
+        .loadRelationCountAndMap(
+          'categories.bookCount',
+          'categories.books',
+          'book',
+          (qb) => {
+            return qb
+              .leftJoin('book.siteBooks', 'filteredSite')
+              .where('filteredSite.site_id = :siteId', { siteId: site.id });
+          },
+        )
+        .getMany(),
     ]);
     const [recentBooks, featureBooks, otherBooks] = await Promise.all([
       data.slice(0, 5),
@@ -103,6 +123,7 @@ export class BooksService {
         adsense_client: site.adsense_client,
         adsense_slots: site.adsense_slots,
       },
+      categories,
       home: { top: top, recentBooks, featureBooks, otherBooks },
     };
   }

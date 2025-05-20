@@ -76,6 +76,11 @@ export class BookService {
         status: ['NEW', 'DRAFT', 'PUBLISHED'],
       });
     }
+    if (query?.search) {
+      bookQb.andWhere(`unaccent(LOWER(book.title)) ILIKE unaccent(:search)`, {
+        search: `%${query.search}%`,
+      });
+    }
 
     return await paginate({ ...query, filter: { ...query.filter } }, bookQb, {
       sortableColumns: ['created_at'],
