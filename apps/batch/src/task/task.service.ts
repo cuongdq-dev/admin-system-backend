@@ -362,7 +362,7 @@ export class TaskService {
     await this.crawlService.fetchChapters();
   }
 
-  @Cron('10 */2 * * *')
+  @Cron('10 */4 * * *')
   async googleIndex() {
     this.logger.debug('START - Request Google Index.');
 
@@ -423,7 +423,7 @@ export class TaskService {
     this.logger.debug('END - Request Google Index.');
   }
 
-  @Cron('30 */2 * * *')
+  @Cron('30 */4 * * *')
   async googleMetaData() {
     this.logger.debug('START - Get Google Meta Data.');
 
