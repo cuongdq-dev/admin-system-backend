@@ -364,11 +364,18 @@ export class TaskService {
 
   @Cron('0 */2 * * *')
   async fetchCeoBook() {
-    const books = await this.bookRepository.find({
-      where: { social_description: {} },
-      select: ['description', 'title', 'id', 'slug', 'author'],
-      take: 30,
-    });
+    const books = await this.bookRepository
+      .createQueryBuilder('book')
+      .select([
+        'book.description',
+        'book.title',
+        'book.id',
+        'book.slug',
+        'book.author',
+      ])
+      .where('book.social_description = :emptyObj', { emptyObj: '{}' })
+      .take(30)
+      .getMany();
     for (const book of books) {
       const geminiData = await this.crawlService.generateGeminiBook(book);
       await this.bookRepository.upsert(
@@ -383,7 +390,7 @@ export class TaskService {
           skipUpdateIfNoValuesChanged: true,
         },
       );
-      this.logger.debug('END: ', book.title);
+      this.logger.debug(`END: ${book.title}`);
     }
   }
 
