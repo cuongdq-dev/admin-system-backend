@@ -112,7 +112,7 @@ export class TaskService {
     // await this.googleMetaData();
   }
 
-  @Cron('0 * * * *')
+  // @Cron('0 * * * *')
   async handleCrawlerBooks() {
     this.logger.debug('START - Crawler Books.');
     const result: any[] = [];
@@ -194,7 +194,7 @@ export class TaskService {
     this.logger.debug('END - Crawler Books.');
   }
 
-  @Cron('0 */2 * * *')
+  // @Cron('0 */2 * * *')
   async handleCrawlerBook() {
     const books = await this.bookRepository
       .createQueryBuilder('book')
