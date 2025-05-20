@@ -142,7 +142,11 @@ export class BookController {
     updateDto: { chapterSlug: string },
     @UserParam() user: User,
   ) {
-    return this.BookService.generateGemini(book, user, updateDto.chapterSlug);
+    return this.BookService.chapterGenerateGemini(
+      book,
+      user,
+      updateDto.chapterSlug,
+    );
   }
 
   @Delete(':id')

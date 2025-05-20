@@ -83,12 +83,25 @@ export class BookService {
       });
     }
 
-    return await paginate({ ...query, filter: { ...query.filter } }, bookQb, {
-      sortableColumns: ['created_at'],
-      defaultSortBy: [['created_at', 'DESC']],
-      maxLimit: 500,
-      defaultLimit: 20,
-    });
+    if (query?.source) {
+      bookQb.andWhere(
+        `unaccent(LOWER(book.source_url)) ILIKE unaccent(:source_url)`,
+        {
+          source_url: `%${query.source}%`,
+        },
+      );
+    }
+
+    return await paginate(
+      { ...query, filter: { ...query.filter, source: query.source } },
+      bookQb,
+      {
+        sortableColumns: ['created_at'],
+        defaultSortBy: [['created_at', 'DESC']],
+        maxLimit: 500,
+        defaultLimit: 20,
+      },
+    );
   }
 
   async getBookBySlug(slugOrId: string, user: User) {
@@ -129,7 +142,7 @@ export class BookService {
     };
   }
 
-  async generateGemini(book: Book, user: User, chapterSlug?: string) {
+  async chapterGenerateGemini(book: Book, user: User, chapterSlug?: string) {
     // Cập nhật trạng thái bắt đầu generate
     await this.bookRepository.update(
       { id: book.id },
