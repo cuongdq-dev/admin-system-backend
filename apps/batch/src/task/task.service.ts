@@ -103,7 +103,7 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    await this.fetchCeoBook();
+    // await this.fetchCeoBook();
     // await this.handleCrawlerDaotruyen();
     // await this.handleCrawlerBooks();
     // await this.handleCrawlerBook();
@@ -374,7 +374,7 @@ export class TaskService {
         'book.author',
       ])
       .where('book.social_description = :emptyObj', { emptyObj: '{}' })
-      // .take(30)
+      .take(20)
       .getMany();
     for (const book of books) {
       const geminiData = await this.crawlService.generateGeminiBook(book);

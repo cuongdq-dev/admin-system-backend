@@ -538,24 +538,45 @@ export async function processImages(
 }
 
 export async function callGeminiApi(prompt: string) {
-  try {
-    const myHeaders = new Headers();
-    myHeaders.append('Content-Type', 'application/json');
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
 
-    const raw = JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-    });
+  const raw = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+  });
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      { method: 'POST', headers: myHeaders, body: raw, redirect: 'follow' },
-    );
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    console.error('Error calling Gemini API:', error);
-    return null;
+  const GEMINI_API_KEYS = [
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+  ];
+  for (const key of GEMINI_API_KEYS) {
+    console.log(key);
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+        { method: 'POST', headers: myHeaders, body: raw, redirect: 'follow' },
+      );
+
+      if (!response.ok) {
+        // Có thể kiểm tra lỗi do key hết hạn, quota,...
+        const errorResponse = await response.json();
+        console.warn('API error with key:', key, errorResponse);
+        // Nếu lỗi là do key, thì thử key kế tiếp
+        continue;
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Network or other error with key:', key, error);
+      // Thử key tiếp
+      continue;
+    }
   }
+
+  console.error('All API keys failed');
+  return null;
 }
 
 export function generateSlug(text: string): string {
