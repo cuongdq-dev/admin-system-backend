@@ -20,20 +20,21 @@ export class BooksService {
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.thumbnail', 'thumbnail')
       .leftJoinAndSelect('book.categories', 'categories')
-      .leftJoinAndSelect('book.chapters', 'chapters')
+      // .leftJoinAndSelect('book.chapters', 'chapters')
       .innerJoin('book.siteBooks', 'siteBook')
       .innerJoin('siteBook.site', 'site')
       .where('site.id = :siteId', { siteId })
-      .andWhere(
-        `(SELECT COUNT(*) FROM chapters chapter WHERE chapter.book_id = book.id) > 5`,
-      )
-      .loadRelationCountAndMap('book.total_chapter', 'book.chapters')
+      // .andWhere(
+      //   `(SELECT COUNT(*) FROM chapters chapter WHERE chapter.book_id = book.id) > 5`,
+      // )
+      // .loadRelationCountAndMap('book.total_chapter', 'book.chapters')
       .select([
         'book.id',
         'book.title',
         'book.slug',
         'book.meta_description',
         'book.description',
+        'book.total_chapter',
         'book.is_new',
         'book.is_hot',
         'book.is_full',
@@ -59,25 +60,23 @@ export class BooksService {
         .createQueryBuilder('book')
         .leftJoinAndSelect('book.thumbnail', 'thumbnail')
         .leftJoinAndSelect('book.categories', 'categories')
-        .leftJoinAndSelect('book.chapters', 'chapters')
+        .innerJoin('book.chapters', 'chapters')
         .innerJoin('book.siteBooks', 'siteBook')
         .innerJoin('siteBook.site', 'site')
         .where('site.id = :siteId', { siteId: site.id })
         .andWhere(
           `(SELECT COUNT(*) FROM chapters chapter WHERE chapter.book_id = book.id) > 15`,
         )
-        .loadRelationCountAndMap('book.total_chapter', 'book.chapters')
         .select([
           'book.id',
           'book.title',
           'book.slug',
-          'book.meta_description',
-          'book.description',
           'book.is_new',
           'book.is_hot',
+          'book.total_chapter',
           'book.is_full',
           'book.author',
-          'book.keywords',
+          // 'book.keywords',
           'book.status',
           'book.created_at',
           'thumbnail.url',
