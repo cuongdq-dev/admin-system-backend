@@ -45,7 +45,7 @@ export class CrawlService {
 
   async handleCrawlerDaoTruyen() {
     let page = 0;
-    const pageSize = 2;
+    const pageSize = 10;
 
     while (true) {
       const response = await fetchWithRetry(
@@ -99,7 +99,6 @@ export class CrawlService {
       social_description: geminiData,
       thumbnail_id: thumbnail.generatedMaps[0].id,
     };
-    console.log(bookResult);
     await this.bookRepository.upsert(bookResult, {
       conflictPaths: ['title', 'slug'],
       skipUpdateIfNoValuesChanged: true,
@@ -281,9 +280,11 @@ export class CrawlService {
       .leftJoinAndSelect('book.thumbnail', 'thumbnail')
       .innerJoin('book.chapters', 'chapters')
       .loadRelationCountAndMap('book.chapter_count', 'book.chapters') // ✅ đếm số chương
+
       .select([
         'book.id',
         'book.title',
+        'book.source_url',
         'book.slug',
         'book.total_chapter',
         'chapters.id',
@@ -296,9 +297,12 @@ export class CrawlService {
       chapter_count: number;
     } & Book)[];
 
-    const books = allData?.filter(
-      (book) => book.total_chapter > book?.chapter_count,
-    );
+    const books = allData?.filter((book) => {
+      const domain = new URL(book.source_url).hostname;
+      return (
+        domain.includes('daotruyen') && book.total_chapter > book?.chapter_count
+      );
+    });
 
     for (const book of books) {
       const existingChapters = book.chapters.map((ch) => ch.chapter_number);
