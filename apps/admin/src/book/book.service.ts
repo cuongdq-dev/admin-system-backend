@@ -68,6 +68,7 @@ export class BookService {
         'thumbnail.slug',
       ])
       .groupBy('book.id')
+      .orderBy('book.created_at', 'DESC')
       .addGroupBy('thumbnail.id');
 
     if (query?.status?.length) {

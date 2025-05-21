@@ -352,7 +352,7 @@ export class TaskService {
     this.logger.debug('END - Crawler Book.');
   }
 
-  @Cron('0 */1 * * *')
+  // @Cron('0 6 * * *')
   async handleCrawlerDaotruyen() {
     await this.crawlService.handleCrawlerDaoTruyen();
   }

@@ -559,17 +559,15 @@ export async function callGeminiApi(prompt: string) {
       );
 
       if (!response.ok) {
-        // Có thể kiểm tra lỗi do key hết hạn, quota,...
         const errorResponse = await response.json();
-        console.warn('API error with key:', key, errorResponse);
-        // Nếu lỗi là do key, thì thử key kế tiếp
+        console.warn('API error with key:', key);
         continue;
       }
 
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Network or other error with key:', key, error);
+      console.error('Network or other error with key:', key);
       // Thử key tiếp
       continue;
     }
