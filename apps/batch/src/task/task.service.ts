@@ -371,12 +371,17 @@ export class TaskService {
         'book.title',
         'book.id',
         'book.slug',
+        'book.source_url',
         'book.author',
       ])
+      .orderBy('created_at', 'DESC')
       .where('book.social_description = :emptyObj', { emptyObj: '{}' })
       .take(20)
       .getMany();
     for (const book of books) {
+      if (!book?.source_url?.includes('daotruyen')) {
+        continue;
+      }
       const geminiData = await this.crawlService.generateGeminiBook(book);
       await this.bookRepository.upsert(
         {
