@@ -45,7 +45,7 @@ export class CrawlService {
 
   async handleCrawlerDaoTruyen() {
     let page = 0;
-    const pageSize = 10;
+    const pageSize = 5;
 
     while (true) {
       const response = await fetchWithRetry(

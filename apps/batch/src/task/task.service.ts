@@ -352,7 +352,7 @@ export class TaskService {
     this.logger.debug('END - Crawler Book.');
   }
 
-  @Cron('0 6 * * *')
+  @Cron('0 */1 * * *')
   async handleCrawlerDaotruyen() {
     await this.crawlService.handleCrawlerDaoTruyen();
   }
@@ -362,7 +362,7 @@ export class TaskService {
     await this.crawlService.fetchChapters();
   }
 
-  @Cron('0 */2 * * *')
+  @Cron('0 */5 * * *')
   async fetchCeoBook() {
     const books = await this.bookRepository
       .createQueryBuilder('book')
