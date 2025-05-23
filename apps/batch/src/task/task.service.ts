@@ -379,9 +379,9 @@ export class TaskService {
       .take(20)
       .getMany();
     for (const book of books) {
-      if (!book?.source_url?.includes('daotruyen')) {
-        continue;
-      }
+      // if (!book?.source_url?.includes('daotruyen')) {
+      //   continue;
+      // }
       const geminiData = await this.crawlService.generateGeminiBook(book);
       await this.bookRepository.upsert(
         {

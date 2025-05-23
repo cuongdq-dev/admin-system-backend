@@ -45,7 +45,7 @@ export class CrawlService {
 
   async handleCrawlerDaoTruyen() {
     let page = 0;
-    const pageSize = 5;
+    const pageSize = 40;
 
     while (true) {
       const response = await fetchWithRetry(
@@ -58,12 +58,35 @@ export class CrawlService {
       if (Array.isArray(data.content)) {
         const stories = this.transformStories(data.content);
         for (const story of stories) {
-          await this.processBook(story);
+          const findData = await this.bookRepository.findOne({
+            where: { title: story.title, slug: generateSlug(story.title) },
+            select: ['total_chapter', 'chapters', 'id'],
+            relations: ['chapters'],
+          });
+
+          if (
+            !findData ||
+            Number(findData?.chapters?.length) < Number(story?.total_chapter)
+          ) {
+            console.log('Crawl data.....');
+            await this.processBook(story);
+          } else {
+            console.log(
+              'exist!!',
+              findData.id,
+              findData.title,
+              findData.total_chapter,
+              story.total_chapter,
+            );
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
 
       if (data.last) break;
 
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       page++;
     }
   }
