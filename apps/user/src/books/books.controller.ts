@@ -63,7 +63,7 @@ export class BooksController {
     @Paginate() query: PaginateQuery,
     @Param() { slug }: { slug: string },
   ) {
-    return this.booksService.getBooksByCategory(req.site, slug, query);
+    return this.booksService.getAllBooks(req.site, query, slug);
   }
 
   @Get('detail/:slug')
@@ -96,6 +96,7 @@ export class BooksController {
   //site map
   @Get('sitemap-categories')
   async getSitemapCategories(@Query('domain') domain: string) {
+    console.log(domain);
     if (!domain) throw new NotFoundException('Domain is required');
     return await this.booksService.getSitemapCategories(domain);
   }

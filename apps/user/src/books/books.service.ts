@@ -1,5 +1,4 @@
 import { Book, Category, Chapter, Site, SiteBook } from '@app/entities';
-import { BookStatus } from '@app/entities/book.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { Repository } from 'typeorm';
@@ -20,14 +19,9 @@ export class BooksService {
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.thumbnail', 'thumbnail')
       .leftJoinAndSelect('book.categories', 'categories')
-      // .leftJoinAndSelect('book.chapters', 'chapters')
       .innerJoin('book.siteBooks', 'siteBook')
       .innerJoin('siteBook.site', 'site')
       .where('site.id = :siteId', { siteId })
-      // .andWhere(
-      //   `(SELECT COUNT(*) FROM chapters chapter WHERE chapter.book_id = book.id) > 5`,
-      // )
-      // .loadRelationCountAndMap('book.total_chapter', 'book.chapters')
       .select([
         'book.id',
         'book.title',
@@ -76,7 +70,7 @@ export class BooksService {
           'book.total_chapter',
           'book.is_full',
           'book.author',
-          // 'book.keywords',
+          'book.description',
           'book.status',
           'book.created_at',
           'thumbnail.url',
@@ -117,6 +111,7 @@ export class BooksService {
       data.slice(6, 11),
       data.slice(12, 17),
     ]);
+
     return {
       adsense: {
         adsense_ga: site.adsense_ga,
@@ -198,50 +193,7 @@ export class BooksService {
     };
   }
 
-  async getBooksByCategory(site: Site, slug: string, query: PaginateQuery) {
-    const qb = this.bookRepo
-      .createQueryBuilder('book')
-      .leftJoinAndSelect('book.thumbnail', 'thumbnail')
-      .leftJoinAndSelect('book.categories', 'categories')
-      .innerJoinAndSelect('book.chapters', 'chapters')
-      .innerJoin('book.siteBooks', 'siteBook')
-      .innerJoin('siteBook.site', 'site')
-      .where('site.id = :siteId', { siteId: site.id })
-      .where('categories.slug = :slug', { slug: slug })
-      .loadRelationCountAndMap('book.total_chapter', 'book.chapters')
-      .select([
-        'book.id',
-        'book.created_at',
-        'book.title',
-        'book.slug',
-        'book.meta_description',
-        'book.description',
-        'book.is_new',
-        'book.is_hot',
-        'book.is_full',
-        'book.author',
-        'book.keywords',
-        'book.status',
-        'thumbnail.url',
-        'thumbnail.id',
-        'thumbnail.slug',
-
-        'categories.slug',
-        'categories.id',
-        'categories.name',
-      ])
-      .groupBy('book.id, thumbnail.id, siteBook.id, categories.id');
-
-    const paginatedData = await paginate(query, qb, {
-      sortableColumns: ['created_at'],
-      defaultSortBy: [['created_at', 'DESC']],
-      maxLimit: 50,
-      defaultLimit: 23,
-    });
-    return paginatedData;
-  }
-
-  async getAllBooks(site: Site, query: PaginateQuery) {
+  async getAllBooks(site: Site, query: PaginateQuery, categorySlug?: string) {
     const qb = this.bookRepo
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.thumbnail', 'thumbnail')
@@ -274,8 +226,18 @@ export class BooksService {
       ])
       .groupBy('book.id, thumbnail.id, siteBook.id, categories.id');
 
+    if (categorySlug) {
+      qb.andWhere('categories.slug = :slug', { slug: categorySlug });
+    }
+
+    if (query?.search) {
+      qb.andWhere(`unaccent(LOWER(book.title)) ILIKE unaccent(:search)`, {
+        search: `%${query.search}%`,
+      });
+    }
+
     const paginatedData = await paginate(query, qb, {
-      sortableColumns: ['created_at'],
+      sortableColumns: ['created_at', 'title'],
       defaultSortBy: [['created_at', 'DESC']],
       maxLimit: 50,
       defaultLimit: 23,
@@ -344,10 +306,7 @@ export class BooksService {
 
     return {
       total: await this.bookRepo.count({
-        where: {
-          siteBooks: { site_id: site.id },
-          status: BookStatus.PUBLISHED,
-        },
+        where: { siteBooks: { site_id: site.id } },
       }),
       perpage: 100,
     };
