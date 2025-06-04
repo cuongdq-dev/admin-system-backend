@@ -240,7 +240,7 @@ export class BooksService {
       sortableColumns: ['created_at', 'title'],
       defaultSortBy: [['created_at', 'DESC']],
       maxLimit: 50,
-      defaultLimit: 23,
+      defaultLimit: 25,
     });
     return paginatedData;
   }
@@ -271,7 +271,12 @@ export class BooksService {
       relations: ['thumbnail', 'categories', 'siteBooks', 'chapters'],
     });
 
-    const recommence = await this.getBooksList(4, site.id);
+    const recommence = await this.bookRepo.find({
+      where: { siteBooks: { site_id: site.id } },
+      relations: ['thumbnail', 'categories'],
+      take: 5,
+    });
+
     return { data: book, recommence };
   }
 
