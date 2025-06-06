@@ -19,6 +19,14 @@ export class AnalyticsController {
   getAnalyticsCategories() {
     return this.analyticsService.getAnalyticsCategories();
   }
+  @Get('/category-news')
+  getAnalyticsNewCategories() {
+    return this.analyticsService.getAnalyticsNewsCategories();
+  }
+  @Get('/category-books')
+  getAnalyticsBookCategories() {
+    return this.analyticsService.getAnalyticsBookCategories();
+  }
 
   @Get('/trending')
   getAnalyticsTrendings() {

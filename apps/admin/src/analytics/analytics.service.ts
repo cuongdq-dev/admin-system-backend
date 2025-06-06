@@ -1,4 +1,5 @@
 import { Category, Post, Site, SitePost, Trending } from '@app/entities';
+import { CategoryType } from '@app/entities/category.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -111,6 +112,64 @@ export class AnalyticsService {
       .leftJoin('category.posts', 'post')
       .groupBy('category.id')
       .addGroupBy('category.name')
+      .select([
+        'category.id AS id',
+        'category.name AS name',
+        'COUNT(post.id) AS postCount',
+      ])
+      .orderBy('postCount', 'DESC')
+      .getRawMany();
+    return {
+      chart: {
+        categories: raw.map((r) => r.name),
+        series: [
+          {
+            name: 'Số lượng bài viết',
+            data: raw.map((r) => parseInt(r.postcount, 10)),
+          },
+        ],
+      },
+    };
+  }
+  async getAnalyticsBookCategories() {
+    const raw = await this.categoryRepository
+      .createQueryBuilder('category')
+      .innerJoin('category.books', 'book')
+      .groupBy('category.id')
+      .addGroupBy('category.name')
+      .andWhere('category.status IN (:...status)', {
+        status: [CategoryType.BOOK],
+      })
+      .select([
+        'category.id AS id',
+        'category.name AS name',
+        'COUNT(book.id) AS bookCount',
+      ])
+      .orderBy('bookCount', 'DESC')
+      .limit(20)
+      .getRawMany();
+
+    return {
+      chart: {
+        categories: raw.map((r) => r.name),
+        series: [
+          {
+            name: 'Số lượng truyện, sách',
+            data: raw.map((r) => parseInt(r.bookcount, 10)),
+          },
+        ],
+      },
+    };
+  }
+  async getAnalyticsNewsCategories() {
+    const raw = await this.categoryRepository
+      .createQueryBuilder('category')
+      .leftJoin('category.posts', 'post')
+      .groupBy('category.id')
+      .addGroupBy('category.name')
+      .where('(category.status = :postStatus OR category.status IS NULL)', {
+        postStatus: CategoryType.POST,
+      })
       .select([
         'category.id AS id',
         'category.name AS name',
