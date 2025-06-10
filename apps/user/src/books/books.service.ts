@@ -84,7 +84,7 @@ export class BooksService {
         .orderBy('RANDOM()')
         .getOne(),
 
-      this.getBooksList(17, site.id),
+      this.getBooksList(18, site.id),
 
       this.categoryRepo
         .createQueryBuilder('categories')
@@ -107,10 +107,12 @@ export class BooksService {
         .getMany(),
     ]);
     const [recentBooks, featureBooks, otherBooks] = await Promise.all([
-      data.slice(0, 5),
-      data.slice(6, 11),
-      data.slice(12, 17),
+      data.slice(0, 6),
+      data.slice(6, 12),
+      data.slice(12, 18),
     ]);
+
+    console.log(recentBooks.length, featureBooks.length, otherBooks.length);
 
     return {
       adsense: {
@@ -240,7 +242,7 @@ export class BooksService {
       sortableColumns: ['created_at', 'title'],
       defaultSortBy: [['created_at', 'DESC']],
       maxLimit: 50,
-      defaultLimit: 25,
+      defaultLimit: 20,
     });
     return paginatedData;
   }
