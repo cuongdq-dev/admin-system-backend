@@ -1,5 +1,6 @@
 import { UserParam } from '@app/decorators';
 import { User } from '@app/entities';
+import { Headers } from '@nestjs/common';
 import {
   Body,
   Controller,
@@ -22,8 +23,11 @@ export class SettingController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
-  getSeting(@UserParam() user: User) {
-    return this.settingService.getSetting(user);
+  getSeting(
+    @UserParam() user: User,
+    @Headers('workspaces') workspaces: string,
+  ) {
+    return this.settingService.getSetting(user, workspaces);
   }
 
   @Post('firebase-token')

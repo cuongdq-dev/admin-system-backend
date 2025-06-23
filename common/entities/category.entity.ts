@@ -12,7 +12,7 @@ import { Book } from './book.entity';
 import { Post } from './post.entity';
 import { Site } from './site.entity';
 
-export enum CategoryType {
+export enum CategoryStatus {
   POST = 'POST',
   BOOK = 'BOOK',
 }
@@ -50,7 +50,12 @@ export class Category extends BaseEntity {
   @ManyToMany(() => Site, (site) => site.categories)
   sites: Relation<Site[]>;
 
-  @Column({ type: 'enum', enum: CategoryType, nullable: true })
+  @Column({
+    type: 'enum',
+    enum: CategoryStatus,
+    nullable: true,
+    default: CategoryStatus.POST,
+  })
   @Index()
-  status: CategoryType;
+  status: CategoryStatus;
 }

@@ -6,6 +6,8 @@ import {
   Trending,
   GoogleIndexRequest,
   TrendingArticle,
+  Book,
+  SiteBook,
 } from '@app/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -19,6 +21,8 @@ import { AnalyticsService } from './analytics.service';
       Site,
       Category,
       SitePost,
+      Book,
+      SiteBook,
       Trending,
       TrendingArticle,
       GoogleIndexRequest,

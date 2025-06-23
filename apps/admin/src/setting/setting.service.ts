@@ -1,4 +1,5 @@
 import {
+  Book,
   Category,
   Lang,
   Notification,
@@ -17,9 +18,6 @@ export class SettingService {
     @InjectRepository(Notification)
     private notificationRepository: Repository<Notification>,
 
-    @InjectRepository(Lang)
-    private langRepository: Repository<Lang>,
-
     @InjectRepository(User)
     private userRepository: Repository<User>,
 
@@ -29,34 +27,53 @@ export class SettingService {
     @InjectRepository(PostEntity)
     private postRepository: Repository<PostEntity>,
 
+    @InjectRepository(Book)
+    private bookRepository: Repository<Book>,
+
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
   ) {}
 
-  async getSetting(user: User) {
-    const [notifyNew, lang, u, sites, posts, categories] = await Promise.all([
+  async getSetting(user: User, workspaces: string) {
+    const types =
+      workspaces === 'wp_books'
+        ? ['BOOK']
+        : workspaces === 'wp_news'
+          ? ['POST']
+          : ['BOOK', 'POST'];
+
+    const [notifyNew, u, sites, posts, books, categories] = await Promise.all([
       this.notificationRepository.count({
         where: { user_id: user.id, status: NotificationStatus.NEW },
       }),
-      this.langRepository.find(),
       this.userRepository.findOne({
         where: { id: user.id },
         relations: ['avatar'],
       }),
-
       this.siteRepository
         .createQueryBuilder('site')
         .where('site.created_by = :createdBy', { createdBy: user.id })
+        .andWhere('site.type IN(:...types)', { types: types })
         .select(['site.id AS id', 'site.name AS title'])
         .getRawMany(),
       this.postRepository
         .createQueryBuilder('post')
         .select(['post.id AS id', 'post.title AS title'])
         .getRawMany(),
+      this.bookRepository
+        .createQueryBuilder('book')
+        .select(['book.id AS id', 'book.title AS title'])
+        .getRawMany(),
+
       this.categoryRepository
         .createQueryBuilder('category')
-        // .where('category.created_by = :createdBy', { createdBy: user.id })
-        .select(['category.id AS id', 'category.name AS title'])
+        .leftJoinAndSelect('category.sites', 'site')
+        .andWhere('category.status IN(:...types)', { types: types })
+        .select([
+          'category.id AS id',
+          'category.name AS title',
+          'category.status AS type',
+        ])
         .getRawMany(),
     ]);
     return {
@@ -66,7 +83,7 @@ export class SettingService {
       ],
       user: u,
       notifyNew,
-      dropdown: { sites, posts, categories },
+      dropdown: { sites, posts, books, categories },
     };
   }
 

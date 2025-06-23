@@ -1,5 +1,13 @@
-import { Category, Post, Site, SitePost, Trending } from '@app/entities';
-import { CategoryType } from '@app/entities/category.entity';
+import {
+  Book,
+  Category,
+  Post,
+  Site,
+  SiteBook,
+  SitePost,
+  Trending,
+} from '@app/entities';
+import { CategoryStatus } from '@app/entities/category.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,31 +30,50 @@ export class AnalyticsService {
     @InjectRepository(SitePost)
     private sitePostRepository: Repository<SitePost>,
 
+    @InjectRepository(Book)
+    private bookRepository: Repository<Book>,
+
+    @InjectRepository(SiteBook)
+    private siteBookRepository: Repository<SiteBook>,
+
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
   ) {}
 
-  async getAnalyticsSite() {
+  async getAnalyticsSite(workspaces: string) {
+    const types =
+      workspaces === 'wp_books'
+        ? ['BOOK']
+        : workspaces === 'wp_news'
+          ? ['POST']
+          : ['BOOK', 'POST'];
+
     const [chart, total, recentCount, previousCount] = await Promise.all([
       this.siteRepository
         .createQueryBuilder('site')
         .select("TO_CHAR(site.created_at, 'YYYY-MM-DD')", 'day')
         .addSelect('COUNT(*)', 'total')
         .where("site.created_at >= NOW() - INTERVAL '7 days'")
+        .andWhere('site.type IN(:...types)', { types: types })
         .groupBy('day')
         .orderBy('day', 'ASC')
         .getRawMany(),
 
-      this.siteRepository.count(),
+      this.siteRepository
+        .createQueryBuilder('site')
+        .where('site.type IN(:...types)', { types: types })
+        .getCount(),
 
       this.siteRepository
         .createQueryBuilder('site')
         .where("site.created_at >= NOW() - INTERVAL '7 days'")
+        .andWhere('site.type IN(:...types)', { types: types })
         .getCount(),
 
       this.siteRepository
         .createQueryBuilder('site')
         .where("site.created_at >= NOW() - INTERVAL '14 days'")
+        .andWhere('site.type IN(:...types)', { types: types })
         .andWhere("site.created_at < NOW() - INTERVAL '7 days'")
         .getCount(),
     ]);
@@ -66,30 +93,69 @@ export class AnalyticsService {
     };
   }
 
-  async getAnalyticsPosts() {
-    const [chart, total, recentCount, previousCount] = await Promise.all([
-      this.postRepository
-        .createQueryBuilder('post')
-        .select("TO_CHAR(post.created_at, 'YYYY-MM-DD')", 'day')
+  async analyticContents(workspace: string) {
+    const getContentAnalytics = async (
+      repo: Repository<any>,
+      alias: string,
+    ) => {
+      const stats7Days = repo
+        .createQueryBuilder(alias)
+        .select(`TO_CHAR(${alias}.created_at, 'YYYY-MM-DD')`, 'day')
         .addSelect('COUNT(*)', 'total')
-        .where("post.created_at >= NOW() - INTERVAL '7 days'")
+        .where(`${alias}.created_at >= NOW() - INTERVAL '7 days'`)
         .groupBy('day')
         .orderBy('day', 'ASC')
-        .getRawMany(),
+        .getRawMany();
 
-      this.postRepository.count(),
+      const totalCount = repo.count();
 
-      this.postRepository
-        .createQueryBuilder('post')
-        .where("post.created_at >= NOW() - INTERVAL '7 days'")
-        .getCount(),
+      const countThisWeek = repo
+        .createQueryBuilder(alias)
+        .where(`${alias}.created_at >= NOW() - INTERVAL '7 days'`)
+        .getCount();
 
-      this.postRepository
-        .createQueryBuilder('post')
-        .where("post.created_at >= NOW() - INTERVAL '14 days'")
-        .andWhere("post.created_at < NOW() - INTERVAL '7 days'")
-        .getCount(),
+      const countLastWeek = repo
+        .createQueryBuilder(alias)
+        .where(`${alias}.created_at >= NOW() - INTERVAL '14 days'`)
+        .andWhere(`${alias}.created_at < NOW() - INTERVAL '7 days'`)
+        .getCount();
+
+      return Promise.all([
+        stats7Days,
+        totalCount,
+        countThisWeek,
+        countLastWeek,
+      ]);
+    };
+
+    if (workspace === 'wp_books') {
+      return getContentAnalytics(this.bookRepository, 'book');
+    }
+
+    if (workspace === 'wp_news') {
+      return getContentAnalytics(this.postRepository, 'post');
+    }
+
+    // default: tổng hợp cả book + post
+    const [
+      [bookStats, bookTotal, bookThisWeek, bookLastWeek],
+      [postStats, postTotal, postThisWeek, postLastWeek],
+    ] = await Promise.all([
+      getContentAnalytics(this.bookRepository, 'book'),
+      getContentAnalytics(this.postRepository, 'post'),
     ]);
+
+    return [
+      [...bookStats, ...postStats], // Nếu cần merge theo `day`, có thể xử lý thêm
+      bookTotal + postTotal,
+      bookThisWeek + postThisWeek,
+      bookLastWeek + postLastWeek,
+    ] as any;
+  }
+
+  async getAnalyticsPosts(workspace: string) {
+    const [chart, total, recentCount, previousCount] =
+      await this.analyticContents(workspace);
 
     const diff = recentCount - previousCount;
     const percent =
@@ -138,7 +204,7 @@ export class AnalyticsService {
       .groupBy('category.id')
       .addGroupBy('category.name')
       .andWhere('category.status IN (:...status)', {
-        status: [CategoryType.BOOK],
+        status: [CategoryStatus.BOOK],
       })
       .select([
         'category.id AS id',
@@ -168,7 +234,7 @@ export class AnalyticsService {
       .groupBy('category.id')
       .addGroupBy('category.name')
       .where('(category.status = :postStatus OR category.status IS NULL)', {
-        postStatus: CategoryType.POST,
+        postStatus: CategoryStatus.POST,
       })
       .select([
         'category.id AS id',
@@ -231,24 +297,60 @@ export class AnalyticsService {
     };
   }
 
-  async getAnalyticsSource() {
-    const raw = await this.postRepository
+  async analyticsSource(workspace: string) {
+    const bookQuery = this.bookRepository
+      .createQueryBuilder('book')
+      .select(
+        `regexp_replace(regexp_replace(book.source_url, '^https?://', ''), '/.*$', '')`,
+        'source',
+      )
+      .addSelect('COUNT(*)', 'value')
+      .groupBy('source');
+
+    const newsQuery = this.postRepository
       .createQueryBuilder('post')
-      .innerJoin('post.article', 'article')
+      .leftJoin('post.article', 'article')
       .select('article.source', 'source')
       .addSelect('COUNT(*)', 'value')
-      .where("post.created_at >= NOW() - INTERVAL '14 days'")
-      .groupBy('article.source')
-      .orderBy('value', 'DESC')
-      .limit(8)
-      .getRawMany();
+      .groupBy('article.source');
 
+    switch (workspace) {
+      case 'wp_books':
+        return await bookQuery.orderBy('value', 'DESC').limit(15).getRawMany();
+
+      case 'wp_news':
+        return await newsQuery.orderBy('value', 'DESC').limit(15).getRawMany();
+
+      default:
+        const [bookResult, newsResult] = await Promise.all([
+          bookQuery.getRawMany(),
+          newsQuery.getRawMany(),
+        ]);
+
+        const merged: Record<string, number> = {};
+
+        for (const row of [...bookResult, ...newsResult]) {
+          const source = row.source ?? '';
+          const value = parseInt(row.value, 10);
+          merged[source] = (merged[source] || 0) + value;
+        }
+
+        const mergedArray = Object.entries(merged)
+          .map(([source, value]) => ({ source, value }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 15);
+
+        return mergedArray;
+    }
+  }
+  async getAnalyticsSource(workspace: string) {
+    const raw = await this.analyticsSource(workspace);
     return {
       chart: {
-        categories: raw.map((r) => r.source),
+        categories: raw.map((r) => r.source || 'Other'),
         series: [
           {
-            name: 'Số lượng bài viết',
+            name: 'Số lượng',
             data: raw.map((r) => parseInt(r.value, 10)),
           },
         ],
@@ -256,37 +358,73 @@ export class AnalyticsService {
     };
   }
 
-  async getAnalyticsGoogleIndexed() {
-    const [chart, recentCount, previousCount, total] = await Promise.all([
-      this.sitePostRepository
-        .createQueryBuilder('sitePost')
-        .select("TO_CHAR(sitePost.created_at, 'YYYY-MM-DD')", 'day')
-        .addSelect('COUNT(*)', 'total')
-        .where("sitePost.created_at >= NOW() - INTERVAL '7 days'")
-        .andWhere('sitePost.indexStatus = :indexStatus', {
-          indexStatus: IndexStatus.PASS,
-        })
-        .groupBy('day')
-        .orderBy('day', 'ASC')
-        .getRawMany(),
+  async googleIndexed(workspace: string) {
+    const getStats = async (repo: Repository<any>) => {
+      const [stats, thisWeek, lastWeek, totalIndexed] = await Promise.all([
+        repo
+          .createQueryBuilder('site')
+          .select("TO_CHAR(site.created_at, 'YYYY-MM-DD')", 'day')
+          .addSelect('COUNT(*)', 'total')
+          .where("site.created_at >= NOW() - INTERVAL '7 days'")
+          .andWhere('site.indexStatus = :indexStatus', {
+            indexStatus: IndexStatus.PASS,
+          })
+          .groupBy('day')
+          .orderBy('day', 'ASC')
+          .getRawMany(),
 
-      this.sitePostRepository
-        .createQueryBuilder('sitePost')
-        .andWhere("sitePost.created_at >= NOW() - INTERVAL '7 days'")
-        .getCount(),
+        repo
+          .createQueryBuilder('site')
+          .where("site.created_at >= NOW() - INTERVAL '7 days'")
+          .getCount(),
 
-      this.sitePostRepository
-        .createQueryBuilder('sitePost')
-        .andWhere("sitePost.created_at >= NOW() - INTERVAL '14 days'")
-        .andWhere("sitePost.created_at < NOW() - INTERVAL '7 days'")
-        .getCount(),
-      this.sitePostRepository
-        .createQueryBuilder('sitePost')
-        .where('sitePost.indexStatus = :indexStatus', {
-          indexStatus: IndexStatus.PASS,
-        })
-        .getCount(),
+        repo
+          .createQueryBuilder('site')
+          .where("site.created_at >= NOW() - INTERVAL '14 days'")
+          .andWhere("site.created_at < NOW() - INTERVAL '7 days'")
+          .getCount(),
+
+        repo
+          .createQueryBuilder('site')
+          .where('site.indexStatus = :indexStatus', {
+            indexStatus: IndexStatus.PASS,
+          })
+          .getCount(),
+      ]);
+
+      return { stats, thisWeek, lastWeek, totalIndexed };
+    };
+
+    if (workspace === 'wp_books') {
+      const { stats, thisWeek, lastWeek, totalIndexed } = await getStats(
+        this.siteBookRepository,
+      );
+      return [stats, thisWeek, lastWeek, totalIndexed];
+    }
+
+    if (workspace === 'wp_news') {
+      const { stats, thisWeek, lastWeek, totalIndexed } = await getStats(
+        this.sitePostRepository,
+      );
+      return [stats, thisWeek, lastWeek, totalIndexed];
+    }
+
+    const [book, post] = await Promise.all([
+      getStats(this.siteBookRepository),
+      getStats(this.sitePostRepository),
     ]);
+
+    return [
+      [...book.stats, ...post.stats],
+      book.thisWeek + post.thisWeek,
+      book.lastWeek + post.lastWeek,
+      book.totalIndexed + post.totalIndexed,
+    ] as any;
+  }
+
+  async getAnalyticsGoogleIndexed(workspace: string) {
+    const [chart, recentCount, previousCount, total] =
+      await this.googleIndexed(workspace);
 
     const diff = recentCount - previousCount;
     const percent =
@@ -303,14 +441,42 @@ export class AnalyticsService {
       chart: { categories, series },
     };
   }
-  async getAnalyticsGoogleSearchStatus() {
-    const raw = await this.sitePostRepository
-      .createQueryBuilder('site_post')
-      .select('site_post.indexStatus', 'status')
-      .addSelect('COUNT(*)', 'value')
-      .groupBy('site_post.indexStatus')
-      .getRawMany();
 
+  async googleSearchStatus(workspace: string) {
+    const getStatusStats = (repo: Repository<any>) =>
+      repo
+        .createQueryBuilder('site')
+        .select('site.indexStatus', 'status')
+        .addSelect('COUNT(*)', 'value')
+        .groupBy('site.indexStatus')
+        .getRawMany();
+
+    if (workspace === 'wp_books') {
+      return getStatusStats(this.siteBookRepository);
+    }
+
+    if (workspace === 'wp_news') {
+      return getStatusStats(this.sitePostRepository);
+    }
+
+    const [bookStatuses, postStatuses] = await Promise.all([
+      getStatusStats(this.siteBookRepository),
+      getStatusStats(this.sitePostRepository),
+    ]);
+
+    const merged = new Map<string, number>();
+    [...bookStatuses, ...postStatuses].forEach(({ status, value }) => {
+      merged.set(status, (merged.get(status) || 0) + parseInt(value, 10));
+    });
+
+    return Array.from(merged.entries()).map(([status, value]) => ({
+      status,
+      value,
+    }));
+  }
+
+  async getAnalyticsGoogleSearchStatus(workspace: string) {
+    const raw = await this.googleSearchStatus(workspace);
     const chart = {
       series: raw.map((row) => ({
         label: row.status,

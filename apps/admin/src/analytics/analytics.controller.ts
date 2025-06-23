@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Headers, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
@@ -11,8 +11,8 @@ export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
 
   @Get('/post')
-  getAnalyticsPosts() {
-    return this.analyticsService.getAnalyticsPosts();
+  getAnalyticsPosts(@Headers('workspaces') workspaces: string) {
+    return this.analyticsService.getAnalyticsPosts(workspaces);
   }
 
   @Get('/category')
@@ -34,21 +34,21 @@ export class AnalyticsController {
   }
 
   @Get('/site')
-  getAnalyticsSite() {
-    return this.analyticsService.getAnalyticsSite();
+  getAnalyticsSite(@Headers('workspaces') workspaces: string) {
+    return this.analyticsService.getAnalyticsSite(workspaces);
   }
   @Get('/source')
-  getAnalyticsSource() {
-    return this.analyticsService.getAnalyticsSource();
+  getAnalyticsSource(@Headers('workspaces') workspaces: string) {
+    return this.analyticsService.getAnalyticsSource(workspaces);
   }
 
   @Get('/google-indexed')
-  getAnalyticsGoogleIndexed() {
-    return this.analyticsService.getAnalyticsGoogleIndexed();
+  getAnalyticsGoogleIndexed(@Headers('workspaces') workspaces: string) {
+    return this.analyticsService.getAnalyticsGoogleIndexed(workspaces);
   }
 
   @Get('/google-search-status')
-  getAnalyticsGoogleSearchStatus() {
-    return this.analyticsService.getAnalyticsGoogleSearchStatus();
+  getAnalyticsGoogleSearchStatus(@Headers('workspaces') workspaces: string) {
+    return this.analyticsService.getAnalyticsGoogleSearchStatus(workspaces);
   }
 }

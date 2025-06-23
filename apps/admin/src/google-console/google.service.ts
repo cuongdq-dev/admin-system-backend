@@ -10,7 +10,6 @@ import { googleIndexingPaginateConfig } from './google.pagination';
 export class GoogleService {
   constructor(
     @InjectRepository(Site) private siteRepository: Repository<Site>,
-    @InjectRepository(Post) private postRepository: Repository<Post>,
     @InjectRepository(GoogleIndexRequest)
     private googleIndexRequestRepository: Repository<GoogleIndexRequest>,
     @InjectRepository(SitePost)

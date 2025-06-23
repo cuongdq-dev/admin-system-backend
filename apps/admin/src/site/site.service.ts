@@ -6,6 +6,7 @@ import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { DataSource, In, Repository } from 'typeorm';
 import { SiteBodyDto } from './site.dto';
 import { sitePaginateConfig } from './site.pagination';
+import { workspaceEnum } from '@app/utils/enum';
 
 @Injectable()
 export class SiteService {
@@ -23,10 +24,14 @@ export class SiteService {
   /**
    * Lấy danh sách tất cả các site có phân trang
    */
-  async getAll(query: PaginateQuery, user: User) {
+  async getAll(query: PaginateQuery, user: User, workspaces: string) {
     return paginate(query, this.siteRepository, {
       ...sitePaginateConfig,
-      where: { ...sitePaginateConfig.where, created_by: user.id },
+      where: {
+        ...sitePaginateConfig.where,
+        created_by: user.id,
+        type: workspaceEnum[workspaces],
+      },
     });
   }
 
@@ -127,9 +132,13 @@ export class SiteService {
   /**
    * Tạo site mới
    */
-  async create(user: User, createDto: SiteBodyDto) {
+  async create(user: User, createDto: SiteBodyDto, workspaces: string) {
     const result = await this.siteRepository
-      .create({ ...createDto, created_by: user.id })
+      .create({
+        ...createDto,
+        created_by: user.id,
+        type: workspaceEnum[workspaces],
+      })
       .save();
     return this.siteRepository.findOne({
       where: { id: result.id },
@@ -181,7 +190,7 @@ export class SiteService {
   /**
    * Cập nhật thông tin site
    */
-  async update(site: Site, dto: SiteBodyDto) {
+  async update(site: Site, dto: SiteBodyDto, workspaces: string) {
     if (!site) throw new NotFoundException('Site not found.');
 
     if (dto?.categories) {

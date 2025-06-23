@@ -1,3 +1,4 @@
+import { Headers } from '@nestjs/common';
 import { BodyWithUser, UserParam } from '@app/decorators';
 import { Site, User } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
@@ -41,15 +42,23 @@ export class SiteController {
   @Get('/list')
   @ApiOkPaginatedResponse(Site, sitePaginateConfig)
   @ApiPaginationQuery(sitePaginateConfig)
-  getAll(@Paginate() query: PaginateQuery, @UserParam() user: User) {
-    return this.siteService.getAll(query, user);
+  getAll(
+    @Paginate() query: PaginateQuery,
+    @UserParam() user: User,
+    @Headers('workspaces') workspaces: string,
+  ) {
+    return this.siteService.getAll(query, user, workspaces);
   }
 
   @Post('/create')
   @ApiCreatedResponse({ type: Site })
   @ApiBody({ type: PickType(Site, []) })
-  create(@BodyWithUser() createDto: SiteBodyDto, @UserParam() user: User) {
-    return this.siteService.create(user, createDto);
+  create(
+    @BodyWithUser() createDto: SiteBodyDto,
+    @UserParam() user: User,
+    @Headers('workspaces') workspaces: string,
+  ) {
+    return this.siteService.create(user, createDto, workspaces);
   }
 
   @Post('/telegram/:id')
@@ -61,6 +70,7 @@ export class SiteController {
       IsIDExistPipe({ entity: Site, checkOwner: true }),
     )
     site: Site,
+    @Headers('workspaces') workspaces: string,
   ) {
     return this.siteService.getTelegram(body.token, site);
   }
@@ -79,10 +89,10 @@ export class SiteController {
       }),
     )
     site: Site,
-
+    @Headers('workspaces') workspaces: string,
     @BodyWithUser() updateDto: SiteBodyDto,
   ) {
-    return this.siteService.update(site, updateDto);
+    return this.siteService.update(site, updateDto, workspaces);
   }
 
   @Delete('/delete/:id')

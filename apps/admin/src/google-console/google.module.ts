@@ -1,9 +1,11 @@
 import {
+  Book,
   Category,
   GoogleIndexRequest,
   Media,
   Post,
   Site,
+  SiteBook,
   SitePost,
   Trending,
   TrendingArticle,
@@ -18,8 +20,10 @@ import { GoogleService } from './google.service';
   imports: [
     TypeOrmModule.forFeature([
       Post,
+      Book,
       User,
       SitePost,
+      SiteBook,
       Category,
       GoogleIndexRequest,
       Site,

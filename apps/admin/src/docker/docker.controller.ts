@@ -131,7 +131,6 @@ export class DockerController {
     @Param('connectionId') connectionId: string,
     @Body() body: Record<string, any>,
   ) {
-    console.log(body);
     return true;
   }
 }

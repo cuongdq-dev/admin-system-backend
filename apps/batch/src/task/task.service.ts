@@ -14,7 +14,7 @@ import {
   TrendingArticle,
   User,
 } from '@app/entities';
-import { CategoryType } from '@app/entities/category.entity';
+import { CategoryStatus } from '@app/entities/category.entity';
 import {
   NotificationStatus,
   NotificationType,
@@ -263,7 +263,7 @@ export class TaskService {
           const slug = generateSlug(name);
 
           await this.categoryRepository.upsert(
-            { name, slug, status: CategoryType.BOOK },
+            { name, slug, status: CategoryStatus.BOOK },
             { conflictPaths: ['name', 'slug'] },
           );
 

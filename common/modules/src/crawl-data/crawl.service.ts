@@ -8,7 +8,7 @@ import {
   StorageType,
 } from '@app/entities';
 import { VideoStatus } from '@app/entities/book.entity';
-import { CategoryType } from '@app/entities/category.entity';
+import { CategoryStatus } from '@app/entities/category.entity';
 import { SiteType } from '@app/entities/site.entity';
 import {
   callGeminiApi,
@@ -233,7 +233,7 @@ export class CrawlService {
         {
           name: c.categoryName,
           slug: c.categoryName,
-          status: CategoryType.BOOK,
+          status: CategoryStatus.BOOK,
         },
         { conflictPaths: ['name', 'slug'] },
       );

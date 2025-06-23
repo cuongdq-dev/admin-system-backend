@@ -42,7 +42,6 @@ export class NotificationController {
     @UserParam() user: User,
     @Paginate() paginateQuery: PaginateQuery,
   ) {
-    console.log(NotificationPaginateConfig);
     return this.notificationService.getNotification(user, paginateQuery);
   }
 

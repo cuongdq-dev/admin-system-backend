@@ -1,14 +1,16 @@
+import { ValidationGroup } from '@app/crud/validation-group';
+import { CategoryStatus } from '@app/entities/category.entity';
+import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
-  IsNotEmpty,
   IsUUID,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ValidationGroup } from '@app/crud/validation-group';
 
 class SiteIdDto {
   @IsUUID()
@@ -42,6 +44,10 @@ export class CategoryBodyDto {
   @IsOptional()
   @Type(() => SiteIdDto)
   sites: SiteIdDto[];
+
+  @IsOptional()
+  @IsEnum(CategoryStatus)
+  status?: CategoryStatus;
 
   @IsArray()
   @ValidateNested({ each: true })

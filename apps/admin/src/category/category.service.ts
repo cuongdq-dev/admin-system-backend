@@ -1,8 +1,9 @@
 import { Category, User } from '@app/entities';
+import { workspaceEnum } from '@app/utils';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { CategoryBodyDto } from './category.dto';
 import { categoryPaginateConfig } from './category.pagination';
 
@@ -14,13 +15,16 @@ export class CategoryService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async getAll(query: PaginateQuery, user: User) {
+  async getAll(query: PaginateQuery, user: User, workspaces: string) {
     return paginate(
       { ...query, filter: { ...query.filter } },
       this.postCategoryRepository,
       {
         ...categoryPaginateConfig,
-        where: { ...categoryPaginateConfig.where, created_by: user?.id },
+        where: {
+          ...categoryPaginateConfig.where,
+          status: In([workspaceEnum[workspaces]]),
+        },
       },
     );
   }

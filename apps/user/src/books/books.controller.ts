@@ -96,7 +96,6 @@ export class BooksController {
   //site map
   @Get('sitemap-categories')
   async getSitemapCategories(@Query('domain') domain: string) {
-    console.log(domain);
     if (!domain) throw new NotFoundException('Domain is required');
     return await this.booksService.getSitemapCategories(domain);
   }

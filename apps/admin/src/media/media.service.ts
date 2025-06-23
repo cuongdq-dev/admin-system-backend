@@ -3,7 +3,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Media, StorageType, User } from '@app/entities';
-import { generateSlug, getListCdn, uploadImageCdn } from '@app/utils';
+import {
+  generateSlug,
+  getListCdn,
+  uploadImageCdn,
+  workspaceEnum,
+} from '@app/utils';
 import { Repository } from 'typeorm';
 import * as path from 'path';
 
@@ -85,29 +90,36 @@ export class MediaService {
     return result;
   }
 
-  async getAllMedia({
-    storage_type = StorageType.LOCAL,
-  }: {
-    storage_type?: StorageType;
-  }) {
-    if (storage_type != StorageType.LOCAL) {
-      const result = await this.mediaRepository.find({
-        where: { storage_type: storage_type },
-        select: ['url', 'slug'],
-      });
-      return {
-        data: result.map((r) => {
-          return { url: r.url, filename: r?.slug };
-        }),
-        totalRecords: result.length,
-      };
+  async getAllMedia({ workspaces }: { workspaces: string }) {
+    const queryDB = this.mediaRepository
+      .createQueryBuilder('media')
+      .select(['media.url AS url', 'media.slug AS filename']);
+
+    if (workspaces == 'wp_system') {
+      queryDB
+        .leftJoin('media.avatars', 'avatar')
+        .leftJoin('media.banners', 'banner')
+        .andWhere('(avatar.id is NOT NULL OR banner.id is NOT NULL)');
     }
-    const listCdn = await getListCdn();
+
+    if (workspaces == 'wp_books') {
+      queryDB.leftJoin('media.books', 'book').andWhere('(book.id IS NOT NULL)');
+    }
+
+    if (workspaces == 'wp_news') {
+      queryDB
+        .leftJoin('media.posts', 'post')
+        .leftJoin('media.articles', 'article')
+        .leftJoin('media.trendings', 'trending')
+        .andWhere(
+          '(post.id IS NOT NULL OR article.id IS NOT NULL OR trending.id IS NOT NULL)',
+        );
+    }
+
+    const result = await queryDB.getRawMany();
     return {
-      data: listCdn?.files.map((f) => {
-        return { url: process.env.CDN_DOMAIN + f?.url, filename: f.name };
-      }),
-      totalRecords: listCdn?.files?.length,
+      data: result,
+      totalRecords: result?.length ?? 0,
     };
   }
 }

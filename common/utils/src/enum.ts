@@ -4,3 +4,8 @@ export enum ServiceStatusEnum {
   UN_INSTALLED = 'uninstalled',
   FALED = 'failed',
 }
+
+export enum workspaceEnum {
+  wp_news = 'POST',
+  wp_books = 'BOOK',
+}
