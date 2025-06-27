@@ -1,24 +1,47 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class Migrations1747080235272 implements MigrationInterface {
-    name = 'Migrations1747080235272'
+  name = 'Migrations1747080235272';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "chapters" ALTER COLUMN "keywords" SET DEFAULT '[]'::jsonb`);
-        await queryRunner.query(`ALTER TABLE "site_books" ALTER COLUMN "indexState" SET DEFAULT '[]'::jsonb`);
-        await queryRunner.query(`ALTER TABLE "site_posts" ALTER COLUMN "indexState" SET DEFAULT '[]'::jsonb`);
-        await queryRunner.query(`ALTER TABLE "posts" ALTER COLUMN "relatedQueries" SET DEFAULT '[]'::jsonb`);
-        await queryRunner.query(`ALTER TABLE "books" ALTER COLUMN "keywords" SET DEFAULT '[]'::jsonb`);
-        await queryRunner.query(`ALTER TABLE "google_index_requests" ALTER COLUMN "response" SET DEFAULT '[]'::jsonb`);
-    }
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `ALTER TABLE "chapters" ALTER COLUMN "keywords" SET DEFAULT '[]'::jsonb`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "site_books" ALTER COLUMN "indexState" SET DEFAULT '[]'::jsonb`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "site_posts" ALTER COLUMN "indexState" SET DEFAULT '[]'::jsonb`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "posts" ALTER COLUMN "relatedQueries" SET DEFAULT '[]'::jsonb`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "books" ALTER COLUMN "keywords" SET DEFAULT '[]'::jsonb`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "google_index_requests" ALTER COLUMN "response" SET DEFAULT '[]'::jsonb`,
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "google_index_requests" ALTER COLUMN "response" SET DEFAULT '[]'`);
-        await queryRunner.query(`ALTER TABLE "books" ALTER COLUMN "keywords" SET DEFAULT '[]'`);
-        await queryRunner.query(`ALTER TABLE "posts" ALTER COLUMN "relatedQueries" SET DEFAULT '[]'`);
-        await queryRunner.query(`ALTER TABLE "site_posts" ALTER COLUMN "indexState" SET DEFAULT '[]'`);
-        await queryRunner.query(`ALTER TABLE "site_books" ALTER COLUMN "indexState" SET DEFAULT '[]'`);
-        await queryRunner.query(`ALTER TABLE "chapters" ALTER COLUMN "keywords" SET DEFAULT '[]'`);
-    }
-
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `ALTER TABLE "google_index_requests" ALTER COLUMN "response" SET DEFAULT '[]'`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "books" ALTER COLUMN "keywords" SET DEFAULT '[]'`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "posts" ALTER COLUMN "relatedQueries" SET DEFAULT '[]'`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "site_posts" ALTER COLUMN "indexState" SET DEFAULT '[]'`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "site_books" ALTER COLUMN "indexState" SET DEFAULT '[]'`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "chapters" ALTER COLUMN "keywords" SET DEFAULT '[]'`,
+    );
+  }
 }
