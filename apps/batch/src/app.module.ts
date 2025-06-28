@@ -6,8 +6,16 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskModule } from './task/task.module';
 import * as FirebaseAdmin from 'firebase-admin';
+import { BullModule } from '@nestjs/bull';
 
 export const global_modules = [
+  BullModule.forRoot({
+    redis: {
+      host: process.env.REDIS_HOST,
+      port: Number(process.env.REDIS_PORT),
+    },
+  }),
+
   ConfigModule.forRoot({
     load: configLoads,
     isGlobal: true,

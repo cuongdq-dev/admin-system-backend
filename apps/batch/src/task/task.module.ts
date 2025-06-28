@@ -18,9 +18,15 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskService } from './task.service';
 import { CrawlModule } from '@app/modules/crawl-data/crawl.module';
+import { BullModule } from '@nestjs/bull';
+import { TaskProcessor } from './task.processor';
 
 @Module({
   imports: [
+    BullModule.registerQueue({
+      name: 'task-queue',
+    }),
+
     TelegramModule,
     CrawlModule,
     TypeOrmModule.forFeature([
@@ -39,6 +45,6 @@ import { CrawlModule } from '@app/modules/crawl-data/crawl.module';
       GoogleIndexRequest,
     ]),
   ],
-  providers: [TaskService],
+  providers: [TaskProcessor, TaskService],
 })
 export class TaskModule {}
