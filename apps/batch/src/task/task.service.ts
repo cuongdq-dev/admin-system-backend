@@ -14,7 +14,6 @@ import {
   TrendingArticle,
   User,
 } from '@app/entities';
-import { CategoryStatus } from '@app/entities/category.entity';
 import {
   NotificationStatus,
   NotificationType,
@@ -25,20 +24,15 @@ import { IndexStatus } from '@app/entities/site_posts.entity';
 import { CrawlService } from '@app/modules/crawl-data/crawl.service';
 import { TelegramService } from '@app/modules/telegram/telegram.service';
 import {
-  extractMetaDescription,
-  extractMetaKeywords,
   fetchTrendings,
-  fetchWithRetry,
   generatePostFromHtml,
   generateSlug,
   getMetaDataGoogleConsole,
-  saveImageAsBase64,
   submitToGoogleIndex,
 } from '@app/utils';
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as cheerio from 'cheerio';
 import {
   DataSource,
   In,
@@ -48,6 +42,17 @@ import {
   Not,
   Repository,
 } from 'typeorm';
+
+export const CustomCron = {
+  CRON_6_HOUR: '0 6 * * *', //6:00 AM hằng ngày	✅ OK
+  CRON_8_HOUR: '0 8 * * *', // 8:00 AM hằng ngày	✅ OK
+  CRON_1_HOUR_10_MINUTE: '10 1 * * *', //1:10 AM hằng ngày	✅ OK
+  CRON_EVERY_4_HOUR_30_MINUTE: '30 1,5,9,13,17,21 * * *', //Mỗi 4h tại các mốc lẻ	✅ OK
+  CRON_EVERY_5_HOUR_45_MINUTE: '45 4,9,14,19 * * *', //Mỗi 5h từ 4:45 AM	✅ OK
+  CRON_EVERY_12_HOUR_30_MINUTE: '30 0 * * *', //12:30 AM hằng ngày	✅ OK
+  CRON_4_HOUR_10_MINUTE: '10 4 * * *', //4:10 AM	✅ OK
+  CRON_EVERY_3_HOUR_45_MINUTE: '45 2,6,10,14,18,22 * * *', //Mỗi 3h lệch	✅ OK
+};
 
 @Injectable()
 export class TaskService {
@@ -103,267 +108,260 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    // await this.fetchCeoBook();
-    // await this.handleCrawlerDaotruyen();
-    // await this.handleCrawlerBooks();
-    // await this.handleCrawlerBook();
-    // await this.handleCleanupOldPosts();
-    // await this.googleIndex();
-    // await this.googleMetaData();
   }
 
-  // @Cron('0 * * * *')
-  async handleCrawlerBooks() {
-    this.logger.debug('START - Crawler Books.');
-    const result: any[] = [];
-    let pageBook = 1;
-    const limitBook = 2;
-    while (result.length <= limitBook) {
-      const url = `https://truyenfull.vision/top-truyen/duoi-100-chuong/trang-${pageBook}/`;
-      const response = await fetchWithRetry(url);
-      if (!response?.ok) break;
+  // @Cron(CronExpression.EVERY_6_HOURS)
+  // async handleCrawlerBooks() {
+  //   this.logger.debug('START - Crawler Books.');
+  //   const result: any[] = [];
+  //   let pageBook = 1;
+  //   const limitBook = 2;
+  //   while (result.length <= limitBook) {
+  //     const url = `https://truyenfull.vision/top-truyen/duoi-100-chuong/trang-${pageBook}/`;
+  //     const response = await fetchWithRetry(url);
+  //     if (!response?.ok) break;
 
-      const html = await response.text();
-      const $ = cheerio.load(html);
+  //     const html = await response.text();
+  //     const $ = cheerio.load(html);
 
-      const itemsOnPage: any[] = [];
-      const elements = $(
-        '.list.list-truyen .row[itemtype="https://schema.org/Book"]',
-      );
-      for (const el of elements) {
-        const element = $(el);
+  //     const itemsOnPage: any[] = [];
+  //     const elements = $(
+  //       '.list.list-truyen .row[itemtype="https://schema.org/Book"]',
+  //     );
+  //     for (const el of elements) {
+  //       const element = $(el);
 
-        const titleEl = element.find('h3.truyen-title a');
-        const title = titleEl.text().trim();
+  //       const titleEl = element.find('h3.truyen-title a');
+  //       const title = titleEl.text().trim();
 
-        const checkExist = await this.bookRepository.findOne({
-          where: { title: title },
-        });
+  //       const checkExist = await this.bookRepository.findOne({
+  //         where: { title: title },
+  //       });
 
-        const link = titleEl.attr('href');
+  //       const link = titleEl.attr('href');
 
-        const full = element.find('.label-title.label-full').length > 0;
-        const hot = element.find('.label-title.label-hot').length > 0;
-        const isNew = element.find('.label-title.label-new').length > 0;
-        const totalChapter = element
-          .find('.col-xs-2 a')
-          .text()
-          .replace(/[^0-9]/g, '')
-          .trim();
+  //       const full = element.find('.label-title.label-full').length > 0;
+  //       const hot = element.find('.label-title.label-hot').length > 0;
+  //       const isNew = element.find('.label-title.label-new').length > 0;
+  //       const totalChapter = element
+  //         .find('.col-xs-2 a')
+  //         .text()
+  //         .replace(/[^0-9]/g, '')
+  //         .trim();
 
-        if (checkExist) {
-          await this.crawlService.countWord(checkExist?.id, checkExist?.title);
+  //       if (checkExist) {
+  //         await this.crawlService.countWord(checkExist?.id, checkExist?.title);
 
-          await this.bookRepository.update(
-            { id: checkExist.id },
-            {
-              is_full: full,
-              is_hot: hot,
-              is_new: isNew,
-              total_chapter: parseInt(totalChapter, 10) || 0,
-            },
-          );
-          continue;
-        }
+  //         await this.bookRepository.update(
+  //           { id: checkExist.id },
+  //           {
+  //             is_full: full,
+  //             is_hot: hot,
+  //             is_new: isNew,
+  //             total_chapter: parseInt(totalChapter, 10) || 0,
+  //           },
+  //         );
+  //         continue;
+  //       }
 
-        itemsOnPage.push({
-          title,
-          slug: generateSlug(title),
-          source_url: link,
-          is_full: full,
-          is_hot: hot,
-          is_new: isNew,
-          total_chapter: parseInt(totalChapter, 10) || 0,
-        });
-      }
+  //       itemsOnPage.push({
+  //         title,
+  //         slug: generateSlug(title),
+  //         source_url: link,
+  //         is_full: full,
+  //         is_hot: hot,
+  //         is_new: isNew,
+  //         total_chapter: parseInt(totalChapter, 10) || 0,
+  //       });
+  //     }
 
-      if (itemsOnPage.length === 0) {
-        pageBook++;
-        continue;
-      }
+  //     if (itemsOnPage.length === 0) {
+  //       pageBook++;
+  //       continue;
+  //     }
 
-      result.push(...itemsOnPage);
-      if (result.length >= limitBook) {
-        result.length = limitBook;
-        break;
-      }
-      pageBook++;
-    }
+  //     result.push(...itemsOnPage);
+  //     if (result.length >= limitBook) {
+  //       result.length = limitBook;
+  //       break;
+  //     }
+  //     pageBook++;
+  //   }
 
-    await this.bookRepository.insert(result);
-    this.logger.debug('END - Crawler Books.');
-  }
+  //   await this.bookRepository.insert(result);
+  //   this.logger.debug('END - Crawler Books.');
+  // }
 
-  // @Cron('0 */2 * * *')
-  async handleCrawlerBook() {
-    const books = await this.bookRepository
-      .createQueryBuilder('book')
-      .leftJoinAndSelect('book.chapters', 'chapter')
-      .where((qb) => {
-        const subQuery = qb
-          .subQuery()
-          .select('1')
-          .from('chapters', 'chapter')
-          .where('chapter.book_id = book.id')
-          .getQuery();
-        return `NOT EXISTS ${subQuery}`;
-      })
-      .getMany();
+  // @Cron(CronExpression.EVERY_7_HOURS)
+  // async handleCrawlerBook() {
+  //   const books = await this.bookRepository
+  //     .createQueryBuilder('book')
+  //     .leftJoinAndSelect('book.chapters', 'chapter')
+  //     .where((qb) => {
+  //       const subQuery = qb
+  //         .subQuery()
+  //         .select('1')
+  //         .from('chapters', 'chapter')
+  //         .where('chapter.book_id = book.id')
+  //         .getQuery();
+  //       return `NOT EXISTS ${subQuery}`;
+  //     })
+  //     .getMany();
 
-    for (const book of books) {
-      this.logger.debug('START - Crawler Book: ' + book.title);
-      const bookHome = await fetchWithRetry(book.source_url);
+  //   for (const book of books) {
+  //     this.logger.debug('START - Crawler Book: ' + book.title);
+  //     const bookHome = await fetchWithRetry(book.source_url);
 
-      if (bookHome.ok) {
-        const bookHtml = await bookHome.text();
-        const el = cheerio.load(bookHtml);
-        const description = el('.desc-text.desc-text-full').html();
-        const meta_description = extractMetaDescription(el);
-        const keywords = extractMetaKeywords(el);
+  //     if (bookHome.ok) {
+  //       const bookHtml = await bookHome.text();
+  //       const el = cheerio.load(bookHtml);
+  //       const description = el('.desc-text.desc-text-full').html();
+  //       const meta_description = extractMetaDescription(el);
+  //       const keywords = extractMetaKeywords(el);
 
-        const genreElements = el('div.info h3:contains("Thể loại:")').nextAll(
-          'a[itemprop="genre"]',
-        );
+  //       const genreElements = el('div.info h3:contains("Thể loại:")').nextAll(
+  //         'a[itemprop="genre"]',
+  //       );
 
-        const authorName = el('div.info h3:contains("Tác giả:")')
-          .parent()
-          .find('a[itemprop="author"]')
-          .text()
-          .trim();
+  //       const authorName = el('div.info h3:contains("Tác giả:")')
+  //         .parent()
+  //         .find('a[itemprop="author"]')
+  //         .text()
+  //         .trim();
 
-        const categories: Category[] = [];
+  //       const categories: Category[] = [];
 
-        const thumbnailUrl = el('.col-xs-12.col-sm-4.col-md-4.info-holder')
-          .find('.book img')
-          .attr('src');
-        const thumbnailData = await saveImageAsBase64(
-          'book image ' + book.title,
-          'book thumbnail ' + book.title,
-          thumbnailUrl,
-        );
+  //       const thumbnailUrl = el('.col-xs-12.col-sm-4.col-md-4.info-holder')
+  //         .find('.book img')
+  //         .attr('src');
+  //       const thumbnailData = await saveImageAsBase64(
+  //         'book image ' + book.title,
+  //         'book thumbnail ' + book.title,
+  //         thumbnailUrl,
+  //       );
 
-        const thumbnail = await this.mediaRepository.upsert(
-          {
-            filename: thumbnailData.filename,
-            slug: generateSlug(`thumbnail book ${book.title}`),
-            storage_type: StorageType.URL,
-            url: thumbnailData.url,
-            mimetype: 'url',
-            deleted_at: null,
-            deleted_by: null,
-          },
-          {
-            conflictPaths: ['slug'],
-          },
-        );
+  //       const thumbnail = await this.mediaRepository.upsert(
+  //         {
+  //           filename: thumbnailData.filename,
+  //           slug: generateSlug(`thumbnail book ${book.title}`),
+  //           storage_type: StorageType.URL,
+  //           url: thumbnailData.url,
+  //           mimetype: 'url',
+  //           deleted_at: null,
+  //           deleted_by: null,
+  //         },
+  //         {
+  //           conflictPaths: ['slug'],
+  //         },
+  //       );
 
-        for (let i = 0; i < genreElements.length; i++) {
-          const genreEl = genreElements[i];
-          const name = el(genreEl).text().trim();
-          const slug = generateSlug(name);
+  //       for (let i = 0; i < genreElements.length; i++) {
+  //         const genreEl = genreElements[i];
+  //         const name = el(genreEl).text().trim();
+  //         const slug = generateSlug(name);
 
-          await this.categoryRepository.upsert(
-            { name, slug, status: CategoryStatus.BOOK },
-            { conflictPaths: ['name', 'slug'] },
-          );
+  //         await this.categoryRepository.upsert(
+  //           { name, slug, status: CategoryStatus.BOOK },
+  //           { conflictPaths: ['name', 'slug'] },
+  //         );
 
-          const category = await this.categoryRepository.findOneOrFail({
-            where: { name },
-          });
+  //         const category = await this.categoryRepository.findOneOrFail({
+  //           where: { name },
+  //         });
 
-          categories.push(category);
-        }
+  //         categories.push(category);
+  //       }
 
-        book.description = description;
-        book.categories = categories;
-        await this.bookRepository.save({
-          ...book,
-          meta_description,
-          keywords,
-          author: { name: authorName, slug: generateSlug(authorName) },
-          thumbnail_id: thumbnail.generatedMaps[0].id,
-        });
+  //       book.description = description;
+  //       book.categories = categories;
+  //       await this.bookRepository.save({
+  //         ...book,
+  //         meta_description,
+  //         keywords,
+  //         author: { name: authorName, slug: generateSlug(authorName) },
+  //         thumbnail_id: thumbnail.generatedMaps[0].id,
+  //       });
 
-        if (book.source_url && Number(book.total_chapter) > 0) {
-          for (let index = 1; index <= book.total_chapter; index++) {
-            const chapter = book.chapters.find(
-              (chapter) => chapter.chapter_number == index,
-            );
-            if (!chapter || !chapter?.content) {
-              const chapterUrl = book.source_url + `chuong-${index}`;
-              const response = await fetchWithRetry(chapterUrl);
-              if (!response.ok) break;
-              const html = await response.text();
-              const $ = cheerio.load(html);
-              $('[class^="ads-"]').remove();
-              $('[class*=" ads-"], [class^="ads-"], [class$=" ads-"]').remove();
-              const meta_description =
-                $('meta[name="description"]').attr('content') ||
-                $('meta[property="og:description"]').attr('content');
+  //       if (book.source_url && Number(book.total_chapter) > 0) {
+  //         for (let index = 1; index <= book.total_chapter; index++) {
+  //           const chapter = book.chapters.find(
+  //             (chapter) => chapter.chapter_number == index,
+  //           );
+  //           if (!chapter || !chapter?.content) {
+  //             const chapterUrl = book.source_url + `chuong-${index}`;
+  //             const response = await fetchWithRetry(chapterUrl);
+  //             if (!response.ok) break;
+  //             const html = await response.text();
+  //             const $ = cheerio.load(html);
+  //             $('[class^="ads-"]').remove();
+  //             $('[class*=" ads-"], [class^="ads-"], [class$=" ads-"]').remove();
+  //             const meta_description =
+  //               $('meta[name="description"]').attr('content') ||
+  //               $('meta[property="og:description"]').attr('content');
 
-              const keywords = $('meta[name="keywords"]')
-                .attr('content')
-                .split(',')
-                .map((keyword) => ({
-                  query: keyword.trim(),
-                  slug: generateSlug(keyword.trim()),
-                }));
+  //             const keywords = $('meta[name="keywords"]')
+  //               .attr('content')
+  //               .split(',')
+  //               .map((keyword) => ({
+  //                 query: keyword.trim(),
+  //                 slug: generateSlug(keyword.trim()),
+  //               }));
 
-              const chapterTitle = $('a.chapter-title').text().trim();
-              const chapterContent = $('#chapter-c').html();
-              this.logger.debug('START - Crawler Chapter: ' + chapterTitle);
+  //             const chapterTitle = $('a.chapter-title').text().trim();
+  //             const chapterContent = $('#chapter-c').html();
+  //             this.logger.debug('START - Crawler Chapter: ' + chapterTitle);
 
-              await this.chapterRepository.upsert(
-                {
-                  book_id: book.id,
-                  chapter_number: index,
-                  content: chapterContent,
-                  meta_description: meta_description,
-                  title: chapterTitle,
-                  slug: generateSlug(book.title + '-' + chapterTitle),
-                  keywords: keywords,
-                  source_url: chapterUrl,
-                },
-                {
-                  conflictPaths: ['slug', 'title', 'book_id'],
-                  skipUpdateIfNoValuesChanged: true,
-                },
-              );
-            }
-          }
+  //             await this.chapterRepository.upsert(
+  //               {
+  //                 book_id: book.id,
+  //                 chapter_number: index,
+  //                 content: chapterContent,
+  //                 meta_description: meta_description,
+  //                 title: chapterTitle,
+  //                 slug: generateSlug(book.title + '-' + chapterTitle),
+  //                 keywords: keywords,
+  //                 source_url: chapterUrl,
+  //               },
+  //               {
+  //                 conflictPaths: ['slug', 'title', 'book_id'],
+  //                 skipUpdateIfNoValuesChanged: true,
+  //               },
+  //             );
+  //           }
+  //         }
 
-          const autoPostSites = await this.siteRepository.find({
-            where: { autoPost: true, type: SiteType.BOOK },
-            relations: ['categories'],
-            select: ['categories', 'autoPost', 'id', 'domain'],
-          });
+  //         const autoPostSites = await this.siteRepository.find({
+  //           where: { autoPost: true, type: SiteType.BOOK },
+  //           relations: ['categories'],
+  //           select: ['categories', 'autoPost', 'id', 'domain'],
+  //         });
 
-          for (const site of autoPostSites) {
-            await this.siteBookRepository.upsert(
-              { site_id: site.id, book_id: book.id },
-              { conflictPaths: ['site_id', 'book_id'] },
-            );
-          }
-        }
-      }
-      await this.crawlService.countWord(book.id, book.title);
-    }
+  //         for (const site of autoPostSites) {
+  //           await this.siteBookRepository.upsert(
+  //             { site_id: site.id, book_id: book.id },
+  //             { conflictPaths: ['site_id', 'book_id'] },
+  //           );
+  //         }
+  //       }
+  //     }
+  //     await this.crawlService.countWord(book.id, book.title);
+  //   }
 
-    this.logger.debug('END - Crawler Book.');
-  }
+  //   this.logger.debug('END - Crawler Book.');
+  // }
 
-  // @Cron('0 6 * * *')
+  @Cron(CustomCron.CRON_6_HOUR)
   async handleCrawlerDaotruyen() {
     await this.crawlService.handleCrawlerDaoTruyen();
   }
 
-  @Cron('0 8 * * *')
+  @Cron(CustomCron.CRON_8_HOUR)
   async fetchChapterMissing() {
     await this.crawlService.fetchChapters();
   }
 
-  @Cron('0 */5 * * *')
-  async fetchCeoBook() {
+  @Cron(CustomCron.CRON_1_HOUR_10_MINUTE)
+  async fetchSEOBook() {
     const books = await this.bookRepository
       .createQueryBuilder('book')
       .select([
@@ -399,7 +397,7 @@ export class TaskService {
     }
   }
 
-  @Cron('10 */4 * * *')
+  @Cron(CustomCron.CRON_EVERY_4_HOUR_30_MINUTE)
   async googleIndex() {
     this.logger.debug('START - Request Google Index.');
 
@@ -460,7 +458,7 @@ export class TaskService {
     this.logger.debug('END - Request Google Index.');
   }
 
-  @Cron('30 */4 * * *')
+  @Cron(CustomCron.CRON_EVERY_5_HOUR_45_MINUTE)
   async googleMetaData() {
     this.logger.debug('START - Get Google Meta Data.');
 
@@ -524,7 +522,7 @@ export class TaskService {
     this.logger.debug('END - Get Google Meta Data.');
   }
 
-  @Cron('0 1 * * *')
+  @Cron(CustomCron.CRON_EVERY_12_HOUR_30_MINUTE)
   async googleMetaDataPassed() {
     this.logger.debug('START - Get Google Meta Data.');
 
@@ -583,7 +581,7 @@ export class TaskService {
     this.logger.debug('END - Get Google Meta Data.');
   }
 
-  @Cron('30 2 * * *')
+  @Cron(CustomCron.CRON_4_HOUR_10_MINUTE)
   async handleCleanupOldPosts() {
     this.logger.debug('START - Cleanup Old Posts.');
 
@@ -647,7 +645,7 @@ export class TaskService {
     this.logger.debug('END - Cleanup Old Posts.');
   }
 
-  @Cron('30 */2 * * *')
+  @Cron(CustomCron.CRON_EVERY_3_HOUR_45_MINUTE)
   async handleCrawlerArticles() {
     this.logger.debug('START - Crawler Articles.');
 
