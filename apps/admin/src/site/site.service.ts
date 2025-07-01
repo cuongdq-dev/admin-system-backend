@@ -1,5 +1,5 @@
 import { Category, Post, Site, SitePost, User } from '@app/entities';
-import { TelegramService } from '@app/modules/telegram/telegram.service';
+// import { TelegramService } from '@app/modules/telegram/telegram.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
@@ -17,7 +17,7 @@ export class SiteService {
     private sitePostRepository: Repository<SitePost>,
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
-    private readonly telegramService: TelegramService,
+    // private readonly telegramService: TelegramService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -149,43 +149,43 @@ export class SiteService {
   /**
    * Kết nối và cập nhật Telegram Bot cho site
    */
-  async getTelegram(token: string, site: Site) {
-    try {
-      const data = await this.telegramService.getChatInfo(token);
-      if (!data || !data.chatId) {
-        throw new NotFoundException('Not found Telegram BOT.');
-      }
+  // async getTelegram(token: string, site: Site) {
+  //   try {
+  //     const data = await this.telegramService.getChatInfo(token);
+  //     if (!data || !data.chatId) {
+  //       throw new NotFoundException('Not found Telegram BOT.');
+  //     }
 
-      if (site.teleToken === token && site.teleChatId === data.chatId) {
-        console.log(
-          'ℹ️ No changes in Telegram bot details. Skipping message sending.',
-        );
-      } else {
-        const res = await this.telegramService.sendBotAddedNotification(
-          site.domain,
-          data.chatId,
-          token,
-        );
+  //     if (site.teleToken === token && site.teleChatId === data.chatId) {
+  //       console.log(
+  //         'ℹ️ No changes in Telegram bot details. Skipping message sending.',
+  //       );
+  //     } else {
+  //       const res = await this.telegramService.sendBotAddedNotification(
+  //         site.domain,
+  //         data.chatId,
+  //         token,
+  //       );
 
-        if (!res.success) {
-          throw new Error('System error! Please try again later.');
-        }
-      }
+  //       if (!res.success) {
+  //         throw new Error('System error! Please try again later.');
+  //       }
+  //     }
 
-      await this.siteRepository.save({
-        ...site,
-        teleBotName: data.botUsername,
-        teleChatName: data.botName,
-        teleChatId: data.chatId,
-        teleToken: token,
-      });
+  //     await this.siteRepository.save({
+  //       ...site,
+  //       teleBotName: data.botUsername,
+  //       teleChatName: data.botName,
+  //       teleChatId: data.chatId,
+  //       teleToken: token,
+  //     });
 
-      return data;
-    } catch (error) {
-      console.error('🚨 Telegram Integration Error:', error);
-      throw new Error('System error! Please try again later.');
-    }
-  }
+  //     return data;
+  //   } catch (error) {
+  //     console.error('🚨 Telegram Integration Error:', error);
+  //     throw new Error('System error! Please try again later.');
+  //   }
+  // }
 
   /**
    * Cập nhật thông tin site

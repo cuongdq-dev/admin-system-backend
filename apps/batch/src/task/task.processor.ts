@@ -20,7 +20,7 @@ import { PostStatus } from '@app/entities/post.entity';
 import { SiteType } from '@app/entities/site.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
 import { CrawlService } from '@app/modules/crawl-data/crawl.service';
-import { TelegramService } from '@app/modules/telegram/telegram.service';
+// import { TelegramService } from '@app/modules/telegram/telegram.service';
 import {
   fetchTrendings,
   generatePostFromHtml,
@@ -92,7 +92,7 @@ export class TaskProcessor {
     @InjectRepository(GoogleIndexRequest)
     private readonly googleIndexRequestRepository: Repository<GoogleIndexRequest>,
 
-    private readonly telegramService: TelegramService,
+    // private readonly telegramService: TelegramService,
 
     private readonly crawlService: CrawlService,
 
@@ -609,12 +609,12 @@ export class TaskProcessor {
 
     const savedPost = await this.postRepository.save(newPost);
 
-    await this.telegramService.sendMessageWithPost(
-      this.chatId,
-      this.botToken,
-      savedPost,
-      categories,
-    );
+    // await this.telegramService.sendMessageWithPost(
+    //   this.chatId,
+    //   this.botToken,
+    //   savedPost,
+    //   categories,
+    // );
 
     if (savedPost.status === PostStatus.PUBLISHED) {
       const autoPostSites = await this.siteRepository.find({
@@ -665,12 +665,12 @@ export class TaskProcessor {
           },
         );
 
-        await this.telegramService.sendMessageWithPost(
-          site.teleChatId,
-          site.teleToken,
-          savedPost,
-          site.categories,
-        );
+        // await this.telegramService.sendMessageWithPost(
+        //   site.teleChatId,
+        //   site.teleToken,
+        //   savedPost,
+        //   site.categories,
+        // );
       }
     }
 

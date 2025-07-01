@@ -13,7 +13,7 @@ import {
   TrendingArticle,
   User,
 } from '@app/entities';
-import { TelegramModule } from '@app/modules/telegram/telegram.module';
+// import { TelegramModule } from '@app/modules/telegram/telegram.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskService } from './task.service';
@@ -27,7 +27,7 @@ import { TaskProcessor } from './task.processor';
       name: 'task-queue',
     }),
 
-    TelegramModule,
+    // TelegramModule,
     CrawlModule,
     TypeOrmModule.forFeature([
       Trending,

@@ -9,7 +9,7 @@ import {
   User,
 } from '@app/entities';
 import { TelegramModule } from '@app/modules/telegram/telegram.module';
-import { TelegramService } from '@app/modules/telegram/telegram.service';
+// import { TelegramService } from '@app/modules/telegram/telegram.service';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SessionModule } from '../session/session.module';
@@ -34,7 +34,10 @@ import { SiteService } from './site.service';
       TrendingArticle,
     ]),
   ],
-  providers: [SiteService, TelegramService],
+  providers: [
+    SiteService,
+    // TelegramService
+  ],
   controllers: [SiteController],
 })
 export class SiteModule {}

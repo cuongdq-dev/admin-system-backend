@@ -15,12 +15,12 @@ import {
 } from '@app/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TelegramModule } from '../telegram/telegram.module';
+// import { TelegramModule } from '../telegram/telegram.module';
 import { CrawlService } from './crawl.service';
 
 @Module({
   imports: [
-    TelegramModule,
+    // TelegramModule,
     TypeOrmModule.forFeature([
       Trending,
       TrendingArticle,

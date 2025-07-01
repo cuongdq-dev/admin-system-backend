@@ -1,6 +1,6 @@
 import { Category, Post, Site } from '@app/entities';
 import { PostStatus } from '@app/entities/post.entity';
-import { TelegramService } from '@app/modules/telegram/telegram.service';
+// import { TelegramService } from '@app/modules/telegram/telegram.service';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,7 +14,7 @@ export class WebhookService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Site)
     private readonly siteRepository: Repository<Site>,
-    private readonly telegramService: TelegramService,
+    // private readonly telegramService: TelegramService,
   ) {}
 
   private readonly botToken = process.env.TELE_BOT_TOKEN;
@@ -97,26 +97,26 @@ export class WebhookService {
       return;
     }
 
-    if (!!post.categories.find((cate) => cate.id == category.id)) {
-      await this.telegramService.editMessageWithPost(
-        chatId,
-        messageId,
-        chatBotToken,
-        post,
-        categories,
-      );
-      return;
-    }
-    post.categories = [category]; // Cập nhật danh mục
-    const savePost = await this.postRepository.save(post);
+    // if (!!post.categories.find((cate) => cate.id == category.id)) {
+    //   await this.telegramService.editMessageWithPost(
+    //     chatId,
+    //     messageId,
+    //     chatBotToken,
+    //     post,
+    //     categories,
+    //   );
+    //   return;
+    // }
+    // post.categories = [category]; // Cập nhật danh mục
+    // const savePost = await this.postRepository.save(post);
 
-    await this.telegramService.editMessageWithPost(
-      chatId,
-      messageId,
-      chatBotToken,
-      savePost,
-      categories,
-    );
+    // await this.telegramService.editMessageWithPost(
+    //   chatId,
+    //   messageId,
+    //   chatBotToken,
+    //   savePost,
+    //   categories,
+    // );
   }
 
   private async handlePublishPost(
@@ -140,13 +140,13 @@ export class WebhookService {
     post.status = PostStatus.PUBLISHED;
     const savedPost = await this.postRepository.save(post);
 
-    await this.telegramService.editMessageWithPost(
-      chatId,
-      messageId,
-      chatBotToken,
-      savedPost,
-      categories,
-    );
+    // await this.telegramService.editMessageWithPost(
+    //   chatId,
+    //   messageId,
+    //   chatBotToken,
+    //   savedPost,
+    //   categories,
+    // );
   }
 
   private async handleDeletePost(
@@ -173,13 +173,13 @@ export class WebhookService {
     });
     await this.postRepository.softDelete(post.id);
 
-    await this.telegramService.editMessageWithPost(
-      chatId,
-      messageId,
-      chatBotToken,
-      savedPost,
-      categories,
-    );
+    // await this.telegramService.editMessageWithPost(
+    //   chatId,
+    //   messageId,
+    //   chatBotToken,
+    //   savedPost,
+    //   categories,
+    // );
   }
 
   private async handleDraftPost(
@@ -201,12 +201,12 @@ export class WebhookService {
 
     post.status = PostStatus.DRAFT;
     const savedPost = await this.postRepository.save(post);
-    await this.telegramService.editMessageWithPost(
-      chatId,
-      messageId,
-      chatBotToken,
-      savedPost,
-      categories,
-    );
+    // await this.telegramService.editMessageWithPost(
+    //   chatId,
+    //   messageId,
+    //   chatBotToken,
+    //   savedPost,
+    //   categories,
+    // );
   }
 }
