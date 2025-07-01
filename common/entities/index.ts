@@ -1,4 +1,5 @@
 import { Address } from './address.entity';
+import { BatchLogs } from './batch_logs';
 import { Book } from './book.entity';
 import { Chapter } from './book_chapter.entity';
 import { Cart } from './cart.entity';
@@ -69,6 +70,7 @@ export {
   SiteBook,
   Book,
   StorageType,
+  BatchLogs,
   Token,
   Trending,
   TrendingArticle,
@@ -83,6 +85,7 @@ export const loadEntities = [
   Media,
   Post,
   Category,
+  BatchLogs,
   Site,
   Chapter,
   Session,

@@ -1,0 +1,26 @@
+import { Column, Entity } from 'typeorm';
+import { BaseEntity } from './base';
+
+@Entity({ name: 'batch_logs' })
+export class BatchLogs extends BaseEntity {
+  @Column()
+  job_name: string;
+
+  @Column()
+  job_source: string; // ví dụ: "cron" | "manual" | "retry"
+
+  @Column({ nullable: true })
+  scheduled_at: Date;
+
+  @Column({ nullable: true })
+  started_at: Date;
+
+  @Column({ nullable: true })
+  finished_at: Date;
+
+  @Column({ default: 'pending' })
+  status: 'pending' | 'running' | 'success' | 'failed';
+
+  @Column({ type: 'text', array: true, nullable: true })
+  message: string[];
+}
