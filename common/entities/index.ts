@@ -10,6 +10,7 @@ import {
   CustomerToken,
   TokenType as CustomerTokenType,
 } from './customer_token.entity';
+import { GoogleIndexBookRequest } from './google_index_book_requests.entity';
 import { GoogleIndexRequest } from './google_index_request.entity';
 import { Lang } from './lang.entity';
 import { LangContent } from './lang_content.entity';
@@ -44,6 +45,7 @@ export {
   CustomerToken,
   CustomerTokenType,
   Lang,
+  GoogleIndexBookRequest,
   LangContent,
   Media,
   Notification,
@@ -86,6 +88,7 @@ export const loadEntities = [
   Session,
   Token,
   SiteBook,
+  GoogleIndexBookRequest,
   Book,
   User,
   Customer,
