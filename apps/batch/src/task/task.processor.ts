@@ -2,11 +2,13 @@ import {
   BatchLogs,
   Book,
   Category,
+  GoogleIndexBookRequest,
   GoogleIndexRequest,
   Media,
   Notification,
   Post,
   Site,
+  SiteBook,
   SitePost,
   StorageType,
   Trending,
@@ -83,8 +85,14 @@ export class TaskProcessor {
     @InjectRepository(SitePost)
     private readonly sitePostRepository: Repository<SitePost>,
 
+    @InjectRepository(SiteBook)
+    private readonly siteBookRepository: Repository<SiteBook>,
+
     @InjectRepository(GoogleIndexRequest)
     private readonly googleIndexRequestRepository: Repository<GoogleIndexRequest>,
+
+    @InjectRepository(GoogleIndexBookRequest)
+    private readonly bookGoogleIndexRequestRepository: Repository<GoogleIndexBookRequest>,
 
     // private readonly telegramService: TelegramService,
 
@@ -183,6 +191,252 @@ export class TaskProcessor {
       await this.batchLogsService.fail(logId, error.message, messages);
     }
   }
+
+  // BOOK
+  @Process(TaskJobName.BOOKS_FETCH_GOOGLE_INDEX)
+  async googleIndexBooks(job: Job<{ time: string; log_id: string }>) {
+    const logId = job.data.log_id;
+    const messages: string[] = [];
+
+    await this.batchLogsService.start(logId);
+    this.logger.debug('START - Request Google Index.');
+
+    try {
+      const sixHoursAgo = new Date();
+      sixHoursAgo.setHours(sixHoursAgo.getHours() - 18);
+
+      const unindexedBooks = await this.siteBookRepository.find({
+        where: {
+          indexStatus: In([IndexStatus.NEW]),
+          created_at: MoreThan(sixHoursAgo),
+        },
+        relations: ['book', 'site'],
+        select: {
+          id: true,
+          book_id: true,
+          site_id: true,
+          book: { slug: true, id: true },
+          site: { domain: true, id: true },
+        },
+      });
+
+      for (const siteBoook of unindexedBooks) {
+        const { book, site } = siteBoook;
+        if (!book || !site) continue;
+
+        const googleResulted =
+          await this.bookGoogleIndexRequestRepository.findOne({
+            where: { site_id: site.id, book_id: book.id, type: 'URL_UPDATED' },
+          });
+
+        if (googleResulted?.response?.urlNotificationMetadata?.url) continue;
+
+        const bookUrl = `${site.domain}/bai-viet/${book.slug}`;
+        this.logger.log(`🔍 Indexing: ${bookUrl}`);
+        messages.push(`Indexing: ${bookUrl}`);
+
+        const success = await submitToGoogleIndex(bookUrl);
+
+        await this.bookGoogleIndexRequestRepository.upsert(
+          {
+            book_id: siteBoook.book_id,
+            site_id: siteBoook.site_id,
+            book_slug: siteBoook.book.slug,
+            site_domain: siteBoook.site.domain,
+            url: bookUrl,
+            googleUrl:
+              'https://indexing.googleapis.com/v3/urlNotifications:publish',
+            type: 'URL_UPDATED',
+            response: success,
+            requested_at: new Date(),
+          },
+          {
+            conflictPaths: ['type', 'book_slug'],
+            skipUpdateIfNoValuesChanged: true,
+          },
+        );
+
+        if (success) {
+          await this.siteBookRepository.save({
+            ...siteBoook,
+            indexStatus: IndexStatus.INDEXING,
+          });
+          messages.push(`✅ Success: ${bookUrl}`);
+        } else {
+          messages.push(`❌ Failed: ${bookUrl}`);
+        }
+      }
+
+      this.logger.debug('END - Request Google Index.');
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error('Google Index Job Failed:', error);
+      await this.batchLogsService.fail(logId, error.message, messages);
+    }
+  }
+
+  @Process(TaskJobName.BOOKS_FETCH_GOOGLE_META)
+  async googleMetaDataBooks(job: Job<{ time: string; log_id: string }>) {
+    const logId = job.data.log_id;
+    const messages: string[] = [];
+
+    await this.batchLogsService.start(logId);
+
+    this.logger.debug('START - Get Google Meta Data.');
+
+    try {
+      const indexedBooks = await this.siteBookRepository.find({
+        where: {
+          indexStatus: In([
+            IndexStatus.NEW,
+            IndexStatus.INDEXING,
+            IndexStatus.VERDICT_UNSPECIFIED,
+            IndexStatus.NEUTRAL,
+          ]),
+        },
+        relations: ['book', 'site'],
+        select: {
+          id: true,
+          book_id: true,
+          site_id: true,
+          book: { slug: true, id: true },
+          site: { domain: true, id: true },
+        },
+      });
+
+      for (const siteBook of indexedBooks) {
+        const { book, site } = siteBook;
+        if (!book || !site) continue;
+
+        const bookUrl = `${site.domain}/bai-viet/${book.slug}`;
+
+        const success = await getMetaDataGoogleConsole(
+          bookUrl,
+          site.domain + '/',
+        );
+
+        await this.bookGoogleIndexRequestRepository.upsert(
+          {
+            book_id: siteBook.book_id,
+            site_id: siteBook.site_id,
+            book_slug: siteBook.book.slug,
+            site_domain: siteBook.site.domain,
+            url: bookUrl,
+            googleUrl:
+              'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+            type: 'URL_METADATA',
+            response: success,
+            requested_at: new Date(),
+          },
+          {
+            conflictPaths: ['type', 'book_slug'],
+            skipUpdateIfNoValuesChanged: true,
+          },
+        );
+
+        if (success) {
+          const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
+          if (!!verdict) {
+            siteBook.indexStatus = verdict;
+            siteBook.indexState = success;
+          }
+          await this.siteBookRepository.save(siteBook);
+        }
+
+        const msg = `🔍 Indexed: ${bookUrl}`;
+        this.logger.log(msg);
+        messages.push(msg);
+      }
+
+      this.logger.debug('END - Get Google Meta Data.');
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error(`❌ googleMetaDataNews: ${error.message}`, error.stack);
+      await this.batchLogsService.fail(logId, error.message, messages);
+    }
+  }
+
+  @Process(TaskJobName.BOOKS_FETCH_GOOGLE_META_PASSED)
+  async googleMetaDataPassedBooks(job: Job<{ time: string; log_id: string }>) {
+    this.logger.debug('START - Get Google Meta Data.');
+
+    const logId = job.data.log_id;
+    const messages: string[] = [];
+
+    await this.batchLogsService.start(logId);
+
+    try {
+      const indexedBooks = await this.siteBookRepository.find({
+        where: {
+          indexStatus: In([IndexStatus.PASS]),
+        },
+        relations: ['book', 'site'],
+        select: {
+          id: true,
+          book_id: true,
+          site_id: true,
+          book: { slug: true, id: true },
+          site: { domain: true, id: true },
+        },
+      });
+
+      for (const siteBook of indexedBooks) {
+        const { book, site } = siteBook;
+        if (!book || !site) continue;
+
+        const bookUrl = `${site.domain}/bai-viet/${book.slug}`;
+        const success = await getMetaDataGoogleConsole(
+          bookUrl,
+          site.domain + '/',
+        );
+
+        await this.bookGoogleIndexRequestRepository.upsert(
+          {
+            book_id: siteBook.book_id,
+            site_id: siteBook.site_id,
+            book_slug: siteBook.book.slug,
+            site_domain: siteBook.site.domain,
+            url: bookUrl,
+            googleUrl:
+              'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+            type: 'URL_METADATA',
+            response: success,
+            requested_at: new Date(),
+          },
+          {
+            conflictPaths: ['type', 'book_slug'],
+            skipUpdateIfNoValuesChanged: true,
+          },
+        );
+
+        if (success) {
+          const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
+          if (!!verdict) {
+            siteBook.indexStatus = verdict;
+            siteBook.indexState = success;
+          }
+          await this.siteBookRepository.save(siteBook);
+        }
+
+        const msg = `🔍 Meta checked: ${bookUrl}`;
+        this.logger.log(msg);
+        messages.push(msg);
+      }
+
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error(
+        `❌ Error in googleMetaDataPassedNews: ${error.message}`,
+        error.stack,
+      );
+      await this.batchLogsService.fail(logId, error.message, messages);
+    }
+
+    this.logger.debug('END - Get Google Meta Data.');
+  }
+  //
+
+  // NEWS
 
   @Process(TaskJobName.NEWS_FETCH_GOOGLE_INDEX)
   async googleIndexNews(job: Job<{ time: string; log_id: string }>) {
@@ -424,7 +678,7 @@ export class TaskProcessor {
 
     this.logger.debug('END - Get Google Meta Data.');
   }
-
+  //
   @Process(TaskJobName.CLEANUP_OLD_POSTS)
   async handleCleanupOldPosts(job: Job<{ time: string; log_id: string }>) {
     const logId = job.data.log_id;

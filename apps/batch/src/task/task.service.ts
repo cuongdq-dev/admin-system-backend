@@ -17,6 +17,10 @@ export const CustomCron = {
   CRON_EVERY_12_HOUR_30_MINUTE: '30 0 * * *', //12:30 AM hằng ngày	✅ OK
   CRON_4_HOUR_10_MINUTE: '10 4 * * *', //4:10 AM	✅ OK
   CRON_EVERY_3_HOUR_45_MINUTE: '45 2,6,10,14,18,22 * * *', //Mỗi 3h lệch	✅ OK
+
+  CRON_20_HOUR_10_MINUTE: '10 20 * * *', // 20:10 hằng ngày
+  CRON_23_HOUR_10_MINUTE: '10 23 * * *', // 23:10 hằng ngày
+  CRON_7_HOUR_5_MINUTE: '5 7 * * *', // 07:05 hằng ngày
 };
 
 @Injectable()
@@ -71,27 +75,47 @@ export class TaskService {
       log_id: log.id,
     });
   }
+
   // TODO UPDATE WITH BOOK
-  // @Cron(CustomCron.CRON_EVERY_4_HOUR_30_MINUTE)
-  // async googleIndexNews() {
-  //   await this.taskQueue.add(TaskJobName.NEWS_FETCH_GOOGLE_INDEX, {
-  //     time: new Date().toISOString(),
-  //   });
-  // }
+  @Cron(CustomCron.CRON_23_HOUR_10_MINUTE)
+  async googleIndexBooks() {
+    const scheduledAt = new Date();
+    const log = await this.batchLogsService.create(
+      TaskJobName.BOOKS_FETCH_GOOGLE_INDEX,
+      scheduledAt,
+    );
+    await this.taskQueue.add(TaskJobName.BOOKS_FETCH_GOOGLE_INDEX, {
+      time: new Date().toISOString(),
+      log_id: log.id,
+    });
+  }
 
-  // @Cron(CustomCron.CRON_EVERY_5_HOUR_45_MINUTE)
-  // async googleMetaDataNews() {
-  //   await this.taskQueue.add(TaskJobName.NEWS_FETCH_GOOGLE_META, {
-  //     time: new Date().toISOString(),
-  //   });
-  // }
+  @Cron(CustomCron.CRON_20_HOUR_10_MINUTE)
+  async googleMetaDataBooks() {
+    const scheduledAt = new Date();
+    const log = await this.batchLogsService.create(
+      TaskJobName.BOOKS_FETCH_GOOGLE_META,
+      scheduledAt,
+    );
+    await this.taskQueue.add(TaskJobName.BOOKS_FETCH_GOOGLE_META, {
+      time: new Date().toISOString(),
+      log_id: log.id,
+    });
+  }
 
-  // @Cron(CustomCron.CRON_EVERY_12_HOUR_30_MINUTE)
-  // async googleMetaDataPassedNews() {
-  //   await this.taskQueue.add(TaskJobName.NEWS_FETCH_GOOGLE_META_PASSED, {
-  //     time: new Date().toISOString(),
-  //   });
-  // }
+  @Cron(CustomCron.CRON_7_HOUR_5_MINUTE)
+  async googleMetaDataPassedBooks() {
+    const scheduledAt = new Date();
+    const log = await this.batchLogsService.create(
+      TaskJobName.BOOKS_FETCH_GOOGLE_META_PASSED,
+      scheduledAt,
+    );
+    await this.taskQueue.add(TaskJobName.BOOKS_FETCH_GOOGLE_META_PASSED, {
+      time: new Date().toISOString(),
+      log_id: log.id,
+    });
+  }
+  //
 
   @Cron(CustomCron.CRON_EVERY_4_HOUR_30_MINUTE)
   async googleIndexNews() {
