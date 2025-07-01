@@ -1,5 +1,5 @@
 import { Address } from './address.entity';
-import { BatchLogs } from './batch_logs';
+import { BatchLogs } from './batch_logs.entity';
 import { Book } from './book.entity';
 import { Chapter } from './book_chapter.entity';
 import { Cart } from './cart.entity';

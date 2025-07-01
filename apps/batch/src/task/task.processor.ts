@@ -1,4 +1,5 @@
 import {
+  BatchLogs,
   Book,
   Category,
   GoogleIndexRequest,
@@ -41,24 +42,17 @@ import {
   Repository,
 } from 'typeorm';
 import { TaskJobName } from './task.dto';
-
-export const CustomCron = {
-  CRON_6_HOUR: '0 6 * * *', //6:00 AM hằng ngày	✅ OK
-  CRON_8_HOUR: '0 8 * * *', // 8:00 AM hằng ngày	✅ OK
-  CRON_1_HOUR_10_MINUTE: '10 1 * * *', //1:10 AM hằng ngày	✅ OK
-  CRON_EVERY_4_HOUR_30_MINUTE: '30 1,5,9,13,17,21 * * *', //Mỗi 4h tại các mốc lẻ	✅ OK
-  CRON_EVERY_5_HOUR_45_MINUTE: '45 4,9,14,19 * * *', //Mỗi 5h từ 4:45 AM	✅ OK
-  CRON_EVERY_12_HOUR_30_MINUTE: '30 0 * * *', //12:30 AM hằng ngày	✅ OK
-  CRON_4_HOUR_10_MINUTE: '10 4 * * *', //4:10 AM	✅ OK
-  CRON_EVERY_3_HOUR_45_MINUTE: '45 2,6,10,14,18,22 * * *', //Mỗi 3h lệch	✅ OK
-};
+import { Job } from 'bull';
+import { BatchLogsService } from '@app/modules/batch-logs/batch-log.service';
 
 @Processor('task-queue') // Tên queue
 export class TaskProcessor {
   private readonly logger = new Logger(TaskProcessor.name);
-  private readonly botToken = process.env.TELE_BOT_TOKEN;
-  private readonly chatId = process.env.TELE_BOT_CHAT_ID;
+  // private readonly botToken = process.env.TELE_BOT_TOKEN;
+  // private readonly chatId = process.env.TELE_BOT_CHAT_ID;
   constructor(
+    private readonly batchLogsService: BatchLogsService,
+
     @InjectRepository(Trending)
     private readonly trendingRepository: Repository<Trending>,
 
@@ -99,347 +93,473 @@ export class TaskProcessor {
     private readonly dataSource: DataSource,
   ) {}
 
-  @Process(TaskJobName.CLEAN_TEMP_FILES)
-  async cleanTempFiles(job: any) {
-    this.logger.log(`🧹 Bắt đầu xử lý job: ${job.name}`);
-    // ⚠️ Tạm giả lập logic xử lý
-    await new Promise((resolve) => setTimeout(resolve, 10000));
-
-    this.logger.log('✅ Dọn dẹp file tạm thành công!');
-  }
-
   @Process(TaskJobName.CRAWL_DAO_TRUYEN)
-  async handleCrawlerDaotruyen() {
-    await this.crawlService.handleCrawlerDaoTruyen();
+  async handleCrawlerDaotruyen(job: Job<{ time: string; log_id: string }>) {
+    const logId = job.data.log_id;
+    const messages: string[] = [];
+
+    await this.batchLogsService.start(logId);
+
+    try {
+      await this.crawlService.handleCrawlerDaoTruyen();
+      messages.push('✅ Đã crawl truyện thành công');
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error(
+        `❌ handleCrawlerDaotruyen: ${error.message}`,
+        error.stack,
+      );
+      await this.batchLogsService.fail(logId, error.message, messages);
+    }
   }
 
   @Process(TaskJobName.FETCH_MISSING_CHAPTERS)
-  async fetchChapterMissing() {
-    await this.crawlService.fetchChapters();
+  async fetchChapterMissing(job: Job<{ time: string; log_id: string }>) {
+    const logId = job.data.log_id;
+    const messages: string[] = [];
+
+    await this.batchLogsService.start(logId);
+
+    try {
+      await this.crawlService.fetchChapters();
+      messages.push('✅ Đã fetch missing chapters');
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error(
+        `❌ fetchChapterMissing: ${error.message}`,
+        error.stack,
+      );
+      await this.batchLogsService.fail(logId, error.message, messages);
+    }
   }
 
   @Process(TaskJobName.FETCH_SEO_BOOK)
-  async fetchSEOBook() {
-    const books = await this.bookRepository
-      .createQueryBuilder('book')
-      .select([
-        'book.description',
-        'book.title',
-        'book.id',
-        'book.slug',
-        'book.source_url',
-        'book.author',
-      ])
-      .orderBy('created_at', 'DESC')
-      .where('book.social_description = :emptyObj', { emptyObj: '{}' })
-      .take(20)
-      .getMany();
-    for (const book of books) {
-      // if (!book?.source_url?.includes('daotruyen')) {
-      //   continue;
-      // }
-      const geminiData = await this.crawlService.generateGeminiBook(book);
-      await this.bookRepository.upsert(
-        {
-          social_description: geminiData,
-          title: book.title,
-          id: book.id,
-          slug: book.slug,
-        },
-        {
-          conflictPaths: ['title', 'slug'],
-          skipUpdateIfNoValuesChanged: true,
-        },
-      );
-      this.logger.debug(`END: ${book.title}`);
+  async fetchSEOBook(job: Job<{ time: string; log_id: string }>) {
+    const logId = job.data.log_id;
+    const messages: string[] = [];
+
+    await this.batchLogsService.start(logId);
+
+    try {
+      const books = await this.bookRepository
+        .createQueryBuilder('book')
+        .select([
+          'book.description',
+          'book.title',
+          'book.id',
+          'book.slug',
+          'book.source_url',
+          'book.author',
+        ])
+        .orderBy('created_at', 'DESC')
+        .where('book.social_description = :emptyObj', { emptyObj: '{}' })
+        .take(20)
+        .getMany();
+
+      for (const book of books) {
+        const geminiData = await this.crawlService.generateGeminiBook(book);
+
+        await this.bookRepository.upsert(
+          {
+            social_description: geminiData,
+            title: book.title,
+            id: book.id,
+            slug: book.slug,
+          },
+          {
+            conflictPaths: ['title', 'slug'],
+            skipUpdateIfNoValuesChanged: true,
+          },
+        );
+
+        const msg = `✅ Updated SEO book: ${book.title}`;
+        this.logger.debug(`END: ${book.title}`);
+        messages.push(msg);
+      }
+
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error(`❌ fetchSEOBook: ${error.message}`, error.stack);
+      await this.batchLogsService.fail(logId, error.message, messages);
     }
   }
 
-  @Process(TaskJobName.FETCH_GOOGLE_INDEX)
-  async googleIndex() {
+  @Process(TaskJobName.NEWS_FETCH_GOOGLE_INDEX)
+  async googleIndexNews(job: Job<{ time: string; log_id: string }>) {
+    const logId = job.data.log_id;
+    const messages: string[] = [];
+
+    await this.batchLogsService.start(logId);
     this.logger.debug('START - Request Google Index.');
 
-    const sixHoursAgo = new Date();
-    sixHoursAgo.setHours(sixHoursAgo.getHours() - 18);
+    try {
+      const sixHoursAgo = new Date();
+      sixHoursAgo.setHours(sixHoursAgo.getHours());
 
-    const unindexedPosts = await this.sitePostRepository.find({
-      where: {
-        indexStatus: In([IndexStatus.NEW]),
-        created_at: MoreThan(sixHoursAgo),
-      },
-      relations: ['post', 'site'],
-      select: {
-        id: true,
-        post_id: true,
-        site_id: true,
-        post: { slug: true, id: true },
-        site: { domain: true, id: true },
-      },
-    });
-    for (const sitePost of unindexedPosts) {
-      const { post, site } = sitePost;
-      if (!post || !site) continue;
-
-      const googleResulted = await this.googleIndexRequestRepository.findOne({
-        where: { site_id: site.id, post_id: post.id, type: 'URL_UPDATED' },
+      const unindexedPosts = await this.sitePostRepository.find({
+        where: {
+          indexStatus: In([IndexStatus.NEW]),
+          created_at: MoreThan(sixHoursAgo),
+        },
+        relations: ['post', 'site'],
+        select: {
+          id: true,
+          post_id: true,
+          site_id: true,
+          post: { slug: true, id: true },
+          site: { domain: true, id: true },
+        },
       });
 
-      if (googleResulted?.response?.urlNotificationMetadata?.url) continue;
-      const postUrl = `${site.domain}/bai-viet/${post.slug}`;
-      this.logger.log(`🔍 Indexing: ${postUrl}`);
-      const success = await submitToGoogleIndex(postUrl);
-      await this.googleIndexRequestRepository.upsert(
-        {
-          post_id: sitePost.post_id,
-          site_id: sitePost.site_id,
-          post_slug: sitePost.post.slug,
-          site_domain: sitePost.site.domain,
-          url: postUrl,
-          googleUrl:
-            'https://indexing.googleapis.com/v3/urlNotifications:publish',
-          type: 'URL_UPDATED',
-          response: success,
-          requested_at: new Date(),
-        },
-        {
-          conflictPaths: ['type', 'post_slug'],
-          skipUpdateIfNoValuesChanged: true,
-        },
-      );
-      if (success) {
-        await this.sitePostRepository.save({
-          ...sitePost,
-          indexStatus: IndexStatus.INDEXING,
+      for (const sitePost of unindexedPosts) {
+        const { post, site } = sitePost;
+        if (!post || !site) continue;
+
+        const googleResulted = await this.googleIndexRequestRepository.findOne({
+          where: { site_id: site.id, post_id: post.id, type: 'URL_UPDATED' },
         });
+
+        if (googleResulted?.response?.urlNotificationMetadata?.url) continue;
+
+        const postUrl = `${site.domain}/bai-viet/${post.slug}`;
+        this.logger.log(`🔍 Indexing: ${postUrl}`);
+        messages.push(`Indexing: ${postUrl}`);
+
+        const success = await submitToGoogleIndex(postUrl);
+
+        await this.googleIndexRequestRepository.upsert(
+          {
+            post_id: sitePost.post_id,
+            site_id: sitePost.site_id,
+            post_slug: sitePost.post.slug,
+            site_domain: sitePost.site.domain,
+            url: postUrl,
+            googleUrl:
+              'https://indexing.googleapis.com/v3/urlNotifications:publish',
+            type: 'URL_UPDATED',
+            response: success,
+            requested_at: new Date(),
+          },
+          {
+            conflictPaths: ['type', 'post_slug'],
+            skipUpdateIfNoValuesChanged: true,
+          },
+        );
+
+        if (success) {
+          await this.sitePostRepository.save({
+            ...sitePost,
+            indexStatus: IndexStatus.INDEXING,
+          });
+          messages.push(`✅ Success: ${postUrl}`);
+        } else {
+          messages.push(`❌ Failed: ${postUrl}`);
+        }
       }
+
+      this.logger.debug('END - Request Google Index.');
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error('Google Index Job Failed:', error);
+      await this.batchLogsService.fail(logId, error.message, messages);
     }
-    this.logger.debug('END - Request Google Index.');
   }
 
-  @Process(TaskJobName.FETCH_GOOGLE_META)
-  async googleMetaData() {
+  @Process(TaskJobName.NEWS_FETCH_GOOGLE_META)
+  async googleMetaDataNews(job: Job<{ time: string; log_id: string }>) {
+    const logId = job.data.log_id;
+    const messages: string[] = [];
+
+    await this.batchLogsService.start(logId);
+
     this.logger.debug('START - Get Google Meta Data.');
 
-    const indexedPosts = await this.sitePostRepository.find({
-      where: {
-        indexStatus: In([
-          IndexStatus.NEW,
-          IndexStatus.INDEXING,
-          IndexStatus.VERDICT_UNSPECIFIED,
-          IndexStatus.NEUTRAL,
-        ]),
-      },
-      relations: ['post', 'site'],
-      select: {
-        id: true,
-        post_id: true,
-        site_id: true,
-        post: { slug: true, id: true },
-        site: { domain: true, id: true },
-      },
-    });
-    for (const sitePost of indexedPosts) {
-      const { post, site } = sitePost;
-      if (!post || !site) continue;
-
-      const postUrl = `${site.domain}/bai-viet/${post.slug}`;
-
-      const success = await getMetaDataGoogleConsole(
-        postUrl,
-        site.domain + '/',
-      );
-      await this.googleIndexRequestRepository.upsert(
-        {
-          post_id: sitePost.post_id,
-          site_id: sitePost.site_id,
-          post_slug: sitePost.post.slug,
-          site_domain: sitePost.site.domain,
-          url: postUrl,
-          googleUrl:
-            'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
-          type: 'URL_METADATA',
-          response: success,
-          requested_at: new Date(),
+    try {
+      const indexedPosts = await this.sitePostRepository.find({
+        where: {
+          indexStatus: In([
+            IndexStatus.NEW,
+            IndexStatus.INDEXING,
+            IndexStatus.VERDICT_UNSPECIFIED,
+            IndexStatus.NEUTRAL,
+          ]),
         },
-        {
-          conflictPaths: ['type', 'post_slug'],
-          skipUpdateIfNoValuesChanged: true,
+        relations: ['post', 'site'],
+        select: {
+          id: true,
+          post_id: true,
+          site_id: true,
+          post: { slug: true, id: true },
+          site: { domain: true, id: true },
         },
-      );
-      if (success) {
-        const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
-        if (!!verdict) {
-          sitePost.indexStatus = verdict;
-          sitePost.indexState = success;
+      });
+
+      for (const sitePost of indexedPosts) {
+        const { post, site } = sitePost;
+        if (!post || !site) continue;
+
+        const postUrl = `${site.domain}/bai-viet/${post.slug}`;
+
+        const success = await getMetaDataGoogleConsole(
+          postUrl,
+          site.domain + '/',
+        );
+
+        await this.googleIndexRequestRepository.upsert(
+          {
+            post_id: sitePost.post_id,
+            site_id: sitePost.site_id,
+            post_slug: sitePost.post.slug,
+            site_domain: sitePost.site.domain,
+            url: postUrl,
+            googleUrl:
+              'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+            type: 'URL_METADATA',
+            response: success,
+            requested_at: new Date(),
+          },
+          {
+            conflictPaths: ['type', 'post_slug'],
+            skipUpdateIfNoValuesChanged: true,
+          },
+        );
+
+        if (success) {
+          const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
+          if (!!verdict) {
+            sitePost.indexStatus = verdict;
+            sitePost.indexState = success;
+          }
+          await this.sitePostRepository.save(sitePost);
         }
-        await this.sitePostRepository.save(sitePost);
-      }
-      this.logger.log(`🔍 Indexing: ${postUrl}`);
-    }
 
-    this.logger.debug('END - Get Google Meta Data.');
+        const msg = `🔍 Indexed: ${postUrl}`;
+        this.logger.log(msg);
+        messages.push(msg);
+      }
+
+      this.logger.debug('END - Get Google Meta Data.');
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error(`❌ googleMetaDataNews: ${error.message}`, error.stack);
+      await this.batchLogsService.fail(logId, error.message, messages);
+    }
   }
 
-  @Process(TaskJobName.FETCH_GOOGLE_META_PASSED)
-  async googleMetaDataPassed() {
+  @Process(TaskJobName.NEWS_FETCH_GOOGLE_META_PASSED)
+  async googleMetaDataPassedNews(job: Job<{ time: string; log_id: string }>) {
     this.logger.debug('START - Get Google Meta Data.');
 
-    const indexedPosts = await this.sitePostRepository.find({
-      where: {
-        indexStatus: In([IndexStatus.PASS]),
-      },
-      relations: ['post', 'site'],
-      select: {
-        id: true,
-        post_id: true,
-        site_id: true,
-        post: { slug: true, id: true },
-        site: { domain: true, id: true },
-      },
-    });
-    for (const sitePost of indexedPosts) {
-      const { post, site } = sitePost;
-      if (!post || !site) continue;
+    const logId = job.data.log_id;
+    const messages: string[] = [];
 
-      const postUrl = `${site.domain}/bai-viet/${post.slug}`;
+    await this.batchLogsService.start(logId);
 
-      const success = await getMetaDataGoogleConsole(
-        postUrl,
-        site.domain + '/',
-      );
-      await this.googleIndexRequestRepository.upsert(
-        {
-          post_id: sitePost.post_id,
-          site_id: sitePost.site_id,
-          post_slug: sitePost.post.slug,
-          site_domain: sitePost.site.domain,
-          url: postUrl,
-          googleUrl:
-            'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
-          type: 'URL_METADATA',
-          response: success,
-          requested_at: new Date(),
+    try {
+      const indexedPosts = await this.sitePostRepository.find({
+        where: {
+          indexStatus: In([IndexStatus.PASS]),
         },
-        {
-          conflictPaths: ['type', 'post_slug'],
-          skipUpdateIfNoValuesChanged: true,
+        relations: ['post', 'site'],
+        select: {
+          id: true,
+          post_id: true,
+          site_id: true,
+          post: { slug: true, id: true },
+          site: { domain: true, id: true },
         },
-      );
-      if (success) {
-        const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
-        if (!!verdict) {
-          sitePost.indexStatus = verdict;
-          sitePost.indexState = success;
+      });
+
+      for (const sitePost of indexedPosts) {
+        const { post, site } = sitePost;
+        if (!post || !site) continue;
+
+        const postUrl = `${site.domain}/bai-viet/${post.slug}`;
+        const success = await getMetaDataGoogleConsole(
+          postUrl,
+          site.domain + '/',
+        );
+
+        await this.googleIndexRequestRepository.upsert(
+          {
+            post_id: sitePost.post_id,
+            site_id: sitePost.site_id,
+            post_slug: sitePost.post.slug,
+            site_domain: sitePost.site.domain,
+            url: postUrl,
+            googleUrl:
+              'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+            type: 'URL_METADATA',
+            response: success,
+            requested_at: new Date(),
+          },
+          {
+            conflictPaths: ['type', 'post_slug'],
+            skipUpdateIfNoValuesChanged: true,
+          },
+        );
+
+        if (success) {
+          const verdict = success?.inspectionResult?.indexStatusResult?.verdict;
+          if (!!verdict) {
+            sitePost.indexStatus = verdict;
+            sitePost.indexState = success;
+          }
+          await this.sitePostRepository.save(sitePost);
         }
-        await this.sitePostRepository.save(sitePost);
+
+        const msg = `🔍 Meta checked: ${postUrl}`;
+        this.logger.log(msg);
+        messages.push(msg);
       }
-      this.logger.log(`🔍 Indexing: ${postUrl}`);
+
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error(
+        `❌ Error in googleMetaDataPassedNews: ${error.message}`,
+        error.stack,
+      );
+      await this.batchLogsService.fail(logId, error.message, messages);
     }
 
     this.logger.debug('END - Get Google Meta Data.');
   }
 
   @Process(TaskJobName.CLEANUP_OLD_POSTS)
-  async handleCleanupOldPosts() {
+  async handleCleanupOldPosts(job: Job<{ time: string; log_id: string }>) {
+    const logId = job.data.log_id;
+    const messages: string[] = [];
+
+    await this.batchLogsService.start(logId);
     this.logger.debug('START - Cleanup Old Posts.');
 
-    const orphanTrending = await this.trendingRepository
-      .createQueryBuilder('trending')
-      .leftJoinAndSelect('trending.thumbnail', 'thumbnail')
-      .leftJoinAndSelect('trending.articles', 'articles')
-      .leftJoinAndSelect('articles.posts', 'articles_posts')
-      .where('articles_posts.id IS NULL OR articles.id IS NULL')
-      .getMany();
+    try {
+      const orphanTrending = await this.trendingRepository
+        .createQueryBuilder('trending')
+        .leftJoinAndSelect('trending.thumbnail', 'thumbnail')
+        .leftJoinAndSelect('trending.articles', 'articles')
+        .leftJoinAndSelect('articles.posts', 'articles_posts')
+        .where('articles_posts.id IS NULL OR articles.id IS NULL')
+        .getMany();
 
-    for (const trending of orphanTrending) {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.delete(Trending, { id: trending.id });
-        await manager.softDelete(Media, { id: trending.thumbnail_id });
-      });
-    }
-
-    const fiveDaysAgo = new Date();
-    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 2);
-
-    const oldSitePosts = await this.sitePostRepository.find({
-      where: {
-        created_at: LessThan(fiveDaysAgo),
-        indexStatus: In([
-          IndexStatus.NEW,
-          IndexStatus.INDEXING,
-          IndexStatus.DELETED,
-          IndexStatus.NEUTRAL,
-          IndexStatus.DELETED,
-        ]),
-      },
-    });
-
-    if (oldSitePosts.length === 0) {
-      this.logger.log('No old posts to delete.');
-      return;
-    }
-
-    this.logger.log(`Deleting ${oldSitePosts.length} old posts...`);
-
-    for (const [index, sitePost] of oldSitePosts.entries()) {
-      try {
-        this.logger.debug(
-          `Deleting post ${index + 1}/${oldSitePosts.length} - sitePost.id: ${sitePost.id}`,
-        );
-
-        const deleted = await this.deletePostArchived(sitePost);
-
-        this.logger.verbose(
-          `✔ Deleted post ID ${deleted.deleted?.post?.id ?? 'N/A'} - "${deleted.deleted?.post?.title}"`,
-        );
-      } catch (err) {
-        this.logger.error(
-          `❌ Failed to delete sitePost ID ${sitePost.id}: ${err.message}`,
-          err.stack,
-        );
+      for (const trending of orphanTrending) {
+        await this.dataSource.transaction(async (manager) => {
+          await manager.delete(Trending, { id: trending.id });
+          await manager.softDelete(Media, { id: trending.thumbnail_id });
+        });
+        messages.push(`🧹 Deleted orphan trending ID: ${trending.id}`);
       }
-    }
 
-    this.logger.debug('END - Cleanup Old Posts.');
+      const fiveDaysAgo = new Date();
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 2);
+
+      const oldSitePosts = await this.sitePostRepository.find({
+        where: {
+          created_at: LessThan(fiveDaysAgo),
+          indexStatus: In([
+            IndexStatus.NEW,
+            IndexStatus.INDEXING,
+            IndexStatus.DELETED,
+            IndexStatus.NEUTRAL,
+            IndexStatus.DELETED,
+          ]),
+        },
+      });
+
+      if (oldSitePosts.length === 0) {
+        const msg = 'No old posts to delete.';
+        this.logger.log(msg);
+        messages.push(msg);
+      } else {
+        const msg = `Deleting ${oldSitePosts.length} old posts...`;
+        this.logger.log(msg);
+        messages.push(msg);
+
+        for (const [index, sitePost] of oldSitePosts.entries()) {
+          try {
+            const progressMsg = `Deleting post ${index + 1}/${oldSitePosts.length} - sitePost.id: ${sitePost.id}`;
+            this.logger.debug(progressMsg);
+            messages.push(progressMsg);
+
+            const deleted = await this.deletePostArchived(sitePost);
+            const successMsg = `✔ Deleted post ID ${deleted.deleted?.post?.id ?? 'N/A'} - "${deleted.deleted?.post?.title}"`;
+            this.logger.verbose(successMsg);
+            messages.push(successMsg);
+          } catch (err) {
+            const errMsg = `❌ Failed to delete sitePost ID ${sitePost.id}: ${err.message}`;
+            this.logger.error(errMsg, err.stack);
+            messages.push(errMsg);
+          }
+        }
+      }
+
+      this.logger.debug('END - Cleanup Old Posts.');
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error(`❌ Cleanup error: ${error.message}`, error.stack);
+      await this.batchLogsService.fail(logId, error.message, messages);
+    }
   }
 
   @Process(TaskJobName.CRAWL_ARTICLES)
-  async handleCrawlerArticles() {
+  async handleCrawlerArticles(job: Job<{ time: string; log_id: string }>) {
+    const logId = job.data.log_id;
+    const messages: string[] = [];
+
+    await this.batchLogsService.start(logId);
     this.logger.debug('START - Crawler Articles.');
 
-    const trendingList = await fetchTrendings();
-    const admins = await this.userRepository.find({
-      where: { firebase_token: Not(IsNull()) },
-    });
+    try {
+      const trendingList = await fetchTrendings();
+      messages.push(`Fetched ${trendingList.length} trendings.`);
 
-    const categoryData = await this.categoryRepository.find();
-    const categoryList = categoryData.map((category) => {
-      return { name: category.name, slug: category.slug };
-    });
-    for (const trending of trendingList) {
-      const trendingData = await this.processTrending(trending);
-
-      if (trending?.articles?.length) {
-        await this.processArticles(
-          trending.articles,
-          trendingData.id,
-          categoryList,
-        );
-      }
-    }
-
-    for (const admin of admins) {
-      const notify = this.notificationRepository.create({
-        title: `New Posts Available `,
-        message: `Please check them out!`,
-        status: NotificationStatus.NEW,
-        type: NotificationType.SYSTEM,
-        user_id: admin.id,
+      const admins = await this.userRepository.find({
+        where: { firebase_token: Not(IsNull()) },
       });
-      await this.notificationRepository.save(notify);
-    }
+      messages.push(`Found ${admins.length} admins to notify.`);
 
-    this.logger.debug('END - Crawler Articles.');
+      const categoryData = await this.categoryRepository.find();
+      const categoryList = categoryData.map((category) => {
+        return { name: category.name, slug: category.slug };
+      });
+
+      for (const trending of trendingList) {
+        const trendingData = await this.processTrending(trending);
+        messages.push(`📌 Processed trending: ${trending.title}`);
+
+        if (trending?.articles?.length) {
+          await this.processArticles(
+            trending.articles,
+            trendingData.id,
+            categoryList,
+          );
+          messages.push(
+            `📝 Processed ${trending.articles.length} articles for trending "${trending.title}"`,
+          );
+        }
+      }
+
+      for (const admin of admins) {
+        const notify = this.notificationRepository.create({
+          title: `New Posts Available `,
+          message: `Please check them out!`,
+          status: NotificationStatus.NEW,
+          type: NotificationType.SYSTEM,
+          user_id: admin.id,
+        });
+        await this.notificationRepository.save(notify);
+      }
+      messages.push(`🔔 Notifications sent to ${admins.length} admins.`);
+
+      this.logger.debug('END - Crawler Articles.');
+      await this.batchLogsService.success(logId, messages);
+    } catch (error) {
+      this.logger.error(
+        `❌ CRAWL_ARTICLES error: ${error.message}`,
+        error.stack,
+      );
+      await this.batchLogsService.fail(logId, error.message, messages);
+    }
   }
 
   private async processTrending(trending: any) {

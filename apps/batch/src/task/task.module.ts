@@ -1,4 +1,5 @@
 import {
+  BatchLogs,
   Book,
   Category,
   Chapter,
@@ -14,12 +15,13 @@ import {
   User,
 } from '@app/entities';
 // import { TelegramModule } from '@app/modules/telegram/telegram.module';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { TaskService } from './task.service';
+import { BatchLogsModule } from '@app/modules/batch-logs/batch-log.module';
 import { CrawlModule } from '@app/modules/crawl-data/crawl.module';
 import { BullModule } from '@nestjs/bull';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskProcessor } from './task.processor';
+import { TaskService } from './task.service';
 
 @Module({
   imports: [
@@ -28,6 +30,7 @@ import { TaskProcessor } from './task.processor';
     }),
 
     // TelegramModule,
+    BatchLogsModule,
     CrawlModule,
     TypeOrmModule.forFeature([
       Trending,
@@ -40,6 +43,7 @@ import { TaskProcessor } from './task.processor';
       Book,
       Chapter,
       SitePost,
+      BatchLogs,
       Site,
       Notification,
       GoogleIndexRequest,

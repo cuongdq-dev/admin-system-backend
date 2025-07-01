@@ -6,9 +6,13 @@ export enum TaskJobName {
 
   // SEO related jobs
   FETCH_SEO_BOOK = 'fetch-seo-book',
-  FETCH_GOOGLE_INDEX = 'fetch-google-index',
-  FETCH_GOOGLE_META = 'fetch-google-meta-data',
-  FETCH_GOOGLE_META_PASSED = 'fetch-google-meta-data-passed',
+  NEWS_FETCH_GOOGLE_INDEX = 'news-fetch-google-index',
+  NEWS_FETCH_GOOGLE_META = 'news-fetch-google-meta-data',
+  NEWS_FETCH_GOOGLE_META_PASSED = 'news-fetch-google-meta-data-passed',
+
+  BOOKS_FETCH_GOOGLE_INDEX = 'books-fetch-google-index',
+  BOOKS_FETCH_GOOGLE_META = 'books-fetch-google-meta-data',
+  BOOKS_FETCH_GOOGLE_META_PASSED = 'books-fetch-google-meta-data-passed',
 
   // Cleanup jobs
   CLEANUP_OLD_POSTS = 'handle-clean-old-posts',
