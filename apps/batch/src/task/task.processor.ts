@@ -194,7 +194,7 @@ export class TaskProcessor {
 
     try {
       const sixHoursAgo = new Date();
-      sixHoursAgo.setHours(sixHoursAgo.getHours());
+      sixHoursAgo.setHours(sixHoursAgo.getHours() - 18);
 
       const unindexedPosts = await this.sitePostRepository.find({
         where: {
