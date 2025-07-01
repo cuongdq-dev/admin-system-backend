@@ -549,6 +549,7 @@ export async function callGeminiApi(prompt: string) {
     process.env.GEMINI_API_KEY_1,
     process.env.GEMINI_API_KEY_2,
     process.env.GEMINI_API_KEY_3,
+    process.env.GEMINI_API_KEY_4,
   ];
   for (const key of GEMINI_API_KEYS) {
     console.log(key);
