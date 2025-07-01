@@ -93,7 +93,7 @@ export class TaskService {
   //   });
   // }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CustomCron.CRON_EVERY_4_HOUR_30_MINUTE)
   async googleIndexNews() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
