@@ -61,19 +61,19 @@ export class SiteController {
     return this.siteService.create(user, createDto, workspaces);
   }
 
-  @Post('/telegram/:id')
-  getTelegram(
-    @Body() body: { token: string },
-    @Param(
-      'id',
-      ParseUUIDPipe,
-      IsIDExistPipe({ entity: Site, checkOwner: true }),
-    )
-    site: Site,
-    @Headers('workspaces') workspaces: string,
-  ) {
-    return this.siteService.getTelegram(body.token, site);
-  }
+  // @Post('/telegram/:id')
+  // getTelegram(
+  //   @Body() body: { token: string },
+  //   @Param(
+  //     'id',
+  //     ParseUUIDPipe,
+  //     IsIDExistPipe({ entity: Site, checkOwner: true }),
+  //   )
+  //   site: Site,
+  //   @Headers('workspaces') workspaces: string,
+  // ) {
+  //   return this.siteService.getTelegram(body.token, site);
+  // }
 
   @Patch('update/:id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
