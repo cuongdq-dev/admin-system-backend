@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/cuongdq-dev/admin-system-backend)
+
 ```markdown
 # CK Ecommerce - Admin System Backend
 
