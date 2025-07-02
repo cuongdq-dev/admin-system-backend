@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { RegisterDto } from '../auth-email/email.dto';
 import { MediaService } from '../media/media.service';
 import { UserUpdateDto } from './user.dto';
+import { userPaginateConfig } from './user.pagination';
 
 @Injectable()
 export class UserService {
@@ -21,6 +22,10 @@ export class UserService {
     @InjectRepository(Post)
     private postRepository: Repository<Post>,
   ) {}
+
+  async getAll(query: PaginateQuery, user: User) {
+    return paginate(query, this.userRepository, userPaginateConfig);
+  }
 
   async create(userCreateDto: RegisterDto | Pick<User, 'is_active'>) {
     const user = User.create({ ...userCreateDto });

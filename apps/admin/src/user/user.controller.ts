@@ -28,15 +28,21 @@ import {
 } from 'nestjs-paginate';
 import { UserParam } from '../../../../common/decorators/src/user.decorator';
 import { UserUpdateDto } from './user.dto';
-import { postPaginateConfig } from './user.pagination';
+import { postPaginateConfig, userPaginateConfig } from './user.pagination';
 import { UserService } from './user.service';
-
 @ApiTags('User')
 @ApiBearerAuth()
 @Controller({ path: 'users', version: '1' })
 @UseGuards(AuthGuard('jwt'))
 export class UserController {
   constructor(private userService: UserService) {}
+
+  @Get('/list')
+  @ApiOkPaginatedResponse(User, userPaginateConfig)
+  @ApiPaginationQuery(userPaginateConfig)
+  getAll(@Paginate() query: PaginateQuery, @UserParam() user: User) {
+    return this.userService.getAll(query, user);
+  }
 
   @Get('/me')
   @ApiOperation({ summary: 'get logged in user details' })
