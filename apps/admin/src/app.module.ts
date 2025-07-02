@@ -10,6 +10,7 @@ import * as multer from 'multer';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { EmailAuthModule } from './auth-email/email.module';
 import { AuthModule } from './auth/auth.module';
+import { BatchLogsModule } from './batch-logs/batch-log.module';
 import { BookModule } from './book/book.module';
 import { CategoryModule } from './category/category.module';
 import { DockerModule } from './docker/docker.module';
@@ -40,6 +41,7 @@ const modules = [
   DropdownModule,
   AnalyticsModule,
   SettingModule,
+  BatchLogsModule,
   MediaModule,
   RepositoryModule,
   NotificationModule,
