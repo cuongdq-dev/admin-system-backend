@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 import { BaseEntity } from './base';
 import { User } from './user.entity';
 import { UserPermissions } from './user_permissions.entity';
@@ -18,7 +18,12 @@ export class Role extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
 
-  @OneToMany(() => UserPermissions, (permission) => permission.role)
+  @ManyToMany(() => UserPermissions, (permission) => permission.roles)
+  @JoinTable({
+    name: 'user_permissions_roles',
+    joinColumn: { name: 'permission_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  })
   permissions: UserPermissions[];
 
   @ManyToMany(() => User, (user) => user.roles)
