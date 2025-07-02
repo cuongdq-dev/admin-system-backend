@@ -134,10 +134,10 @@ export class TaskProcessor {
       await this.batchLogsService.success(logId, messages);
     } catch (error) {
       this.logger.error(
-        `❌ fetchChapterMissing: ${error.message}`,
+        `❌ fetchChapterMissing: ${error?.message}`,
         error.stack,
       );
-      await this.batchLogsService.fail(logId, error.message, messages);
+      await this.batchLogsService.fail(logId, error?.message, messages);
     }
   }
 
@@ -231,7 +231,7 @@ export class TaskProcessor {
 
         if (googleResulted?.response?.urlNotificationMetadata?.url) continue;
 
-        const bookUrl = `${site.domain}/bai-viet/${book.slug}`;
+        const bookUrl = `${site.domain}/${book.slug}`;
         this.logger.log(`🔍 Indexing: ${bookUrl}`);
         messages.push(`Indexing: ${bookUrl}`);
 
@@ -765,12 +765,10 @@ export class TaskProcessor {
 
     try {
       const trendingList = await fetchTrendings();
-      messages.push(`Fetched ${trendingList.length} trendings.`);
 
       const admins = await this.userRepository.find({
         where: { firebase_token: Not(IsNull()) },
       });
-      messages.push(`Found ${admins.length} admins to notify.`);
 
       const categoryData = await this.categoryRepository.find();
       const categoryList = categoryData.map((category) => {
@@ -779,7 +777,7 @@ export class TaskProcessor {
 
       for (const trending of trendingList) {
         const trendingData = await this.processTrending(trending);
-        messages.push(`📌 Processed trending: ${trending.title}`);
+        messages.push(`📌 Processed trending: ${trending?.title?.query}`);
 
         if (trending?.articles?.length) {
           await this.processArticles(
@@ -788,7 +786,7 @@ export class TaskProcessor {
             categoryList,
           );
           messages.push(
-            `📝 Processed ${trending.articles.length} articles for trending "${trending.title}"`,
+            `📝 Processed ${trending?.articles?.length} articles for trending "${trending?.title?.query}"`,
           );
         }
       }
@@ -803,7 +801,6 @@ export class TaskProcessor {
         });
         await this.notificationRepository.save(notify);
       }
-      messages.push(`🔔 Notifications sent to ${admins.length} admins.`);
 
       this.logger.debug('END - Crawler Articles.');
       await this.batchLogsService.success(logId, messages);
