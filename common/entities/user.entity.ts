@@ -9,13 +9,17 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  Index,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   Relation,
   Unique,
 } from 'typeorm';
 import { BaseEntity } from './base';
+import { Book } from './book.entity';
 import type { Media } from './media.entity';
 import { Notification } from './notification.entity';
 import type { Post } from './post.entity';
@@ -23,8 +27,12 @@ import { Server } from './server.entity';
 import { Site } from './site.entity';
 import type { Session } from './user_session.entity';
 import { Token } from './user_token.entity';
-import { Book } from './book.entity';
+import { Role } from './user_roles.entity';
 
+export enum UserType {
+  ADMIN = 'ADMIN',
+  USER = 'USER',
+}
 @Entity({ name: 'users' })
 @Unique(['name', 'email'])
 export class User extends BaseEntity {
@@ -52,6 +60,10 @@ export class User extends BaseEntity {
   @ApiHideProperty()
   @Column({ type: 'boolean', default: false })
   is_active: boolean;
+
+  @Column({ type: 'enum', enum: UserType, nullable: true })
+  @Index()
+  type: UserType;
 
   @ApiHideProperty()
   @OneToMany(() => Token, (token) => token.user)
@@ -104,6 +116,14 @@ export class User extends BaseEntity {
 
   @OneToMany('Notification', 'user')
   notifications: Relation<Notification[]>;
+
+  @ManyToMany(() => Role, (role) => role.users)
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  })
+  roles: Role[];
 
   @AfterLoad()
   storePasswordInCache() {

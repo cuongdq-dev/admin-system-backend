@@ -33,6 +33,8 @@ import { SitePost } from './site_posts.entity';
 import { Trending } from './trending.entity';
 import { TrendingArticle } from './trending_articles.entity';
 import { User } from './user.entity';
+import { UserPermissions } from './user_permissions.entity';
+import { Role } from './user_roles.entity';
 import { Session } from './user_session.entity';
 import { Token, TokenType as UserTokenType } from './user_token.entity';
 
@@ -76,8 +78,11 @@ export {
   TrendingArticle,
   GoogleIndexRequest,
   Chapter,
-  User,
+  User as User,
   UserTokenType,
+  // role
+  UserPermissions as Permission,
+  Role,
 };
 export const loadEntities = [
   CustomerSession,
@@ -114,4 +119,7 @@ export const loadEntities = [
   Repository,
   ServerService,
   LangContent,
+  // role
+  UserPermissions,
+  Role,
 ];
