@@ -308,7 +308,7 @@ export class TaskProcessor {
         const { book, site } = siteBook;
         if (!book || !site) continue;
 
-        const bookUrl = `${site.domain}/bai-viet/${book.slug}`;
+        const bookUrl = `${site.domain}/${book.slug}`;
 
         const success = await getMetaDataGoogleConsole(
           bookUrl,
@@ -351,7 +351,7 @@ export class TaskProcessor {
       this.logger.debug('END - Get Google Meta Data.');
       await this.batchLogsService.success(logId, messages);
     } catch (error) {
-      this.logger.error(`❌ googleMetaDataNews: ${error.message}`, error.stack);
+      this.logger.error(`❌ googleMetaDataBook: ${error.message}`, error.stack);
       await this.batchLogsService.fail(logId, error.message, messages);
     }
   }
@@ -384,7 +384,7 @@ export class TaskProcessor {
         const { book, site } = siteBook;
         if (!book || !site) continue;
 
-        const bookUrl = `${site.domain}/bai-viet/${book.slug}`;
+        const bookUrl = `${site.domain}/${book.slug}`;
         const success = await getMetaDataGoogleConsole(
           bookUrl,
           site.domain + '/',
