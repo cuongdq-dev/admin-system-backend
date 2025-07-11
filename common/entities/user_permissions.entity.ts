@@ -14,7 +14,7 @@ import { Role } from './user_roles.entity';
 @Unique(['action', 'subject'])
 export class UserPermissions extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
-  action: string;
+  action: string; //read, update, create, delete, publish
 
   @Column({ type: 'varchar', length: 100 })
   subject: string;

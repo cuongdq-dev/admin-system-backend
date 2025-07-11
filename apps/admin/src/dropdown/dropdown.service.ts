@@ -1,5 +1,6 @@
 import { Category, Post, Site, User } from '@app/entities';
-import { Injectable, Logger } from '@nestjs/common';
+import { UserPermissions } from '@app/entities/user_permissions.entity';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -35,6 +36,7 @@ export class DropdownService {
     ]);
     return { sites, posts, categories };
   }
+
   async getSites(user: User) {
     return await this.siteRepository
       .createQueryBuilder('site')

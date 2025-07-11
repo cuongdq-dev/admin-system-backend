@@ -18,14 +18,16 @@ export class Role extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
 
-  @ManyToMany(() => UserPermissions, (permission) => permission.roles)
+  @ManyToMany(() => UserPermissions, (permission) => permission.roles, {
+    cascade: true,
+  })
   @JoinTable({
     name: 'user_permissions_roles',
-    joinColumn: { name: 'permission_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+    joinColumn: { name: 'role_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'permission_id', referencedColumnName: 'id' },
   })
   permissions: UserPermissions[];
 
-  @ManyToMany(() => User, (user) => user.roles)
+  @ManyToMany(() => User, (user) => user.roles, { cascade: true })
   users: User[];
 }

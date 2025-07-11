@@ -3,19 +3,17 @@ import {
   Lang,
   LangContent,
   loadEntities,
-  Notification,
+  Role,
   Server,
   Service,
   User,
 } from '@app/entities';
-import {
-  NotificationStatus,
-  NotificationType,
-} from '@app/entities/notification.entity';
+import { UserType } from '@app/entities/user.entity';
+import { generateSlug } from '@app/utils';
 import * as bcrypt from 'bcryptjs';
 import dataSource from 'ormconfig';
 import { languages } from './lang';
-import { generateSlug } from '@app/utils';
+import { UserPermissions } from '@app/entities/user_permissions.entity';
 
 async function create() {
   dataSource.setOptions({
@@ -37,6 +35,7 @@ async function create() {
         is_active: true,
         email: process.env.ADMIN_EMAIL,
         password: password,
+        type: UserType.ADMIN,
       },
       {
         conflictPaths: ['name', 'email'],
@@ -73,6 +72,7 @@ async function createUser() {
         is_active: true,
         email: 'user@example.com',
         password: password,
+        type: UserType.USER,
       },
       {
         conflictPaths: ['name', 'email'],
@@ -324,6 +324,160 @@ async function createCategory() {
   }
 }
 
+async function createPermissionDefault() {
+  dataSource.setOptions({
+    entities: loadEntities,
+  });
+  await dataSource.initialize();
+
+  const queryRunner = dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  const permissionsRepository = dataSource.getRepository(UserPermissions);
+  try {
+    const permissionArr = [
+      // { action: '*', subject: '*' },
+      // TABLE POST
+      { action: 'read', subject: 'posts' },
+      { action: 'create', subject: 'posts' },
+      { action: 'publish', subject: 'posts' },
+
+      {
+        action: 'update',
+        subject: 'posts',
+        conditions: { ownerOnly: true },
+      },
+      {
+        action: 'delete',
+        subject: 'posts',
+        conditions: { ownerOnly: true },
+      },
+
+      // TABLE BOOK
+      { action: 'read', subject: 'books' },
+      { action: 'publish', subject: 'books' },
+      { action: 'create', subject: 'books' },
+      {
+        action: 'update',
+        subject: 'books',
+        conditions: { ownerOnly: true },
+      },
+      {
+        action: 'delete',
+        subject: 'books',
+        conditions: { ownerOnly: true },
+      },
+
+      // TABLE SITE
+      { action: 'read', subject: 'sites' },
+      { action: 'create', subject: 'sites' },
+      {
+        action: 'update',
+        subject: 'sites',
+        conditions: { ownerOnly: true },
+      },
+      {
+        action: 'delete',
+        subject: 'sites',
+        conditions: { ownerOnly: true },
+      },
+
+      // TABLE CHAPTER
+      { action: 'read', subject: 'chapters' },
+      { action: 'create', subject: 'chapters' },
+      {
+        action: 'update',
+        subject: 'chapters',
+        conditions: { ownerOnly: true },
+      },
+      {
+        action: 'delete',
+        subject: 'chapters',
+        conditions: { ownerOnly: true },
+      },
+
+      // TABLE MEDIA
+      { action: 'read', subject: 'media' },
+      { action: 'create', subject: 'media' },
+      {
+        action: 'update',
+        subject: 'media',
+        conditions: { ownerOnly: true },
+      },
+      {
+        action: 'delete',
+        subject: 'media',
+        conditions: { ownerOnly: true },
+      },
+
+      // TABLE USER
+      { action: 'read', subject: 'users' },
+      { action: 'create', subject: 'users' },
+      {
+        action: 'update',
+        subject: 'users',
+        conditions: { ownerOnly: true },
+      },
+      {
+        action: 'delete',
+        subject: 'users',
+        conditions: { ownerOnly: true },
+      },
+    ];
+
+    await permissionsRepository.upsert(permissionArr as any, {
+      conflictPaths: ['action', 'subject'],
+      skipUpdateIfNoValuesChanged: true,
+    });
+    console.log('Permission created successfully.');
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    console.error('Error seeding Permission:', error.message);
+  } finally {
+    await queryRunner.release();
+  }
+}
+
+async function createRoleDefault() {
+  dataSource.setOptions({
+    entities: loadEntities,
+  });
+  await dataSource.initialize();
+
+  const queryRunner = dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  const roleRepository = dataSource.getRepository(Role);
+  const permissionRepository = dataSource.getRepository(UserPermissions);
+  try {
+    const permissionArr = await permissionRepository.find();
+    const roleArr = {
+      name: 'Super Admin',
+      type: 'system',
+      description:
+        'Super Admins can access and manage all features and settings.',
+      permissions: permissionArr,
+    };
+
+    const superAdmin = roleRepository.create({
+      name: 'Super Admin',
+      description:
+        'Super Admins can access and manage all features and settings.',
+      permissions: permissionArr,
+    });
+
+    await roleRepository.save(superAdmin);
+    console.log('Role created successfully.');
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    console.error('Error seeding Role:', error.message);
+  } finally {
+    await queryRunner.release();
+  }
+}
+
 async function createServer() {
   dataSource.setOptions({
     entities: loadEntities,
@@ -364,55 +518,57 @@ async function createServer() {
   }
 }
 
-async function createNotification() {
-  dataSource.setOptions({
-    entities: loadEntities,
-  });
+// async function createNotification() {
+//   dataSource.setOptions({
+//     entities: loadEntities,
+//   });
 
-  await dataSource.initialize();
+//   await dataSource.initialize();
 
-  const queryRunner = dataSource.createQueryRunner();
-  await queryRunner.connect();
-  await queryRunner.startTransaction();
-  const notificationRepository = dataSource.getRepository(Notification);
-  const adminRepository = dataSource.getRepository(User);
+//   const queryRunner = dataSource.createQueryRunner();
+//   await queryRunner.connect();
+//   await queryRunner.startTransaction();
+//   const notificationRepository = dataSource.getRepository(Notification);
+//   const adminRepository = dataSource.getRepository(User);
 
-  try {
-    // Fetch a user to associate the notifications
-    // Create notifications covering all statuses and types
-    const admin = await adminRepository.findOne({
-      where: { email: process.env.ADMIN_EMAIL },
-    });
-    const notifications = Object.values(NotificationStatus).flatMap((status) =>
-      Object.values(NotificationType).map((type) =>
-        notificationRepository.create({
-          title: `${type} Notification - ${status}`,
-          message: `This is a ${type} notification with status ${status}.`,
-          status,
-          type,
+//   try {
+//     // Fetch a user to associate the notifications
+//     // Create notifications covering all statuses and types
+//     const admin = await adminRepository.findOne({
+//       where: { email: process.env.ADMIN_EMAIL },
+//     });
+//     const notifications = Object.values(NotificationStatus).flatMap((status) =>
+//       Object.values(NotificationType).map((type) =>
+//         notificationRepository.create({
+//           title: `${type} Notification - ${status}`,
+//           message: `This is a ${type} notification with status ${status}.`,
+//           status,
+//           type,
 
-          meta_data: JSON.stringify({
-            detail: `Meta for ${type} and status ${status}`,
-          }),
-          user_id: admin.id,
-        }),
-      ),
-    );
+//           meta_data: JSON.stringify({
+//             detail: `Meta for ${type} and status ${status}`,
+//           }),
+//           user_id: admin.id,
+//         }),
+//       ),
+//     );
 
-    // Save notifications to the database
-    await notificationRepository.save(notifications);
+//     // Save notifications to the database
+//     await notificationRepository.save(notifications);
 
-    console.log('Full notifications seeded successfully.');
-  } catch (error) {
-    console.error('Error seeding full notifications:', error.message);
-  }
-}
+//     console.log('Full notifications seeded successfully.');
+//   } catch (error) {
+//     console.error('Error seeding full notifications:', error.message);
+//   }
+// }
 // void createLanguages();
 
-void createService();
-void create();
-void createUser();
-void createServer();
-void createNotification();
+// void createService();
+// void create();
+// void createUser();
+// void createServer();
+// void createNotification();
 
-void createCategory();
+// void createPermissionDefault();
+
+void createRoleDefault();

@@ -25,6 +25,7 @@ import { SettingModule } from './setting/setting.module';
 import { SiteModule } from './site/site.module';
 import { UserModule } from './user/user.module';
 import { WebhookModule } from './webhook/webhook.module';
+import { UserRolesModule } from './user-roles/user-roles.module';
 
 const modules = [
   AuthModule,
@@ -41,6 +42,7 @@ const modules = [
   DropdownModule,
   AnalyticsModule,
   SettingModule,
+  UserRolesModule,
   BatchLogsModule,
   MediaModule,
   RepositoryModule,
