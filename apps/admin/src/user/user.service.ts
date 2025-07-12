@@ -1,9 +1,8 @@
-import { Category, Post, Site, User } from '@app/entities';
+import { Category, Post, Role, Site, User } from '@app/entities';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { Repository } from 'typeorm';
-import { RegisterDto } from '../auth-email/email.dto';
+import { In, Repository } from 'typeorm';
 import { MediaService } from '../media/media.service';
 import { UserUpdateDto } from './user.dto';
 import { userPaginateConfig } from './user.pagination';
@@ -17,6 +16,10 @@ export class UserService {
 
     @InjectRepository(Site)
     private siteRepository: Repository<Site>,
+
+    @InjectRepository(Role)
+    private roleRepository: Repository<Role>,
+
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
     @InjectRepository(Post)
@@ -27,9 +30,20 @@ export class UserService {
     return paginate(query, this.userRepository, userPaginateConfig);
   }
 
-  async create(userCreateDto: RegisterDto | Pick<User, 'is_active'>) {
-    const user = User.create({ ...userCreateDto });
-    return this.userRepository.save(user);
+  async create(user: User, body: UserUpdateDto) {
+    const roles = await this.roleRepository.find({
+      where: { id: In(body?.roles?.map((r) => r.id)) },
+    });
+    const userCreate = this.userRepository.create({
+      ...body,
+      roles: roles,
+      created_by: user.id,
+    });
+    return this.userRepository.save(userCreate);
+  }
+
+  async getDetail(user: User) {
+    return user;
   }
 
   async findMe(user: User) {
@@ -83,7 +97,53 @@ export class UserService {
     return { ...profile, sites, categories, posts };
   }
 
-  async update(user: User, updateDto: UserUpdateDto) {
+  async update(user: User, input: UserUpdateDto) {
+    const findUser = await this.userRepository.findOne({
+      where: [{ id: user.id }, { created_by: user.id }],
+      select: [
+        'id',
+        'name',
+        'email',
+        'phoneNumber',
+        'address',
+        'is_active',
+        'created_at',
+        'updated_at',
+      ],
+    });
+
+    if (!findUser) throw new NotFoundException('User not found.');
+
+    const roles = await this.roleRepository.find({
+      where: { id: In(input.roles.map((r) => r.id)) },
+    });
+
+    const newData = {
+      id: findUser.id,
+      name: input.name,
+      email: input.email,
+      address: input.address,
+      is_active: input.is_active,
+      password: input.password,
+      updated_by: user.id,
+      roles: roles,
+    };
+    const resultUpdate = await this.userRepository.save(newData);
+
+    return resultUpdate;
+  }
+
+  /**
+   * Xóa site (soft delete)
+   */
+  async delete(user: User) {
+    await this.userRepository.delete({ id: user.id });
+    return {
+      message: 'User deleted successfully.',
+    };
+  }
+
+  async updateProfile(user: User, updateDto: UserUpdateDto) {
     const findUser = await this.userRepository.findOne({
       where: [{ id: user.id }, { created_by: user.id }],
       select: [

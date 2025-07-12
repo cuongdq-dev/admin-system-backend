@@ -1,10 +1,16 @@
-import { Post as PostEntity, User } from '@app/entities';
+import { BodyWithUser, UserParam } from '@app/decorators';
+import { Post as PostEntity, Role, User } from '@app/entities';
+import { IsIDExistPipe } from '@app/pipes';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
   Patch,
+  Post,
   Query,
   UploadedFile,
   UseGuards,
@@ -15,7 +21,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiCreatedResponse,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
   PickType,
@@ -26,7 +34,6 @@ import {
   Paginate,
   PaginateQuery,
 } from 'nestjs-paginate';
-import { UserParam } from '../../../../common/decorators/src/user.decorator';
 import { UserUpdateDto } from './user.dto';
 import { postPaginateConfig, userPaginateConfig } from './user.pagination';
 import { UserService } from './user.service';
@@ -42,6 +49,47 @@ export class UserController {
   @ApiPaginationQuery(userPaginateConfig)
   getAll(@Paginate() query: PaginateQuery, @UserParam() user: User) {
     return this.userService.getAll(query, user);
+  }
+
+  @Get(':id')
+  @ApiParam({ name: 'id', type: 'varchar' })
+  getDetail(
+    @Param(
+      'id',
+      IsIDExistPipe({
+        entity: User,
+        filterField: 'id',
+        relations: ['roles', 'avatar', 'banner'],
+      }),
+    )
+    user: User,
+  ) {
+    return this.userService.getDetail(user);
+  }
+
+  @Post('/create')
+  @ApiCreatedResponse({ type: Role })
+  @ApiBody({ type: PickType(Role, []) })
+  create(@BodyWithUser() body: UserUpdateDto, @UserParam() user: User) {
+    return this.userService.create(user, body);
+  }
+
+  @Patch('update/:id')
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  @ApiBody({ type: PickType(User, []) })
+  partialUpdate(
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      IsIDExistPipe({
+        entity: User,
+        relations: ['roles'],
+      }),
+    )
+    user: User,
+    @BodyWithUser() updateDto: UserUpdateDto,
+  ) {
+    return this.userService.update(user, updateDto);
   }
 
   @Get('/me')
@@ -73,7 +121,7 @@ export class UserController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Update logged in user' })
   @ApiOperation({ summary: 'update logged in user' })
   async update(@UserParam() user: User, @Body() updateDto: UserUpdateDto) {
-    return this.userService.update(user, updateDto);
+    return this.userService.updateProfile(user, updateDto);
   }
 
   @Patch('/me/avatar')
@@ -95,5 +143,14 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.userService.uploadBanner(user, file);
+  }
+
+  @Delete('/delete/:id')
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  delete(
+    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: User }))
+    user: User,
+  ) {
+    return this.userService.delete(user);
   }
 }

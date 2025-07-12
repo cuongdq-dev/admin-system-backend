@@ -4,6 +4,7 @@ import {
   Lang,
   Notification,
   Post,
+  Role,
   Site,
   User,
 } from '@app/entities';
@@ -17,6 +18,7 @@ import { UserPermissions } from '@app/entities/user_permissions.entity';
   imports: [
     TypeOrmModule.forFeature([
       Notification,
+      Role,
       Book,
       Lang,
       User,

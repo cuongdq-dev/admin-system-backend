@@ -3,6 +3,7 @@ import {
   Category,
   Notification,
   Post as PostEntity,
+  Role,
   Site,
   User,
 } from '@app/entities';
@@ -23,6 +24,9 @@ export class SettingService {
 
     @InjectRepository(UserPermissions)
     private permissionRepository: Repository<UserPermissions>,
+
+    @InjectRepository(Role)
+    private roleRepository: Repository<Role>,
 
     @InjectRepository(Site)
     private siteRepository: Repository<Site>,
@@ -45,7 +49,7 @@ export class SettingService {
           ? ['POST']
           : ['BOOK', 'POST'];
 
-    const [notifyNew, u, sites, posts, books, categories, permissions] =
+    const [notifyNew, u, sites, posts, books, categories, roles, permissions] =
       await Promise.all([
         this.notificationRepository.count({
           where: { user_id: user.id, status: NotificationStatus.NEW },
@@ -79,6 +83,10 @@ export class SettingService {
             'category.status AS type',
           ])
           .getRawMany(),
+        this.roleRepository
+          .createQueryBuilder('roles')
+          .leftJoinAndSelect('roles.permissions', 'permissions')
+          .getMany(),
         this.permissionRepository.createQueryBuilder('permissions').getMany(),
       ]);
 
@@ -107,6 +115,7 @@ export class SettingService {
       notifyNew,
       dropdown: { sites, posts, books, categories },
       collectionPermission: permissionsArr,
+      roles: roles,
     };
   }
 
