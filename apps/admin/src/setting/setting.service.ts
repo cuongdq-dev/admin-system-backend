@@ -164,7 +164,7 @@ export class SettingService {
       }
     }
 
-    return allChannels;
+    return { keyword: keyword, continuation: continuation, lists: allChannels };
   }
 
   async searchWithCurlRaw(continuation?: string, keyword?: string) {
@@ -402,7 +402,7 @@ export class SettingService {
       if (!c) return {};
 
       return {
-        title: c.title?.simpleText || c.title?.runs?.[0]?.text || '',
+        podcast: c.title?.simpleText || c.title?.runs?.[0]?.text || '',
         channelId: c.channelId,
         subscribersNumber: parseSubscriberCount(
           c?.videoCountText?.simpleText || '',
@@ -412,7 +412,7 @@ export class SettingService {
           c.descriptionSnippet?.runs?.map((run: any) => run.text).join('') ||
           '',
 
-        url: `https://www.youtube.com/channel/${c.channelId}`,
+        link: `https://www.youtube.com/channel/${c.channelId}`,
       };
     });
 
