@@ -57,7 +57,7 @@ export class UserRolesService {
 
     const resultUpdate = await this.roleRepository.save(newData);
 
-    return resultUpdate;
+    return { ...role, ...resultUpdate };
   }
 
   /**

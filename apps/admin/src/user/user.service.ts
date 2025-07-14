@@ -100,6 +100,7 @@ export class UserService {
   async update(user: User, input: UserUpdateDto) {
     const findUser = await this.userRepository.findOne({
       where: [{ id: user.id }, { created_by: user.id }],
+      relations: ['avatar', 'roles'],
       select: [
         'id',
         'name',
@@ -130,7 +131,7 @@ export class UserService {
     };
     const resultUpdate = await this.userRepository.save(newData);
 
-    return resultUpdate;
+    return { ...findUser, ...resultUpdate };
   }
 
   /**
