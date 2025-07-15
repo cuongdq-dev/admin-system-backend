@@ -1,11 +1,56 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { DataSource } from 'typeorm';
+import { REQUEST } from '@nestjs/core';
 
+import { User } from '@app/entities';
+import { userHasPermission } from 'common/helper/permission.helper';
+import { InjectDataSource } from '@nestjs/typeorm';
 @Injectable()
-export class RolesGuard implements CanActivate {
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+export class RoleGuard implements CanActivate {
+  constructor(
+    private reflector: Reflector,
+    @InjectDataSource() private dataSource: DataSource,
+    @Inject(REQUEST) private request: any,
+  ) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const entity = this.reflector.get('entity', context.getHandler());
+    const action = this.reflector.get('action', context.getHandler());
+    if (!entity) {
+      return true; // Không cần kiểm tra nếu không gắn metadata
+    }
+
+    const userRepository = this.dataSource.getRepository(User);
+    const metadata = this.dataSource.getMetadata(entity);
+    const tableName = metadata.tableName;
+
+    const userRequest =
+      this.request?.user?.user || this.request?.user?.customer;
+
+    const user = await userRepository.findOne({
+      where: { id: userRequest.id },
+      relations: ['roles', 'roles.permissions'],
+    });
+    if (!user) {
+      throw new ForbiddenException('User not authenticated');
+    }
+
+    const permission = userHasPermission(user, action, tableName);
+
+    if (!permission) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        message: 'You do not have permission to access this resource',
+        code: 'PERMISSION_DENIED',
+      });
+    }
     return true;
   }
 }
