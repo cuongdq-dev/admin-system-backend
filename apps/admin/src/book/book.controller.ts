@@ -1,6 +1,6 @@
 import { ValidationGroup } from '@app/crud/validation-group';
 import { BodyWithUser, UserParam } from '@app/decorators';
-import { Book, User } from '@app/entities';
+import { Book, Chapter, User } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
 import validationOptions from '@app/utils/validation-options';
 import {
@@ -12,6 +12,7 @@ import {
   Patch,
   Post,
   Query,
+  SetMetadata,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -36,6 +37,8 @@ import {
 import { CreateBookDto } from './book.dto';
 import { bookPaginateConfig } from './book.pagination';
 import { BookService } from './book.service';
+import { RoleGuard } from '@app/guard/roles.guard';
+import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
 
 @ApiTags('Book')
 @ApiBearerAuth()
@@ -47,6 +50,9 @@ export class BookController {
   @Get('/list')
   @ApiOkPaginatedResponse(Book, bookPaginateConfig)
   @ApiPaginationQuery(bookPaginateConfig)
+  @SetMetadata('entity', Book)
+  @SetMetadata('action', 'read')
+  @UseGuards(RoleGuard)
   getAll(
     @Paginate() paginateQuery: PaginateQuery,
     @Query() query: { indexStatus?: string; site_id?: string; status?: string },
@@ -69,6 +75,9 @@ export class BookController {
     type: PickType(Book, ['title', 'meta_description', 'thumbnail']),
   })
   @UseInterceptors(FileInterceptor('thumbnail'))
+  @SetMetadata('entity', Book)
+  @SetMetadata('action', 'create')
+  @UseGuards(RoleGuard)
   @ApiCreatedResponse({ type: Book })
   async createBook(
     @BodyWithUser() body: CreateBookDto,
@@ -78,6 +87,9 @@ export class BookController {
   }
 
   @Post('crawler/:id')
+  @SetMetadata('entity', Chapter)
+  @SetMetadata('action', 'create')
+  @UseGuards(RoleGuard)
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   @UseInterceptors(FileInterceptor('thumbnail'))
   @ApiCreatedResponse({ type: Book })
@@ -95,8 +107,9 @@ export class BookController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
         entity: Book,
+        action: 'update',
         filterField: 'id',
         relations: ['user', 'thumbnail'],
       }),
@@ -116,6 +129,34 @@ export class BookController {
     return this.BookService.update(book.id, updateDto, user, file);
   }
 
+  @Patch('publish/:id')
+  @ApiBody({ type: PickType(Book, ['status']) })
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  @UseInterceptors(FileInterceptor('thumbnail'))
+  publishBook(
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      PermissionDetailPipe({
+        entity: Book,
+        action: 'publish',
+        filterField: 'id',
+      }),
+    )
+    book: Book,
+
+    @BodyWithUser(
+      new ValidationPipe({
+        ...validationOptions,
+        groups: [ValidationGroup.UPDATE],
+      }),
+    )
+    updateDto: CreateBookDto,
+    @UserParam() user: User,
+  ) {
+    return this.BookService.publishBook(book.id, updateDto, user);
+  }
+
   @Post('generate-gemini/:id')
   @ApiBody({
     type: PickType(Book, ['title', 'meta_description', 'keywords']),
@@ -125,8 +166,9 @@ export class BookController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
         entity: Book,
+        action: 'update',
         filterField: 'id',
         relations: ['chapters'],
       }),
@@ -155,9 +197,9 @@ export class BookController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
         entity: Book,
-        checkOwner: true,
+        action: 'delete',
         relations: [
           'user',
           'thumbnail',

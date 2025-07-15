@@ -384,6 +384,48 @@ export class BookService {
     };
   }
 
+  async publishBook(id: string, body: CreateBookDto, user: User) {
+    const { status } = body;
+    const dataToUpdate = {
+      id: id,
+      status: status,
+      updated_by: body.updated_by,
+    };
+
+    if (status) dataToUpdate['status'] = body.status;
+
+    await this.bookRepository.update({ id: id }, dataToUpdate);
+
+    const result = await this.bookRepository.findOne({
+      where: { id: id },
+      relations: [
+        'user',
+        'thumbnail',
+        'categories',
+        'siteBooks',
+        'siteBooks.site',
+      ],
+    });
+
+    return {
+      ...result,
+
+      categories: await this.categoryRepository.find({
+        where: {
+          books: { id: id }, // Liên kết qua bài viết
+          created_by: user.id, // Điều kiện lọc theo user
+        },
+        relations: ['books'], // Nếu cần quan hệ với bài viết
+      }),
+      siteBooks: null,
+      sites: await this.siteRepository.find({
+        where: {
+          id: In(result?.siteBooks?.map((st) => st.site_id)), // Liên kết qua bài viết
+        },
+      }),
+    };
+  }
+
   async delete(book: Book) {
     if (book.status == BookStatus.DELETED) {
       throw new BadRequestException('Books already deleted!');

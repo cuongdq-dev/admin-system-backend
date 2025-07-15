@@ -1,7 +1,9 @@
 import { ValidationGroup } from '@app/crud/validation-group';
 import { BodyWithUser, UserParam } from '@app/decorators';
 import { Post as PostEntity, SitePost, Trending, User } from '@app/entities';
-import { IsIDExistPipe } from '@app/pipes';
+import { RoleGuard } from '@app/guard/roles.guard';
+import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
+import { IsIDExistPipe } from '@app/pipes/IsIDExist.pipe';
 import validationOptions from '@app/utils/validation-options';
 import {
   Controller,
@@ -12,6 +14,7 @@ import {
   Patch,
   Post,
   Query,
+  SetMetadata,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -47,22 +50,32 @@ export class PostController {
   @Get('/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
+  @SetMetadata('entity', PostEntity)
+  @SetMetadata('action', 'read')
+  @UseGuards(RoleGuard)
   getAll(
     @Paginate() paginateQuery: PaginateQuery,
     @Query() query: { indexStatus?: string; site_id?: string; status?: string },
     @UserParam() user: User,
   ) {
+    const paramQuery = {
+      status: query?.status?.split(','),
+      created_by: user.id,
+    };
+
     return this.postService.getAll({
       ...paginateQuery,
       ...query,
-      status: query?.status?.split(','),
-      created_by: user.id,
+      ...paramQuery,
     });
   }
 
   @Get('/archived/list')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
+  @UseGuards(RoleGuard)
+  @SetMetadata('entity', PostEntity)
+  @SetMetadata('action', 'read')
   getArchived(
     @Paginate() paginate: PaginateQuery,
     @Query() query: { indexStatus?: string; site_id: string },
@@ -76,7 +89,11 @@ export class PostController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({ entity: SitePost, filterField: 'id' }),
+      PermissionDetailPipe({
+        entity: SitePost,
+        subject: 'posts',
+        filterField: 'id',
+      }),
     )
     sitePost: SitePost,
   ) {
@@ -84,6 +101,9 @@ export class PostController {
   }
 
   @Get('/unused/list')
+  @SetMetadata('entity', PostEntity)
+  @UseGuards(RoleGuard)
+  @SetMetadata('action', 'read')
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
   getUnusedPosts(
@@ -99,7 +119,8 @@ export class PostController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
+        action: 'delete',
         entity: PostEntity,
         filterField: 'id',
         relations: [
@@ -119,14 +140,29 @@ export class PostController {
   @Get('/trending/list')
   @ApiOkPaginatedResponse(Trending, trendingPaginateConfig)
   @ApiPaginationQuery(trendingPaginateConfig)
+  @SetMetadata('entity', PostEntity)
+  @UseGuards(RoleGuard)
+  @SetMetadata('action', 'read')
   getTrendingPosts(@Paginate() query: PaginateQuery) {
     return this.postService.getTrendings(query);
   }
 
   @Delete('/trending/delete/:id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
-  deleteTrendingPost(@Param('id') trendingId: string) {
-    return this.postService.deleteTrending(trendingId);
+  deleteTrendingPost(
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      PermissionDetailPipe({
+        action: 'delete',
+        entity: Trending,
+        subject: 'posts',
+        filterField: 'id',
+      }),
+    )
+    post: PostEntity,
+  ) {
+    return this.postService.deleteTrending(post.id);
   }
 
   @Get(':slug')
@@ -134,8 +170,9 @@ export class PostController {
   getPostBySlug(
     @Param(
       'slug',
-      IsIDExistPipe({
+      PermissionDetailPipe({
         entity: PostEntity,
+        action: 'read',
         filterField: 'slug',
         relations: [
           'user',
@@ -169,6 +206,9 @@ export class PostController {
     ]),
   })
   @UseInterceptors(FileInterceptor('thumbnail'))
+  @SetMetadata('entity', PostEntity)
+  @SetMetadata('action', 'create')
+  @UseGuards(RoleGuard)
   @ApiCreatedResponse({ type: PostEntity })
   async createPost(
     @BodyWithUser() body: CreatePostDto,
@@ -193,10 +233,10 @@ export class PostController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
+        action: 'update',
         entity: PostEntity,
         filterField: 'id',
-        // checkOwner: true,
         relations: [
           'user',
           'thumbnail',
@@ -208,6 +248,7 @@ export class PostController {
       }),
     )
     post: PostEntity,
+
     @BodyWithUser(
       new ValidationPipe({
         ...validationOptions,
@@ -221,15 +262,43 @@ export class PostController {
     return this.postService.update(post.id, updateDto, user, file);
   }
 
+  @Patch('publish/:id')
+  @ApiBody({ type: PickType(PostEntity, ['status']) })
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  @UseInterceptors(FileInterceptor('thumbnail'))
+  publishPost(
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      PermissionDetailPipe({
+        action: 'update',
+        entity: PostEntity,
+        filterField: 'id',
+      }),
+    )
+    post: PostEntity,
+
+    @BodyWithUser(
+      new ValidationPipe({
+        ...validationOptions,
+        groups: [ValidationGroup.UPDATE],
+      }),
+    )
+    updateDto: CreatePostDto,
+    @UserParam() user: User,
+  ) {
+    return this.postService.publishPost(post.id, updateDto, user);
+  }
+
   @Delete(':id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   deletePost(
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
         entity: PostEntity,
-        checkOwner: true,
+        action: 'delete',
         relations: [
           'user',
           'thumbnail',
