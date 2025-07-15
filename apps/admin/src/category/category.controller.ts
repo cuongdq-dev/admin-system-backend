@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  SetMetadata,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -24,6 +25,8 @@ import { categoryPaginateConfig } from './category.pagination';
 import { CategoryService } from './category.service';
 import { Headers } from '@nestjs/common';
 import { workspaceEnum } from '@app/utils';
+import { RoleGuard } from '@app/guard/roles.guard';
+import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
 
 @ApiTags('Category')
 @ApiBearerAuth()
@@ -35,6 +38,9 @@ export class CategoryController {
   @Get('/list')
   @ApiOkPaginatedResponse(Category, categoryPaginateConfig)
   @ApiPaginationQuery(categoryPaginateConfig)
+  @SetMetadata('entity', Category)
+  @SetMetadata('action', 'read')
+  @UseGuards(RoleGuard)
   getAll(
     @Paginate() query: PaginateQuery,
     @UserParam() user: User,
@@ -44,6 +50,9 @@ export class CategoryController {
   }
 
   @Post('/create')
+  @SetMetadata('entity', Category)
+  @SetMetadata('action', 'create')
+  @UseGuards(RoleGuard)
   @ApiCreatedResponse({ type: Category })
   create(
     @BodyWithUser() createDto: CategoryBodyDto,
@@ -60,9 +69,9 @@ export class CategoryController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
+        action: 'update',
         entity: Category,
-        checkOwner: true,
         relations: ['posts', 'sites'],
       }),
     )
@@ -83,9 +92,9 @@ export class CategoryController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
         entity: Category,
-        checkOwner: true,
+        action: 'delete',
         relations: ['posts'],
       }),
     )

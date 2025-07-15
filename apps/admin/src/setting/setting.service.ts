@@ -1,4 +1,3 @@
-import * as https from 'https';
 import {
   Book,
   Category,

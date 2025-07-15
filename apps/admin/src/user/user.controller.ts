@@ -12,6 +12,7 @@ import {
   Patch,
   Post,
   Query,
+  SetMetadata,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -37,6 +38,8 @@ import {
 import { UserUpdateDto } from './user.dto';
 import { postPaginateConfig, userPaginateConfig } from './user.pagination';
 import { UserService } from './user.service';
+import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
+import { RoleGuard } from '@app/guard/roles.guard';
 @ApiTags('User')
 @ApiBearerAuth()
 @Controller({ path: 'users', version: '1' })
@@ -47,6 +50,9 @@ export class UserController {
   @Get('/list')
   @ApiOkPaginatedResponse(User, userPaginateConfig)
   @ApiPaginationQuery(userPaginateConfig)
+  @SetMetadata('entity', User)
+  @SetMetadata('action', 'read')
+  @UseGuards(RoleGuard)
   getAll(@Paginate() query: PaginateQuery, @UserParam() user: User) {
     return this.userService.getAll(query, user);
   }
@@ -56,8 +62,9 @@ export class UserController {
   getDetail(
     @Param(
       'id',
-      IsIDExistPipe({
+      PermissionDetailPipe({
         entity: User,
+        action: 'read',
         filterField: 'id',
         relations: ['roles', 'avatar', 'banner'],
       }),
@@ -68,6 +75,9 @@ export class UserController {
   }
 
   @Post('/create')
+  @SetMetadata('entity', User)
+  @SetMetadata('action', 'create')
+  @UseGuards(RoleGuard)
   @ApiCreatedResponse({ type: Role })
   @ApiBody({ type: PickType(Role, []) })
   create(@BodyWithUser() body: UserUpdateDto, @UserParam() user: User) {
@@ -81,7 +91,8 @@ export class UserController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
+        action: 'update',
         entity: User,
         relations: ['roles'],
       }),
@@ -92,13 +103,38 @@ export class UserController {
     return this.userService.update(user, updateDto);
   }
 
+  @Patch('publish/:id')
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  @ApiBody({ type: PickType(User, []) })
+  partialPublish(
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      PermissionDetailPipe({
+        action: 'publish',
+        entity: User,
+        relations: ['roles'],
+      }),
+    )
+    user: User,
+    @BodyWithUser() updateDto: UserUpdateDto,
+  ) {
+    return this.userService.publish(user, updateDto);
+  }
+
   @Get('/me')
+  @SetMetadata('entity', User)
+  @SetMetadata('action', 'read')
+  @UseGuards(RoleGuard)
   @ApiOperation({ summary: 'get logged in user details' })
   async me(@UserParam() user: User) {
     return this.userService.findMe(user);
   }
 
   @Get('/post/list')
+  @SetMetadata('entity', User)
+  @SetMetadata('action', 'read')
+  @UseGuards(RoleGuard)
   @ApiOkPaginatedResponse(PostEntity, postPaginateConfig)
   @ApiPaginationQuery(postPaginateConfig)
   getPostByUser(
@@ -148,7 +184,11 @@ export class UserController {
   @Delete('/delete/:id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   delete(
-    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: User }))
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      PermissionDetailPipe({ action: 'delete', entity: User }),
+    )
     user: User,
   ) {
     return this.userService.delete(user);

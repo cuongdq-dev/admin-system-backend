@@ -1,6 +1,6 @@
-import { Headers } from '@nestjs/common';
+import { Headers, SetMetadata } from '@nestjs/common';
 import { BodyWithUser, UserParam } from '@app/decorators';
-import { Site, User } from '@app/entities';
+import { Category, Site, User } from '@app/entities';
 import { IsIDExistPipe } from '@app/pipes';
 import {
   Body,
@@ -31,6 +31,8 @@ import {
 import { SiteBodyDto } from './site.dto';
 import { sitePaginateConfig } from './site.pagination';
 import { SiteService } from './site.service';
+import { RoleGuard } from '@app/guard/roles.guard';
+import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
 
 @ApiTags('site')
 @ApiBearerAuth()
@@ -40,6 +42,9 @@ export class SiteController {
   constructor(private siteService: SiteService) {}
 
   @Get('/list')
+  @SetMetadata('entity', Site)
+  @SetMetadata('action', 'read')
+  @UseGuards(RoleGuard)
   @ApiOkPaginatedResponse(Site, sitePaginateConfig)
   @ApiPaginationQuery(sitePaginateConfig)
   getAll(
@@ -53,6 +58,9 @@ export class SiteController {
   @Post('/create')
   @ApiCreatedResponse({ type: Site })
   @ApiBody({ type: PickType(Site, []) })
+  @SetMetadata('entity', Category)
+  @SetMetadata('action', 'create')
+  @UseGuards(RoleGuard)
   create(
     @BodyWithUser() createDto: SiteBodyDto,
     @UserParam() user: User,
@@ -82,9 +90,9 @@ export class SiteController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
         entity: Site,
-        checkOwner: true,
+        action: 'update',
         relations: ['sitePosts', 'categories'],
       }),
     )
@@ -101,7 +109,7 @@ export class SiteController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({ entity: Site, checkOwner: true }),
+      PermissionDetailPipe({ entity: Site, action: 'delete' }),
     )
     site: Site,
 
@@ -111,6 +119,9 @@ export class SiteController {
   }
 
   @Get('/:id/categories/list')
+  @SetMetadata('entity', Category)
+  @SetMetadata('action', 'read')
+  @UseGuards(RoleGuard)
   getCategoriesBySiteId(@Param('id') id: string) {
     return this.siteService.getCategoriesBySiteId(id);
   }
@@ -129,7 +140,14 @@ export class SiteController {
   @Get('/:id')
   @ApiParam({ name: 'id', type: 'varchar' })
   getById(
-    @Param('id', IsIDExistPipe({ entity: Site, relations: ['categories'] }))
+    @Param(
+      'id',
+      PermissionDetailPipe({
+        action: 'read',
+        entity: Site,
+        relations: ['categories'],
+      }),
+    )
     site: Site,
   ) {
     return this.siteService.getById(site);

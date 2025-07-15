@@ -134,6 +134,43 @@ export class UserService {
     return { ...findUser, ...resultUpdate };
   }
 
+  async publish(user: User, input: UserUpdateDto) {
+    const findUser = await this.userRepository.findOne({
+      where: [{ id: user.id }, { created_by: user.id }],
+      relations: ['avatar', 'roles'],
+      select: [
+        'id',
+        'name',
+        'email',
+        'phoneNumber',
+        'address',
+        'is_active',
+        'created_at',
+        'updated_at',
+      ],
+    });
+
+    if (!findUser) throw new NotFoundException('User not found.');
+
+    const roles = await this.roleRepository.find({
+      where: { id: In(input.roles.map((r) => r.id)) },
+    });
+
+    const newData = {
+      id: findUser.id,
+      name: input.name,
+      email: input.email,
+      address: input.address,
+      is_active: input.is_active,
+      password: input.password,
+      updated_by: user.id,
+      roles: roles,
+    };
+    const resultUpdate = await this.userRepository.save(newData);
+
+    return { ...findUser, ...resultUpdate };
+  }
+
   /**
    * Xóa site (soft delete)
    */
