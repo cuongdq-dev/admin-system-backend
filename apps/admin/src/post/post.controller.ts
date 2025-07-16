@@ -3,7 +3,6 @@ import { BodyWithUser, UserParam } from '@app/decorators';
 import { Post as PostEntity, SitePost, Trending, User } from '@app/entities';
 import { RoleGuard } from '@app/guard/roles.guard';
 import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
-import { IsIDExistPipe } from '@app/pipes/IsIDExist.pipe';
 import validationOptions from '@app/utils/validation-options';
 import {
   Controller,

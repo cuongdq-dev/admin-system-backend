@@ -1,10 +1,13 @@
 import { BodyWithUser, UserParam } from '@app/decorators';
 import { Category, User } from '@app/entities';
-import { IsIDExistPipe } from '@app/pipes';
+import { RoleGuard } from '@app/guard/roles.guard';
+import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
+import { workspaceEnum } from '@app/utils';
 import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -23,10 +26,6 @@ import {
 import { CategoryBodyDto } from './category.dto';
 import { categoryPaginateConfig } from './category.pagination';
 import { CategoryService } from './category.service';
-import { Headers } from '@nestjs/common';
-import { workspaceEnum } from '@app/utils';
-import { RoleGuard } from '@app/guard/roles.guard';
-import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
 
 @ApiTags('Category')
 @ApiBearerAuth()

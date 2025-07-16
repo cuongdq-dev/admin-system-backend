@@ -1,6 +1,7 @@
 import { BodyWithUser, UserParam } from '@app/decorators';
 import { Post as PostEntity, Role, User } from '@app/entities';
-import { IsIDExistPipe } from '@app/pipes';
+import { RoleGuard } from '@app/guard/roles.guard';
+import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
 import {
   Body,
   Controller,
@@ -38,8 +39,6 @@ import {
 import { UserUpdateDto } from './user.dto';
 import { postPaginateConfig, userPaginateConfig } from './user.pagination';
 import { UserService } from './user.service';
-import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
-import { RoleGuard } from '@app/guard/roles.guard';
 @ApiTags('User')
 @ApiBearerAuth()
 @Controller({ path: 'users', version: '1' })

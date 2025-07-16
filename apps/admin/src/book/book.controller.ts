@@ -1,7 +1,8 @@
 import { ValidationGroup } from '@app/crud/validation-group';
 import { BodyWithUser, UserParam } from '@app/decorators';
 import { Book, Chapter, User } from '@app/entities';
-import { IsIDExistPipe } from '@app/pipes';
+import { RoleGuard } from '@app/guard/roles.guard';
+import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
 import validationOptions from '@app/utils/validation-options';
 import {
   Controller,
@@ -37,8 +38,6 @@ import {
 import { CreateBookDto } from './book.dto';
 import { bookPaginateConfig } from './book.pagination';
 import { BookService } from './book.service';
-import { RoleGuard } from '@app/guard/roles.guard';
-import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
 
 @ApiTags('Book')
 @ApiBearerAuth()

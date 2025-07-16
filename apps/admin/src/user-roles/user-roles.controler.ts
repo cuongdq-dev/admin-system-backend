@@ -1,6 +1,7 @@
 import { BodyWithUser, UserParam } from '@app/decorators';
 import { Role, User } from '@app/entities';
-import { IsIDExistPipe } from '@app/pipes';
+import { RoleGuard } from '@app/guard/roles.guard';
+import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
 import {
   Controller,
   Delete,
@@ -9,6 +10,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  SetMetadata,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -38,6 +40,9 @@ export class UserRolesController {
   constructor(private userRolesService: UserRolesService) {}
 
   @Get('/list')
+  @SetMetadata('entity', Role)
+  @SetMetadata('action', 'read')
+  @UseGuards(RoleGuard)
   @ApiOkPaginatedResponse(Role, userRolesPaginateConfig)
   @ApiPaginationQuery(userRolesPaginateConfig)
   getAll(@Paginate() query: PaginateQuery, @UserParam() user: User) {
@@ -49,7 +54,8 @@ export class UserRolesController {
   getDetail(
     @Param(
       'id',
-      IsIDExistPipe({
+      PermissionDetailPipe({
+        action: 'read',
         entity: Role,
         filterField: 'id',
         relations: ['users', 'permissions'],
@@ -74,7 +80,8 @@ export class UserRolesController {
     @Param(
       'id',
       ParseUUIDPipe,
-      IsIDExistPipe({
+      PermissionDetailPipe({
+        action: 'update',
         entity: Role,
         relations: ['users', 'permissions'],
       }),
@@ -88,7 +95,14 @@ export class UserRolesController {
   @Delete('/delete/:id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   delete(
-    @Param('id', ParseUUIDPipe, IsIDExistPipe({ entity: Role }))
+    @Param(
+      'id',
+      ParseUUIDPipe,
+      PermissionDetailPipe({
+        action: 'delete',
+        entity: Role,
+      }),
+    )
     role: Role,
   ) {
     return this.userRolesService.delete(role);

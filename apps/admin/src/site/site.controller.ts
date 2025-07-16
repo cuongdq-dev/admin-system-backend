@@ -1,16 +1,17 @@
-import { Headers, SetMetadata } from '@nestjs/common';
 import { BodyWithUser, UserParam } from '@app/decorators';
 import { Category, Site, User } from '@app/entities';
-import { IsIDExistPipe } from '@app/pipes';
+import { RoleGuard } from '@app/guard/roles.guard';
+import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
 import {
-  Body,
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
+  SetMetadata,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -31,8 +32,6 @@ import {
 import { SiteBodyDto } from './site.dto';
 import { sitePaginateConfig } from './site.pagination';
 import { SiteService } from './site.service';
-import { RoleGuard } from '@app/guard/roles.guard';
-import { PermissionDetailPipe } from '@app/pipes/permission.pipe';
 
 @ApiTags('site')
 @ApiBearerAuth()
@@ -68,20 +67,6 @@ export class SiteController {
   ) {
     return this.siteService.create(user, createDto, workspaces);
   }
-
-  // @Post('/telegram/:id')
-  // getTelegram(
-  //   @Body() body: { token: string },
-  //   @Param(
-  //     'id',
-  //     ParseUUIDPipe,
-  //     IsIDExistPipe({ entity: Site, checkOwner: true }),
-  //   )
-  //   site: Site,
-  //   @Headers('workspaces') workspaces: string,
-  // ) {
-  //   return this.siteService.getTelegram(body.token, site);
-  // }
 
   @Patch('update/:id')
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
