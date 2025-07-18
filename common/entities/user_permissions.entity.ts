@@ -4,10 +4,12 @@ import {
   JoinColumn,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   Unique,
 } from 'typeorm';
 import { BaseEntity } from './base';
 import { Role } from './user_roles.entity';
+import { RolePermissionCondition } from './role_permission_condition.entity';
 
 // common/entities/permission.entity.ts
 @Entity({ name: 'user_permissions' })
@@ -27,4 +29,7 @@ export class UserPermissions extends BaseEntity {
 
   @ManyToMany(() => Role, (role) => role.permissions)
   roles: Role[];
+
+  @OneToMany(() => RolePermissionCondition, (rpc) => rpc.permission)
+  role_permission_conditions: RolePermissionCondition[];
 }

@@ -58,7 +58,12 @@ export class UserRolesController {
         action: 'read',
         entity: Role,
         filterField: 'id',
-        relations: ['users', 'permissions'],
+        relations: [
+          'users',
+          'permissions',
+          'permissions.role_permission_conditions',
+          'permissions.role_permission_conditions.permission',
+        ],
       }),
     )
     role: Role,

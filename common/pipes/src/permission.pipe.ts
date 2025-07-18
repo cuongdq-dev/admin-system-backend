@@ -52,7 +52,11 @@ export const PermissionDetailPipe: PermissionPipeType = ({
 
       const user = await userRepository.findOne({
         where: { id: userRequest.id },
-        relations: ['roles', 'roles.permissions'],
+        relations: [
+          'roles',
+          'roles.permissions',
+          'roles.permissions.role_permission_conditions',
+        ],
       });
 
       if (!user) throw new ForbiddenException('User not authenticated');

@@ -11,6 +11,9 @@ import {
 import { Type } from 'class-transformer';
 import { ValidationGroup } from '@app/crud/validation-group';
 
+type Condition = {
+  [key: string]: any; // ví dụ: { region: 'VN', time: 'daytime' }
+};
 class PermissionIdDto {
   @IsUUID()
   permissionId: string;
@@ -22,6 +25,9 @@ class PermissionIdDto {
   @IsOptional()
   @IsString()
   collectionName?: string;
+
+  @IsOptional()
+  conditions?: Condition;
 }
 
 export class RoleBodyDto {

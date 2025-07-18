@@ -12,7 +12,13 @@ export function userHasPermission(
   for (const role of user.roles) {
     for (const permission of role.permissions) {
       if (permission.action === action && permission.subject === subject) {
-        matched.push(permission);
+        const conditions = permission.role_permission_conditions[0];
+        const mapper = {
+          ...permission,
+          conditions: conditions?.conditions,
+        } as UserPermissions;
+
+        matched.push(mapper);
       }
     }
   }

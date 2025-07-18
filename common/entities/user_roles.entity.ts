@@ -2,6 +2,7 @@ import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 import { BaseEntity } from './base';
 import { User } from './user.entity';
 import { UserPermissions } from './user_permissions.entity';
+import { RolePermissionCondition } from './role_permission_condition.entity';
 
 // common/entities/role.entity.ts
 @Entity({ name: 'roles' })
@@ -27,6 +28,11 @@ export class Role extends BaseEntity {
     inverseJoinColumn: { name: 'permission_id', referencedColumnName: 'id' },
   })
   permissions: UserPermissions[];
+
+  @OneToMany(() => RolePermissionCondition, (rpc) => rpc.role, {
+    cascade: true,
+  })
+  role_permission_conditions: RolePermissionCondition[];
 
   @ManyToMany(() => User, (user) => user.roles, { cascade: true })
   users: User[];

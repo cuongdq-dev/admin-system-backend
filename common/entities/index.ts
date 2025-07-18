@@ -24,6 +24,7 @@ import { Product } from './product.entity';
 import { ProductVariant } from './product_variant.entity';
 import { ProductVariantMedia } from './product_variant_media.entity';
 import { Repository } from './repository.entity';
+import { RolePermissionCondition } from './role_permission_condition.entity';
 import { Server } from './server.entity';
 import { Service } from './service.entity';
 import { ServerService } from './service_service.entity';
@@ -65,6 +66,7 @@ export {
   ProductVariantMedia,
   Repository,
   Server,
+  RolePermissionCondition,
   ServerService,
   Service,
   Session,
@@ -97,6 +99,7 @@ export const loadEntities = [
   Token,
   SiteBook,
   GoogleIndexBookRequest,
+  RolePermissionCondition,
   Book,
   User,
   Customer,
