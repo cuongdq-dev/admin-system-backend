@@ -1,13 +1,13 @@
 // src/common/services/batch-log.service.ts
 
-import { Role, RolePermissionCondition, User } from '@app/entities';
-import { UserPermissions } from '@app/entities/user_permissions.entity';
+import { Role, User, Permission, RolePermission } from '@app/entities';
+
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { DataSource, In, Repository } from 'typeorm';
 import { RoleBodyDto } from './user-roles.dto';
-import { userRolesPaginateConfig } from './user-roles.pagination';
+import { rolesPaginateConfig } from './user-roles.pagination';
 
 @Injectable()
 export class UserRolesService {
@@ -15,25 +15,14 @@ export class UserRolesService {
     private readonly dataSource: DataSource,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
-
-    @InjectRepository(RolePermissionCondition)
-    private readonly permissionConditionRepository: Repository<RolePermissionCondition>,
   ) {}
 
   async getAll(query: PaginateQuery, user: User) {
-    return await paginate(query, this.roleRepository, userRolesPaginateConfig);
+    return await paginate(query, this.roleRepository, rolesPaginateConfig);
   }
 
   async getDetail(role: Role) {
-    return {
-      ...role,
-      permissions: role.permissions.map((p) => {
-        return {
-          ...p,
-          conditions: p?.role_permission_conditions[0]?.conditions,
-        };
-      }),
-    };
+    return role;
   }
 
   async create(user: User, createDto: RoleBodyDto) {
@@ -44,89 +33,65 @@ export class UserRolesService {
         type: 'custom',
         created_by: user.id,
       });
+
       const savedRole = await manager.save(role);
 
-      const rpcList = createDto.permissions.map((p) =>
-        manager.create(RolePermissionCondition, {
+      // Tạo danh sách RolePermission tương ứng
+      const rolePermissions = createDto.permissions.map((p) =>
+        manager.create(RolePermission, {
           role: savedRole,
           permission: { id: p.permissionId },
           conditions: p.conditions,
+          created_by: user.id,
         }),
       );
-      await manager.save(RolePermissionCondition, rpcList);
+
+      await manager.save(RolePermission, rolePermissions);
 
       const result = await manager.findOne(Role, {
-        where: { id: role?.id },
-        relations: [
-          'users',
-          'permissions',
-          'permissions.role_permission_conditions',
-        ],
+        where: { id: savedRole.id },
+        relations: ['role_permissions', 'role_permissions.permission'],
       });
 
       return {
         ...result,
-        permissions: result?.permissions?.map((p) => {
-          return {
-            ...p,
-            conditions: p?.role_permission_conditions[0]?.conditions,
-          };
-        }),
+        permissions: result?.role_permissions?.map((rp) => ({
+          ...rp.permission,
+          conditions: rp.conditions,
+        })),
       };
     });
   }
 
   async update(role: Role, input: RoleBodyDto) {
     return this.dataSource.transaction(async (manager) => {
-      // 1. Tìm các permissions theo ID
-      const permissionIds =
-        input?.permissions?.map((p) => p.permissionId) ?? [];
-      const permissions = await manager.find(UserPermissions, {
-        where: { id: In(permissionIds) },
-      });
-
-      // 2. Cập nhật thông tin role và permissions
-      const updatedRole = await manager.save(Role, {
-        id: role.id,
+      // Cập nhật name & description
+      await manager.update(Role, role.id, {
         name: input.name,
         description: input.description,
-        permissions,
       });
 
-      // 3. Xoá toàn bộ conditions cũ của role
-      await manager.delete(RolePermissionCondition, { role_id: role.id });
+      // Xoá tất cả role_permissions cũ
+      await manager.delete(RolePermission, { role: { id: role.id } });
 
-      // 4. Ghi lại conditions mới nếu có
-      const conditions = input.permissions
-        .filter((p) => p.conditions)
-        .map((p) => ({
-          role_id: role.id,
-          permission_id: p.permissionId,
+      // Ghi mới lại
+      const newRolePermissions = input.permissions.map((p) =>
+        manager.create(RolePermission, {
+          role: { id: role.id },
+          permission: { id: p.permissionId },
           conditions: p.conditions,
-        }));
+          updated_by: role.updated_by,
+        }),
+      );
 
-      if (conditions.length > 0) {
-        await manager.save(RolePermissionCondition, conditions);
-      }
+      await manager.save(RolePermission, newRolePermissions);
 
       const result = await manager.findOne(Role, {
-        where: { id: role?.id },
-        relations: [
-          'users',
-          'permissions',
-          'permissions.role_permission_conditions',
-        ],
+        where: { id: role.id },
+        relations: ['role_permissions', 'role_permissions.permission'],
       });
 
-      return {
-        ...result,
-        permissions: result?.permissions?.map((p) => {
-          return {
-            ...p,
-            conditions: p?.role_permission_conditions[0]?.conditions,
-          };
-        }),
-      };
+      return result;
     });
   }
 
@@ -134,9 +99,13 @@ export class UserRolesService {
    * Xóa site (soft delete)
    */
   async delete(role: Role) {
-    await this.roleRepository.delete({ id: role.id });
-    return {
-      message: 'Site deleted successfully.',
-    };
+    return this.dataSource.transaction(async (manager) => {
+      await manager.softDelete(Role, { id: role.id });
+      await manager.softDelete(RolePermission, { role: { id: role.id } });
+
+      return {
+        message: 'Role deleted successfully.',
+      };
+    });
   }
 }

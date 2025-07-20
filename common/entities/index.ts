@@ -19,12 +19,14 @@ import { Media, StorageType } from './media.entity';
 import { Notification } from './notification.entity';
 import { Order, OrderStatus } from './order.entity';
 import { Payment, PaymentProvider, PaymentStatus } from './payment.entity';
+import { Permission } from './permission.entity';
 import { Post } from './post.entity';
 import { Product } from './product.entity';
 import { ProductVariant } from './product_variant.entity';
 import { ProductVariantMedia } from './product_variant_media.entity';
 import { Repository } from './repository.entity';
-import { RolePermissionCondition } from './role_permission_condition.entity';
+import { Role } from './role.entity';
+import { RolePermission } from './role_permission.entity';
 import { Server } from './server.entity';
 import { Service } from './service.entity';
 import { ServerService } from './service_service.entity';
@@ -34,8 +36,7 @@ import { SitePost } from './site_posts.entity';
 import { Trending } from './trending.entity';
 import { TrendingArticle } from './trending_articles.entity';
 import { User } from './user.entity';
-import { UserPermissions } from './user_permissions.entity';
-import { Role } from './user_roles.entity';
+import { UserRole } from './user_roles.entity';
 import { Session } from './user_session.entity';
 import { Token, TokenType as UserTokenType } from './user_token.entity';
 
@@ -66,7 +67,6 @@ export {
   ProductVariantMedia,
   Repository,
   Server,
-  RolePermissionCondition,
   ServerService,
   Service,
   Session,
@@ -83,8 +83,10 @@ export {
   User as User,
   UserTokenType,
   // role
-  UserPermissions as Permission,
   Role,
+  Permission,
+  UserRole,
+  RolePermission,
 };
 export const loadEntities = [
   CustomerSession,
@@ -99,7 +101,6 @@ export const loadEntities = [
   Token,
   SiteBook,
   GoogleIndexBookRequest,
-  RolePermissionCondition,
   Book,
   User,
   Customer,
@@ -123,6 +124,8 @@ export const loadEntities = [
   ServerService,
   LangContent,
   // role
-  UserPermissions,
   Role,
+  Permission,
+  UserRole,
+  RolePermission,
 ];

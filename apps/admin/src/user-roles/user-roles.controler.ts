@@ -29,7 +29,7 @@ import {
   PaginateQuery,
 } from 'nestjs-paginate';
 import { RoleBodyDto } from './user-roles.dto';
-import { userRolesPaginateConfig } from './user-roles.pagination';
+import { rolesPaginateConfig } from './user-roles.pagination';
 import { UserRolesService } from './user-roles.service';
 
 @ApiTags('roles')
@@ -43,8 +43,8 @@ export class UserRolesController {
   @SetMetadata('entity', Role)
   @SetMetadata('action', 'read')
   @UseGuards(RoleGuard)
-  @ApiOkPaginatedResponse(Role, userRolesPaginateConfig)
-  @ApiPaginationQuery(userRolesPaginateConfig)
+  @ApiOkPaginatedResponse(Role, rolesPaginateConfig)
+  @ApiPaginationQuery(rolesPaginateConfig)
   getAll(@Paginate() query: PaginateQuery, @UserParam() user: User) {
     return this.userRolesService.getAll(query, user);
   }
@@ -59,10 +59,9 @@ export class UserRolesController {
         entity: Role,
         filterField: 'id',
         relations: [
-          'users',
-          'permissions',
-          'permissions.role_permission_conditions',
-          'permissions.role_permission_conditions.permission',
+          'user_roles',
+          'role_permissions',
+          'role_permissions.permission',
         ],
       }),
     )
@@ -88,7 +87,11 @@ export class UserRolesController {
       PermissionDetailPipe({
         action: 'update',
         entity: Role,
-        relations: ['users', 'permissions'],
+        relations: [
+          'user_roles',
+          'role_permissions',
+          'role_permissions.permission',
+        ],
       }),
     )
     role: Role,
@@ -103,10 +106,7 @@ export class UserRolesController {
     @Param(
       'id',
       ParseUUIDPipe,
-      PermissionDetailPipe({
-        action: 'delete',
-        entity: Role,
-      }),
+      PermissionDetailPipe({ action: 'delete', entity: Role }),
     )
     role: Role,
   ) {

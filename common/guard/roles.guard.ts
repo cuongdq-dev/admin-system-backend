@@ -36,7 +36,13 @@ export class RoleGuard implements CanActivate {
 
     const user = await userRepository.findOne({
       where: { id: userRequest.id },
-      relations: ['roles', 'roles.permissions'],
+
+      relations: [
+        'user_roles',
+        'user_roles.role',
+        'user_roles.role.role_permissions',
+        'user_roles.role.role_permissions.permission',
+      ],
     });
     if (!user) {
       throw new ForbiddenException('User not authenticated');

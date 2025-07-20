@@ -65,7 +65,12 @@ export class UserController {
         entity: User,
         action: 'read',
         filterField: 'id',
-        relations: ['roles', 'avatar', 'banner'],
+        relations: [
+          'user_roles',
+          'user_roles.role',
+          'user_roles.role.role_permissions',
+          'user_roles.role.role_permissions.permission',
+        ],
       }),
     )
     user: User,
@@ -93,32 +98,16 @@ export class UserController {
       PermissionDetailPipe({
         action: 'update',
         entity: User,
-        relations: ['roles'],
+        relations: ['user_roles', 'user_roles.role'],
       }),
     )
-    user: User,
-    @BodyWithUser() updateDto: UserUpdateDto,
-  ) {
-    return this.userService.update(user, updateDto);
-  }
+    updateUser: User,
 
-  @Patch('publish/:id')
-  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
-  @ApiBody({ type: PickType(User, []) })
-  partialPublish(
-    @Param(
-      'id',
-      ParseUUIDPipe,
-      PermissionDetailPipe({
-        action: 'publish',
-        entity: User,
-        relations: ['roles'],
-      }),
-    )
-    user: User,
     @BodyWithUser() updateDto: UserUpdateDto,
+
+    @UserParam() user: User,
   ) {
-    return this.userService.publish(user, updateDto);
+    return this.userService.update(updateUser, updateDto, user);
   }
 
   @Get('/me')

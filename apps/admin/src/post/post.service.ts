@@ -285,8 +285,6 @@ export class PostService {
       dataToUpdate['thumbnail_id'] = thumbnailResult.generatedMaps[0].id;
     }
 
-    console.log(dataToUpdate);
-
     await this.dataSource.transaction(async (manager) => {
       if (dataToUpdate['sitePosts']) {
         await manager.delete(SitePost, { post_id: id });

@@ -1,6 +1,7 @@
 import {
   Category,
   Media,
+  Permission,
   Post,
   Role,
   Site,
@@ -12,7 +13,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MediaModule } from '../media/media.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { UserPermissions } from '@app/entities/user_permissions.entity';
 
 @Module({
   imports: [
@@ -20,7 +20,7 @@ import { UserPermissions } from '@app/entities/user_permissions.entity';
       User,
       Site,
       Post,
-      UserPermissions,
+      Permission,
       Role,
       Category,
       SitePost,

@@ -36,14 +36,18 @@ export class EmailService {
       where: { email: loginDto.email.toLowerCase() },
     });
     if (!user) {
-      throw new UnprocessableEntityException({ email: 'User not found' });
+      throw new UnprocessableEntityException({
+        errors: { email: 'User not found' },
+      });
     }
     if (!user.is_active) {
-      throw new UnprocessableEntityException({ email: 'User not active' });
+      throw new UnprocessableEntityException({
+        errors: { email: 'User not active' },
+      });
     }
     if (!user.comparePassword(loginDto.password)) {
       throw new UnprocessableEntityException({
-        password: 'Password is incorrect',
+        errors: { password: 'Password is incorrect' },
       });
     }
     return this.authService.createJwtToken(user);
@@ -55,7 +59,11 @@ export class EmailService {
     });
 
     if (!user)
-      throw new UnprocessableEntityException({ email: 'User not found' });
+      throw new UnprocessableEntityException({
+        errors: {
+          email: 'User not found',
+        },
+      });
 
     const token = await this.tokenService.create(user, 'RESET_PASSWORD');
     await this.authService.forgotPasswordEmail({
@@ -73,7 +81,11 @@ export class EmailService {
       user.password = resetPasswordDto.password;
       await user.save();
     } catch (e) {
-      throw new UnprocessableEntityException({ reset_token: e.message });
+      throw new UnprocessableEntityException({
+        errors: {
+          reset_token: e.message,
+        },
+      });
     }
   }
 }

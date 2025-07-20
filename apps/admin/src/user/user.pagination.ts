@@ -78,7 +78,6 @@ export const trendingPaginateConfig: PaginateConfig<Trending> = {
     'articles.thumbnail.url',
     'titleQuery',
     'thumbnail.url',
-    // 'thumbnail.data',
     'thumbnail.slug',
     'formattedTraffic',
     'trendDate',
@@ -87,10 +86,9 @@ export const trendingPaginateConfig: PaginateConfig<Trending> = {
 };
 
 export const userPaginateConfig: PaginateConfig<User> = {
-  relations: ['roles'],
+  relations: ['user_roles', 'user_roles.role', 'avatar', 'banner'],
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
   maxLimit: 500,
   defaultLimit: 23,
-  // select: ['id', 'name', 'phoneNumber', 'email', 'created_at', 'roles'],
 };

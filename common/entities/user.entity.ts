@@ -11,8 +11,6 @@ import {
   Entity,
   Index,
   JoinColumn,
-  JoinTable,
-  ManyToMany,
   ManyToOne,
   OneToMany,
   Relation,
@@ -25,9 +23,9 @@ import { Notification } from './notification.entity';
 import type { Post } from './post.entity';
 import { Server } from './server.entity';
 import { Site } from './site.entity';
+import { UserRole } from './user_roles.entity';
 import type { Session } from './user_session.entity';
 import { Token } from './user_token.entity';
-import { Role } from './user_roles.entity';
 
 export enum UserType {
   ADMIN = 'ADMIN',
@@ -117,13 +115,8 @@ export class User extends BaseEntity {
   @OneToMany('Notification', 'user')
   notifications: Relation<Notification[]>;
 
-  @ManyToMany(() => Role, (role) => role.users)
-  @JoinTable({
-    name: 'user_roles',
-    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
-  })
-  roles: Role[];
+  @OneToMany(() => UserRole, (ur) => ur.user)
+  user_roles: UserRole[];
 
   @AfterLoad()
   storePasswordInCache() {

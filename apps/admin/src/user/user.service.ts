@@ -1,8 +1,17 @@
-import { Category, Post, Role, Site, User } from '@app/entities';
+import {
+  Category,
+  Media,
+  Post,
+  Role,
+  Site,
+  User,
+  UserRole,
+} from '@app/entities';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcryptjs';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { MediaService } from '../media/media.service';
 import { UserUpdateDto } from './user.dto';
 import { userPaginateConfig } from './user.pagination';
@@ -10,8 +19,12 @@ import { userPaginateConfig } from './user.pagination';
 @Injectable()
 export class UserService {
   constructor(
+    private readonly dataSource: DataSource,
+
     @InjectRepository(User)
     private userRepository: Repository<User>,
+
+    @InjectRepository(Media)
     private mediaService: MediaService,
 
     @InjectRepository(Site)
@@ -31,15 +44,39 @@ export class UserService {
   }
 
   async create(user: User, body: UserUpdateDto) {
-    const roles = await this.roleRepository.find({
-      where: { id: In(body?.roles?.map((r) => r.id)) },
+    return await this.dataSource.transaction(async (manager) => {
+      // 1. Lấy các role theo id
+      const roles = await manager.find(Role, {
+        where: { id: In(body?.roles?.map((r) => r.id)) },
+      });
+
+      // 2. Tạo user mới
+      const newUser = manager.create(User, {
+        ...body,
+        created_by: user.id,
+      });
+
+      const savedUser = await manager.save(User, newUser);
+
+      // 3. Tạo các bản ghi user_roles
+      const userRoles = roles.map((role) =>
+        manager.create(UserRole, {
+          role: role,
+          user: savedUser,
+          created_by: user.id,
+        }),
+      );
+
+      await manager.save(UserRole, userRoles);
+
+      // 4. Trả về kết quả kèm roles (nếu muốn)
+      const result = await manager.findOne(User, {
+        where: { id: savedUser.id },
+        relations: ['user_roles', 'user_roles.role'],
+      });
+
+      return result;
     });
-    const userCreate = this.userRepository.create({
-      ...body,
-      roles: roles,
-      created_by: user.id,
-    });
-    return this.userRepository.save(userCreate);
   }
 
   async getDetail(user: User) {
@@ -97,78 +134,64 @@ export class UserService {
     return { ...profile, sites, categories, posts };
   }
 
-  async update(user: User, input: UserUpdateDto) {
-    const findUser = await this.userRepository.findOne({
-      where: [{ id: user.id }, { created_by: user.id }],
-      relations: ['avatar', 'roles'],
-      select: [
-        'id',
-        'name',
-        'email',
-        'phoneNumber',
-        'address',
-        'is_active',
-        'created_at',
-        'updated_at',
-      ],
+  async update(currentUser: User, input: UserUpdateDto, user: User) {
+    return await this.dataSource.transaction(async (manager) => {
+      // 1. Tìm user cần cập nhật
+      const detail = await manager.findOne(User, {
+        where: [{ id: currentUser.id }],
+      });
+
+      if (!detail) {
+        throw new NotFoundException('User not found.');
+      }
+
+      // 2. Cập nhật thông tin cơ bản
+      detail.name = input.name;
+      detail.phoneNumber = input.phoneNumber;
+      detail.email = input.email;
+      detail.address = input.address;
+      detail.is_active = input.is_active;
+      detail.updated_by = currentUser.id;
+
+      if (input.password) {
+        const salt = await bcrypt.genSalt();
+        detail.password = await bcrypt.hash(input.password, salt);
+      }
+
+      // 3. Cập nhật roles
+      // 3.1 Xoá roles cũ
+      await manager.delete(UserRole, { user: detail });
+      // 3.2 Thêm roles mới
+      const roles = await manager.find(Role, {
+        where: { id: In(input.roles.map((r) => r.id)) },
+      });
+
+      const userRoles = roles.map((role) =>
+        manager.create(UserRole, {
+          role: role,
+          user: currentUser,
+          created_by: user.id,
+        }),
+      );
+
+      await manager.save(UserRole, userRoles);
+
+      // 4. Lưu lại thông tin user
+      await manager.save(User, detail);
+
+      // 5. Trả về user kèm roles mới
+      const result = await manager.findOne(User, {
+        where: { id: detail.id },
+        relations: [
+          'user_roles',
+          'user_roles.role',
+          'user_roles.role.role_permissions',
+          'user_roles.role.role_permissions.permission',
+        ],
+      });
+
+      return result;
     });
-
-    if (!findUser) throw new NotFoundException('User not found.');
-
-    const roles = await this.roleRepository.find({
-      where: { id: In(input.roles.map((r) => r.id)) },
-    });
-
-    const newData = {
-      id: findUser.id,
-      name: input.name,
-      email: input.email,
-      address: input.address,
-      is_active: input.is_active,
-      password: input.password,
-      updated_by: user.id,
-      roles: roles,
-    };
-    const resultUpdate = await this.userRepository.save(newData);
-
-    return { ...findUser, ...resultUpdate };
-  }
-
-  async publish(user: User, input: UserUpdateDto) {
-    const findUser = await this.userRepository.findOne({
-      where: [{ id: user.id }, { created_by: user.id }],
-      relations: ['avatar', 'roles'],
-      select: [
-        'id',
-        'name',
-        'email',
-        'phoneNumber',
-        'address',
-        'is_active',
-        'created_at',
-        'updated_at',
-      ],
-    });
-
-    if (!findUser) throw new NotFoundException('User not found.');
-
-    const roles = await this.roleRepository.find({
-      where: { id: In(input.roles.map((r) => r.id)) },
-    });
-
-    const newData = {
-      id: findUser.id,
-      name: input.name,
-      email: input.email,
-      address: input.address,
-      is_active: input.is_active,
-      password: input.password,
-      updated_by: user.id,
-      roles: roles,
-    };
-    const resultUpdate = await this.userRepository.save(newData);
-
-    return { ...findUser, ...resultUpdate };
   }
 
   /**
@@ -256,7 +279,6 @@ export class UserService {
       .addGroupBy('sp_site.id')
       .addGroupBy('sp_post.id');
 
-    console.log(await postsQb.getRawMany());
     if (query?.site_id)
       postsQb.andWhere('sp_site.id = :site_id', { site_id: query.site_id });
 

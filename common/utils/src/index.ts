@@ -552,7 +552,6 @@ export async function callGeminiApi(prompt: string) {
     process.env.GEMINI_API_KEY_4,
   ];
   for (const key of GEMINI_API_KEYS) {
-    console.log(key);
     try {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,

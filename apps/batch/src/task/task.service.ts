@@ -1,11 +1,8 @@
-import { BatchLogs } from '@app/entities';
 import { BatchLogsService } from '@app/modules/batch-logs/batch-log.service';
 import { InjectQueue } from '@nestjs/bull';
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Cron } from '@nestjs/schedule';
 import { Queue } from 'bull';
-import { Repository } from 'typeorm';
 import { TaskJobName } from './task.dto';
 
 export const CustomCron = {

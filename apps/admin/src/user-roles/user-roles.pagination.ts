@@ -1,8 +1,8 @@
 import { Role } from '@app/entities';
 import { PaginateConfig } from 'nestjs-paginate';
 
-export const userRolesPaginateConfig: PaginateConfig<Role> = {
-  relations: ['users', 'permissions'],
+export const rolesPaginateConfig: PaginateConfig<Role> = {
+  relations: ['user_roles', 'role_permissions'],
   sortableColumns: ['created_at'],
   defaultSortBy: [['created_at', 'DESC']],
   maxLimit: 1000,

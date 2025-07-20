@@ -1,27 +1,27 @@
-import { User } from '@app/entities';
-import { UserPermissions } from '@app/entities/user_permissions.entity';
+import { Permission, User } from '@app/entities';
 
 export function userHasPermission(
   user: User,
   action: string,
   subject: string,
-): UserPermissions[] {
-  if (!user.roles) return undefined;
-  const matched: UserPermissions[] = [];
+): Permission[] {
+  if (!user.user_roles) return undefined;
+  const matched: Permission[] = [];
 
-  for (const role of user.roles) {
-    for (const permission of role.permissions) {
-      if (permission.action === action && permission.subject === subject) {
-        const conditions = permission.role_permission_conditions[0];
+  for (const role of user.user_roles) {
+    for (const role_permissions of role.role.role_permissions) {
+      if (
+        role_permissions?.permission?.action === action &&
+        role_permissions?.permission?.subject === subject
+      ) {
         const mapper = {
-          ...permission,
-          conditions: conditions?.conditions,
-        } as UserPermissions;
+          ...role_permissions.permission,
+          conditions: role_permissions?.conditions,
+        } as Permission;
 
         matched.push(mapper);
       }
     }
   }
-
   return matched.length > 0 ? matched : undefined;
 }

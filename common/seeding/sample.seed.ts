@@ -3,7 +3,9 @@ import {
   Lang,
   LangContent,
   loadEntities,
+  Permission,
   Role,
+  RolePermission,
   Server,
   Service,
   User,
@@ -13,7 +15,6 @@ import { generateSlug } from '@app/utils';
 import * as bcrypt from 'bcryptjs';
 import dataSource from 'ormconfig';
 import { languages } from './lang';
-import { UserPermissions } from '@app/entities/user_permissions.entity';
 
 async function create() {
   dataSource.setOptions({
@@ -334,101 +335,63 @@ async function createPermissionDefault() {
   await queryRunner.connect();
   await queryRunner.startTransaction();
 
-  const permissionsRepository = dataSource.getRepository(UserPermissions);
+  const permissionsRepository = dataSource.getRepository(Permission);
   try {
     const permissionArr = [
-      // { action: '*', subject: '*' },
-      // TABLE POST
       { action: 'read', subject: 'posts' },
       { action: 'create', subject: 'posts' },
       { action: 'publish', subject: 'posts' },
-
-      {
-        action: 'update',
-        subject: 'posts',
-        conditions: { ownerOnly: true },
-      },
-      {
-        action: 'delete',
-        subject: 'posts',
-        conditions: { ownerOnly: true },
-      },
+      { action: 'update', subject: 'posts' },
+      { action: 'delete', subject: 'posts' },
 
       // TABLE BOOK
       { action: 'read', subject: 'books' },
       { action: 'publish', subject: 'books' },
       { action: 'create', subject: 'books' },
-      {
-        action: 'update',
-        subject: 'books',
-        conditions: { ownerOnly: true },
-      },
-      {
-        action: 'delete',
-        subject: 'books',
-        conditions: { ownerOnly: true },
-      },
+      { action: 'update', subject: 'books' },
+      { action: 'delete', subject: 'books' },
 
       // TABLE SITE
       { action: 'read', subject: 'sites' },
       { action: 'create', subject: 'sites' },
-      {
-        action: 'update',
-        subject: 'sites',
-        conditions: { ownerOnly: true },
-      },
-      {
-        action: 'delete',
-        subject: 'sites',
-        conditions: { ownerOnly: true },
-      },
+      { action: 'update', subject: 'sites' },
+      { action: 'delete', subject: 'sites' },
 
       // TABLE CHAPTER
       { action: 'read', subject: 'chapters' },
       { action: 'create', subject: 'chapters' },
-      {
-        action: 'update',
-        subject: 'chapters',
-        conditions: { ownerOnly: true },
-      },
-      {
-        action: 'delete',
-        subject: 'chapters',
-        conditions: { ownerOnly: true },
-      },
+      { action: 'update', subject: 'chapters' },
+      { action: 'delete', subject: 'chapters' },
 
       // TABLE MEDIA
       { action: 'read', subject: 'media' },
       { action: 'create', subject: 'media' },
-      {
-        action: 'update',
-        subject: 'media',
-        conditions: { ownerOnly: true },
-      },
-      {
-        action: 'delete',
-        subject: 'media',
-        conditions: { ownerOnly: true },
-      },
+      { action: 'update', subject: 'media' },
+      { action: 'delete', subject: 'media' },
 
       // TABLE USER
       { action: 'read', subject: 'users' },
       { action: 'create', subject: 'users' },
-      {
-        action: 'update',
-        subject: 'users',
-        conditions: { ownerOnly: true },
-      },
-      {
-        action: 'delete',
-        subject: 'users',
-        conditions: { ownerOnly: true },
-      },
+      { action: 'update', subject: 'users' },
+      { action: 'delete', subject: 'users' },
+
+      // TABLE ROLE
+      { action: 'read', subject: 'roles' },
+      { action: 'create', subject: 'roles' },
+      { action: 'update', subject: 'roles' },
+      { action: 'delete', subject: 'roles' },
+
+      // TABLE CATEGORIES
+      { action: 'read', subject: 'categories' },
+      { action: 'create', subject: 'categories' },
+      { action: 'update', subject: 'categories' },
+      { action: 'delete', subject: 'categories' },
     ];
 
-    await permissionsRepository.upsert(permissionArr as any, {
+    await permissionsRepository.upsert(permissionArr as Permission[], {
       conflictPaths: ['action', 'subject'],
       skipUpdateIfNoValuesChanged: true,
+      upsertType: 'on-conflict-do-update',
     });
     console.log('Permission created successfully.');
   } catch (error) {
@@ -440,9 +403,7 @@ async function createPermissionDefault() {
 }
 
 async function createRoleDefault() {
-  dataSource.setOptions({
-    entities: loadEntities,
-  });
+  dataSource.setOptions({ entities: loadEntities });
   await dataSource.initialize();
 
   const queryRunner = dataSource.createQueryRunner();
@@ -450,33 +411,106 @@ async function createRoleDefault() {
   await queryRunner.startTransaction();
 
   const roleRepository = dataSource.getRepository(Role);
-  const permissionRepository = dataSource.getRepository(UserPermissions);
+  const permissionRepository = dataSource.getRepository(Permission);
+  const rolePermissionRepository = dataSource.getRepository(RolePermission);
+
   try {
     const permissionArr = await permissionRepository.find();
-    const roleArr = {
+
+    // Tạo role
+    const superAdmin = roleRepository.create({
       name: 'Super Admin',
       type: 'system',
       description:
         'Super Admins can access and manage all features and settings.',
-      permissions: permissionArr,
-    };
-
-    const superAdmin = roleRepository.create({
-      name: 'Super Admin',
-      description:
-        'Super Admins can access and manage all features and settings.',
-      permissions: permissionArr,
     });
-
     await roleRepository.save(superAdmin);
-    console.log('Role created successfully.');
+
+    // Gán permission + conditions thông qua role_permissions
+    const rolePermissions = permissionArr.map((p) =>
+      rolePermissionRepository.create({
+        role: superAdmin,
+        permission: p,
+        conditions: { ownerOnly: true, asOwner: true },
+      }),
+    );
+    await rolePermissionRepository.save(rolePermissions);
+
+    await queryRunner.commitTransaction();
+    console.log('✅ Role created successfully.');
   } catch (error) {
     await queryRunner.rollbackTransaction();
-    console.error('Error seeding Role:', error.message);
+    console.error('❌ Error seeding Role:', error.message);
   } finally {
     await queryRunner.release();
   }
 }
+
+// async function addConditionsAdmin() {
+//   dataSource.setOptions({ entities: loadEntities });
+//   await dataSource.initialize();
+
+//   const queryRunner = dataSource.createQueryRunner();
+//   await queryRunner.connect();
+//   await queryRunner.startTransaction();
+
+//   const userRepository = dataSource.getRepository(User);
+//   const roleRepository = dataSource.getRepository(Role);
+//   const rpcRepository = dataSource.getRepository(RolePermissionCondition);
+//   const permissionRepository = dataSource.getRepository(UserPermissions);
+//   try {
+//     const roleAdmin = await roleRepository.findOne({
+//       where: {},
+//       relations: ['permissions'],
+//     });
+
+//     dataSource.transaction(async (manager) => {
+//       const permissions = await manager.find(UserPermissions, {});
+
+//       const updatedRole = await manager.save(Role, {
+//         ...roleAdmin,
+//         permissions,
+//       });
+//       await manager.delete(RolePermissionCondition, {
+//         role_id: updatedRole.id,
+//       });
+//       const conditions = permissions.map((p) => ({
+//         role_id: updatedRole.id,
+//         permission_id: p.id,
+//         conditions: { ownerOnly: true, asOwner: true },
+//       }));
+
+//       if (conditions.length > 0) {
+//         await manager.save(RolePermissionCondition, conditions);
+//       }
+//     });
+
+//     // const roleUpdate = await roleRepository.update(
+//     //   { id: roleAdmin.id },
+//     //   { permissions: permissionArr },
+//     // );
+//     // console.log(roleUpdate);
+//     // console.log(roleAdmin.permissions.length, permissionArr.length);
+//     // const rpcList = permissionArr.map((p) =>
+//     //   conditionsRepository.create({
+//     //     role: superAdmin,
+//     //     role_id: superAdmin.id,
+//     //     permission: { id: p.id },
+//     //     permission_id: p.id,
+//     //     conditions: { ownerOnly: true, asOwner: true },
+//     //   }),
+//     // );
+//     // await conditionsRepository.save(rpcList);
+
+//     // await roleRepository.save(superAdmin);
+//     console.log('Role created successfully.');
+//   } catch (error) {
+//     await queryRunner.rollbackTransaction();
+//     console.error('Error seeding Role:', error.message);
+//   } finally {
+//     await queryRunner.release();
+//   }
+// }
 
 async function createServer() {
   dataSource.setOptions({
@@ -562,7 +596,7 @@ async function createServer() {
 //   }
 // }
 // void createLanguages();
-
+// void createCategory();
 // void createService();
 // void create();
 // void createUser();
@@ -570,5 +604,5 @@ async function createServer() {
 // void createNotification();
 
 // void createPermissionDefault();
-
 void createRoleDefault();
+// void addConditionsAdmin();

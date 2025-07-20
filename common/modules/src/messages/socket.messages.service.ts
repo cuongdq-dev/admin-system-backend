@@ -21,7 +21,6 @@ export class SocketMessageService implements OnModuleDestroy {
   }
 
   async sendMessage(event: string, message: any) {
-    console.log(this.socket);
     this.socket.emit(event, message);
   }
 

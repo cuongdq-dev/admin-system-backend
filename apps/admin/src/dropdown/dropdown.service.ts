@@ -1,5 +1,4 @@
 import { Category, Post, Site, User } from '@app/entities';
-import { UserPermissions } from '@app/entities/user_permissions.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';

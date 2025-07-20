@@ -2,13 +2,13 @@ import {
   Book,
   Category,
   Notification,
+  Permission,
   Post as PostEntity,
   Role,
   Site,
   User,
 } from '@app/entities';
 import { NotificationStatus } from '@app/entities/notification.entity';
-import { UserPermissions } from '@app/entities/user_permissions.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -22,8 +22,8 @@ export class SettingService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
 
-    @InjectRepository(UserPermissions)
-    private permissionRepository: Repository<UserPermissions>,
+    @InjectRepository(Permission)
+    private permissionRepository: Repository<Permission>,
 
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
@@ -56,7 +56,13 @@ export class SettingService {
         }),
         this.userRepository.findOne({
           where: { id: user.id },
-          relations: ['avatar', 'roles', 'roles.permissions'],
+          relations: [
+            'avatar',
+            'user_roles',
+            'user_roles.role.role_permissions',
+            'user_roles.role.role_permissions.permission',
+            'user_roles.role.role_permissions.role',
+          ],
         }),
         this.siteRepository
           .createQueryBuilder('site')
@@ -85,8 +91,9 @@ export class SettingService {
           .getRawMany(),
         this.roleRepository
           .createQueryBuilder('roles')
-          .leftJoinAndSelect('roles.permissions', 'permissions')
+          .leftJoinAndSelect('role_permissions', 'user_roles')
           .getMany(),
+
         this.permissionRepository.createQueryBuilder('permissions').getMany(),
       ]);
 
@@ -382,7 +389,6 @@ export class SettingService {
       'https://www.youtube.com/youtubei/v1/search?prettyPrint=false',
       requestOptions as any,
     ).then((response) => response.json());
-    console.log(res);
     return this.extractResult(res);
   }
 
