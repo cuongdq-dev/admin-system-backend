@@ -623,7 +623,7 @@ export class YoutubesService {
 
     // Dòng thông tin tổng quan
     const summaryRow = [
-      `📊 Found: ${data.length} channels | Filtered: 1K-100K subscribers | Date: ${new Date().toLocaleDateString('vi-VN')}`,
+      `📊 Found: ${data.length} channels | Filtered: 100K-200K subscribers | Date: ${new Date().toLocaleDateString('vi-VN')}`,
       ...Array(9).fill(''),
     ];
 
