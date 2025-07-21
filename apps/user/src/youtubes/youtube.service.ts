@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { google } from 'googleapis';
 import * as fs from 'fs';
 import * as path from 'path';
+import { parseStringPromise } from 'xml2js';
 
 interface ColumnConfig {
   index: number;
@@ -36,33 +37,44 @@ export class YoutubesService {
   // Default column configurations cho YouTube channels
   private defaultColumnConfigs: ColumnConfig[] = [
     { index: 0, name: '#', width: 50, alignment: 'CENTER' },
-    { index: 1, name: 'Podcast Name', width: 200, alignment: 'LEFT' },
-    { index: 2, name: 'Link', width: 250, alignment: 'LEFT' },
-    { index: 3, name: 'First Name', width: 100, alignment: 'LEFT' },
-    { index: 4, name: 'Contact 1', width: 100, alignment: 'LEFT' },
-    { index: 5, name: 'Contact 2', width: 100, alignment: 'LEFT' },
+    { index: 1, name: 'Podcast Name', width: 150, alignment: 'LEFT' },
+    { index: 2, name: 'Link', width: 200, alignment: 'LEFT' },
+    { index: 3, name: 'First Name', width: 50, alignment: 'LEFT' },
+    { index: 4, name: 'Contact 1', width: 50, alignment: 'LEFT' },
+    { index: 5, name: 'Contact 2', width: 50, alignment: 'LEFT' },
     { index: 6, name: 'Description', width: 200, alignment: 'LEFT' },
     { index: 7, name: 'Subscribers', width: 150, alignment: 'LEFT' },
     { index: 8, name: 'Country', width: 100, alignment: 'LEFT' },
-    { index: 9, name: 'Total Video', width: 150, alignment: 'LEFT' },
+    { index: 9, name: 'Total Video', width: 100, alignment: 'LEFT' },
     {
       index: 10,
       name: 'Social Links',
-      width: 150,
+      width: 200,
       alignment: 'LEFT',
       wrapText: true,
     },
-    { index: 11, name: 'Joined Date', width: 120, alignment: 'CENTER' },
+    {
+      index: 11,
+      name: 'Video Publish Time',
+      width: 300,
+      alignment: 'LEFT',
+      wrapText: true,
+    },
+    { index: 12, name: 'Joined Date', width: 120, alignment: 'CENTER' },
   ];
 
   constructor() {
-    const keyFilePath = path.resolve('./', 'google-service-account.json');
-    if (!fs.existsSync(keyFilePath)) {
-      throw new Error('Service account JSON file not found at: ' + keyFilePath);
+    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+
+    if (!serviceAccountJson) {
+      throw new Error(
+        'Missing GOOGLE_SERVICE_ACCOUNT_JSON in environment variables',
+      );
     }
 
+    const credentials = JSON.parse(serviceAccountJson);
     const auth = new google.auth.GoogleAuth({
-      keyFile: keyFilePath,
+      credentials,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
@@ -71,7 +83,7 @@ export class YoutubesService {
   }
 
   async searchMultiplePages(keyword?: string) {
-    const maxPages = 20;
+    const maxPages = 2;
     let continuation: string | undefined = undefined;
     const allChannels: any[] = [];
 
@@ -133,7 +145,50 @@ export class YoutubesService {
       uniqueLists.map(async (item) => {
         try {
           const extra = await this.fetchExtraInfo(item.channelName);
-          return { ...item, ...extra };
+          // FETCH VIDEO INFO
+
+          let videoId, published, videoUrl, videoTitle, videoDescription;
+
+          try {
+            const channelId = item.channelId || item.link?.split('/').pop();
+            const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+            const res = await fetch(rssUrl);
+            const xml = await res.text();
+            const parsed = await parseStringPromise(xml, {
+              explicitArray: false,
+            });
+
+            const feed = parsed.feed;
+            const entries = Array.isArray(feed.entry)
+              ? feed.entry
+              : [feed.entry];
+
+            // ❗ Chỉ lấy video thường, không lấy Shorts
+            const normalVideo = entries.find((entry) =>
+              entry.link?.['$']?.href?.includes('/watch?v='),
+            );
+
+            console.log(normalVideo);
+            if (normalVideo) {
+              videoId = normalVideo['yt:videoId'];
+              published = normalVideo.published;
+              videoUrl = normalVideo.link?.['$']?.href;
+              videoTitle = normalVideo['media:group']?.['media:title'];
+              videoDescription =
+                normalVideo['media:group']?.['media:description'];
+            }
+          } catch (e) {
+            console.warn(`XML fetch failed for ${item.link}:`, e.message || e);
+          }
+          return {
+            ...item,
+            ...extra,
+            latestVideoId: videoId,
+            latestPublished: published,
+            latestVideoUrl: videoUrl,
+            latestVideoTitle: videoTitle,
+            latestVideoDescription: videoDescription,
+          };
         } catch (e) {
           console.warn(
             `Failed to fetch details for ${item.link} ${JSON.stringify(e)}`,
@@ -308,16 +363,6 @@ export class YoutubesService {
 
     const continuationCommand = this.findContinuationCommand(json);
 
-    // const continuation =
-    //   json.onResponseReceivedCommands?.[0]?.appendContinuationItemsAction?.continuationItems?.find(
-    //     (i: any) => i.continuationItemRenderer,
-    //   )?.continuationItemRenderer?.continuationEndpoint?.continuationCommand
-    //     ?.token ||
-    //   json.contents?.twoColumnSearchResultsRenderer?.primaryContents
-    //     ?.sectionListRenderer?.contents?.[1]?.continuationItemRenderer
-    //     ?.continuationEndpoint?.continuationCommand?.token ||
-    //   null;
-
     return { channels, continuation: continuationCommand?.token };
   }
 
@@ -476,8 +521,10 @@ export class YoutubesService {
       'Contact 2',
       '📝 Description',
       '👥 Subscribers',
+      'Country',
       'Total Video',
       'Social Links',
+      '📅 Video Publish Time',
       '📅 Date Joined',
     ];
 
@@ -491,8 +538,16 @@ export class YoutubesService {
       'N/A',
       item?.descriptions || 'N/A',
       item?.subscribersText || 'N/A',
+      item?.country || 'N/A',
       item?.totalVideo || 'N/A',
       item?.links?.join('\n'),
+      `${
+        new Date(item?.latestPublished).toLocaleString('vi-VN', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          hour12: false,
+        }) || 'N/A'
+      }\n${item.latestVideoTitle}\n${item.latestVideoUrl}`,
+
       item?.joinedDateText,
     ]);
     return {
@@ -515,7 +570,7 @@ export class YoutubesService {
     await this.sheets.spreadsheets.values.update({
       spreadsheetId: this.spreadSheetId,
       range: targetRange,
-      valueInputOption: 'RAW',
+      valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: newData.values,
       },
@@ -645,7 +700,7 @@ export class YoutubesService {
           startRowIndex: separatorRowStart,
           endRowIndex: separatorRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 11,
+          endColumnIndex: 13,
         },
         cell: {
           userEnteredFormat: {
@@ -664,7 +719,7 @@ export class YoutubesService {
           startRowIndex: keywordRowStart,
           endRowIndex: keywordRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 11,
+          endColumnIndex: 13,
         },
         cell: {
           userEnteredFormat: {
@@ -692,7 +747,7 @@ export class YoutubesService {
           startRowIndex: summaryRowStart,
           endRowIndex: summaryRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 11,
+          endColumnIndex: 13,
         },
         cell: {
           userEnteredFormat: {
@@ -720,7 +775,7 @@ export class YoutubesService {
           startRowIndex: headerRowStart,
           endRowIndex: headerRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 11,
+          endColumnIndex: 13,
         },
         cell: {
           userEnteredFormat: {
@@ -760,7 +815,7 @@ export class YoutubesService {
               startRowIndex: rowStart,
               endRowIndex: rowEnd,
               startColumnIndex: 0,
-              endColumnIndex: 11,
+              endColumnIndex: 13,
             },
             cell: {
               userEnteredFormat: {
@@ -824,7 +879,7 @@ export class YoutubesService {
           startRowIndex: keywordRowStart,
           endRowIndex: dataRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 11,
+          endColumnIndex: 13,
         },
         top: {
           style: 'SOLID',
@@ -867,7 +922,7 @@ export class YoutubesService {
           startRowIndex: headerRowStart,
           endRowIndex: headerRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 11,
+          endColumnIndex: 13,
         },
         bottom: {
           style: 'DOUBLE',
