@@ -105,7 +105,7 @@ export class YoutubesService {
         const filtered = channels
           ?.filter((c) => {
             const count = parseSubscriberCount(c.subscribersText);
-            return count >= 100000 && count <= 200000;
+            return count >= 1000 && count <= 100000;
           })
           .map((c) => ({
             ...c,
@@ -225,7 +225,7 @@ export class YoutubesService {
         const filtered = channels
           ?.filter((c) => {
             const count = parseSubscriberCount(c.subscribersText);
-            return count >= 1000 && count <= 100000;
+            return count >= 100000 && count <= 200000;
           })
           .map((c) => ({
             ...c,
@@ -623,7 +623,7 @@ export class YoutubesService {
 
     // Dòng thông tin tổng quan
     const summaryRow = [
-      `📊 Found: ${data.length} channels | Filtered: 100K-200K subscribers | Date: ${new Date().toLocaleDateString('vi-VN')}`,
+      `📊 Found: ${data.length} channels | Filtered: 1K-100K subscribers | Date: ${new Date().toLocaleDateString('vi-VN')}`,
       ...Array(9).fill(''),
     ];
 
