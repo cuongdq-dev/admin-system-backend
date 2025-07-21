@@ -83,7 +83,7 @@ export class YoutubesService {
   }
 
   async searchMultiplePages(keyword?: string) {
-    const maxPages = 2;
+    const maxPages = 30;
     let continuation: string | undefined = undefined;
     const allChannels: any[] = [];
 
