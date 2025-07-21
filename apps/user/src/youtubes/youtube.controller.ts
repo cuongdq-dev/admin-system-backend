@@ -27,7 +27,7 @@ export class YoutubesController {
       throw new BadRequestException('Missing keyword or continuation token.');
     }
 
-    return this.youtubesService.searchMultiplePages(keyword);
+    return this.youtubesService.searchMultiplePagesWithNewSheet(keyword);
   }
 
   @Get('google-sheet')
@@ -35,5 +35,17 @@ export class YoutubesController {
   @ApiOperation({ summary: 'Tìm kiếm kênh YouTube bằng Internal API' })
   async googleSheet() {
     return this.youtubesService.googleSheet();
+  }
+
+  @Get('create-sheet')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Tìm kiếm kênh YouTube bằng Internal API' })
+  @ApiQuery({
+    name: 'keyword',
+    required: false,
+    description: 'Từ khóa tìm kiếm',
+  })
+  async createSheet(@Query('keyword') keyword?: string) {
+    return this.youtubesService.searchMultiplePagesWithNewSheet(keyword);
   }
 }

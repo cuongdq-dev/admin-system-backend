@@ -202,6 +202,126 @@ export class YoutubesService {
     return { enrichedLists, keyword: keyword };
   }
 
+  async searchMultiplePagesWithNewSheet(keyword?: string) {
+    const maxPages = 30;
+    let continuation: string | undefined = undefined;
+    const allChannels: any[] = [];
+
+    // Lấy dữ liệu đã tồn tại
+    const dataExist = (await this.googleSheet()).map((d: string) =>
+      d.toLocaleLowerCase().trim(),
+    ) as string[];
+
+    for (let page = 0; page < maxPages; page++) {
+      try {
+        const { channels, continuation: next } = await this.searchWithCurlRaw(
+          continuation,
+          keyword,
+        );
+
+        if (!channels?.length) {
+          console.warn(`No channels found at page ${page + 1}`);
+          break;
+        }
+
+        const filtered = channels
+          ?.filter((c) => {
+            const count = parseSubscriberCount(c.subscribersText);
+            return count >= 1000 && count <= 100000;
+          })
+          .map((c) => ({
+            ...c,
+            subscribersNumber: parseSubscriberCount(c.subscribersText),
+          }));
+
+        allChannels.push(...filtered);
+
+        if (!next) break;
+        continuation = next;
+      } catch (err) {
+        console.error(`Error on page ${page + 1}:`, err.message || err);
+        break;
+      }
+    }
+
+    const existSet = new Set(dataExist.map((d) => d.toLowerCase().trim()));
+
+    const lists = allChannels
+      .filter((c) => {
+        const podcast = c?.podcast?.toLowerCase().trim();
+        return podcast && !existSet.has(podcast);
+      })
+      .sort((a, b) => a.channelName?.localeCompare(b.channelName || '') || 0);
+
+    // Lọc trùng trong nội bộ danh sách mới
+    const uniqueLists = Array.from(
+      new Map(
+        lists.map((item) => [item.link?.toLowerCase().trim(), item]), // bạn có thể đổi key
+      ).values(),
+    );
+
+    // Enrich
+    const enrichedLists = [];
+
+    for (const item of uniqueLists) {
+      try {
+        const extra = await this.fetchExtraInfo(item.channelName);
+
+        // FETCH VIDEO INFO
+        let videoId, published, videoUrl, videoTitle, videoDescription;
+
+        try {
+          const channelId = item.channelId || item.link?.split('/').pop();
+          const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+          const res = await fetch(rssUrl);
+          const xml = await res.text();
+          const parsed = await parseStringPromise(xml, {
+            explicitArray: false,
+          });
+
+          const feed = parsed.feed;
+          const entries = Array.isArray(feed.entry) ? feed.entry : [feed.entry];
+
+          // ❗ Chỉ lấy video thường, không lấy Shorts
+          const normalVideo = entries.find((entry) =>
+            entry.link?.['$']?.href?.includes('/watch?v='),
+          );
+
+          if (normalVideo) {
+            videoId = normalVideo['yt:videoId'];
+            published = normalVideo.published;
+            videoUrl = normalVideo.link?.['$']?.href;
+            videoTitle = normalVideo['media:group']?.['media:title'];
+            videoDescription =
+              normalVideo['media:group']?.['media:description'];
+          }
+        } catch (e) {
+          console.warn(`XML fetch failed for ${item.link}:`, e.message || e);
+        }
+
+        enrichedLists.push({
+          ...item,
+          ...extra,
+          latestVideoId: videoId,
+          latestPublished: published,
+          latestVideoUrl: videoUrl,
+          latestVideoTitle: videoTitle,
+          latestVideoDescription: videoDescription,
+        });
+      } catch (e) {
+        console.warn(
+          `Failed to fetch details for ${item.link}:`,
+          e.message || e,
+        );
+        enrichedLists.push(item);
+      }
+    }
+
+    // Sử dụng formatting đẹp mới
+    await this.appendStyledKeyword(keyword, enrichedLists, keyword);
+    return { enrichedLists, keyword: keyword };
+  }
+
   async fetchExtraInfo(channelName) {
     const url = `https://www.youtube.com${channelName}`;
 
@@ -411,7 +531,7 @@ export class YoutubesService {
   ) {
     try {
       const sheetName = targetSheetName || this.sheetName;
-      const sheetId = await this.getSheetIdByName(sheetName);
+      const sheetId = await this.createSheetIfNotExists(sheetName);
 
       // Merge default options với custom options
       const formattingOptions: FormattingOptions = {
@@ -1022,10 +1142,7 @@ export class YoutubesService {
               addSheet: {
                 properties: {
                   title: sheetName,
-                  gridProperties: {
-                    rowCount: 1000,
-                    columnCount: 15,
-                  },
+                  gridProperties: { rowCount: 1000, columnCount: 15 },
                 },
               },
             },
