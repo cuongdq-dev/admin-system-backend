@@ -818,7 +818,7 @@ export class YoutubesService {
           startRowIndex: separatorRowStart,
           endRowIndex: separatorRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 13,
+          endColumnIndex: 14,
         },
         cell: {
           userEnteredFormat: {
@@ -837,7 +837,7 @@ export class YoutubesService {
           startRowIndex: keywordRowStart,
           endRowIndex: keywordRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 13,
+          endColumnIndex: 14,
         },
         cell: {
           userEnteredFormat: {
@@ -865,7 +865,7 @@ export class YoutubesService {
           startRowIndex: summaryRowStart,
           endRowIndex: summaryRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 13,
+          endColumnIndex: 14,
         },
         cell: {
           userEnteredFormat: {
@@ -893,7 +893,7 @@ export class YoutubesService {
           startRowIndex: headerRowStart,
           endRowIndex: headerRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 13,
+          endColumnIndex: 14,
         },
         cell: {
           userEnteredFormat: {
@@ -933,7 +933,7 @@ export class YoutubesService {
               startRowIndex: rowStart,
               endRowIndex: rowEnd,
               startColumnIndex: 0,
-              endColumnIndex: 13,
+              endColumnIndex: 14,
             },
             cell: {
               userEnteredFormat: {
@@ -997,7 +997,7 @@ export class YoutubesService {
           startRowIndex: keywordRowStart,
           endRowIndex: dataRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 13,
+          endColumnIndex: 14,
         },
         top: {
           style: 'SOLID',
@@ -1040,7 +1040,7 @@ export class YoutubesService {
           startRowIndex: headerRowStart,
           endRowIndex: headerRowEnd,
           startColumnIndex: 0,
-          endColumnIndex: 13,
+          endColumnIndex: 14,
         },
         bottom: {
           style: 'DOUBLE',
@@ -1056,7 +1056,7 @@ export class YoutubesService {
         properties: {
           sheetId,
           gridProperties: {
-            frozenRowCount: 0,
+            frozenRowCount: headerRowEnd,
           },
         },
         fields: 'gridProperties.frozenRowCount',
