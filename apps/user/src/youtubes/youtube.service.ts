@@ -141,62 +141,61 @@ export class YoutubesService {
     );
 
     // Enrich
-    const enrichedLists = await Promise.all(
-      uniqueLists.map(async (item) => {
+    const enrichedLists = [];
+
+    for (const item of uniqueLists) {
+      try {
+        const extra = await this.fetchExtraInfo(item.channelName);
+
+        // FETCH VIDEO INFO
+        let videoId, published, videoUrl, videoTitle, videoDescription;
+
         try {
-          const extra = await this.fetchExtraInfo(item.channelName);
-          // FETCH VIDEO INFO
+          const channelId = item.channelId || item.link?.split('/').pop();
+          const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+          const res = await fetch(rssUrl);
+          const xml = await res.text();
+          const parsed = await parseStringPromise(xml, {
+            explicitArray: false,
+          });
 
-          let videoId, published, videoUrl, videoTitle, videoDescription;
+          const feed = parsed.feed;
+          const entries = Array.isArray(feed.entry) ? feed.entry : [feed.entry];
 
-          try {
-            const channelId = item.channelId || item.link?.split('/').pop();
-            const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-            const res = await fetch(rssUrl);
-            const xml = await res.text();
-            const parsed = await parseStringPromise(xml, {
-              explicitArray: false,
-            });
-
-            const feed = parsed.feed;
-            const entries = Array.isArray(feed.entry)
-              ? feed.entry
-              : [feed.entry];
-
-            // ❗ Chỉ lấy video thường, không lấy Shorts
-            const normalVideo = entries.find((entry) =>
-              entry.link?.['$']?.href?.includes('/watch?v='),
-            );
-
-            console.log(normalVideo);
-            if (normalVideo) {
-              videoId = normalVideo['yt:videoId'];
-              published = normalVideo.published;
-              videoUrl = normalVideo.link?.['$']?.href;
-              videoTitle = normalVideo['media:group']?.['media:title'];
-              videoDescription =
-                normalVideo['media:group']?.['media:description'];
-            }
-          } catch (e) {
-            console.warn(`XML fetch failed for ${item.link}:`, e.message || e);
-          }
-          return {
-            ...item,
-            ...extra,
-            latestVideoId: videoId,
-            latestPublished: published,
-            latestVideoUrl: videoUrl,
-            latestVideoTitle: videoTitle,
-            latestVideoDescription: videoDescription,
-          };
-        } catch (e) {
-          console.warn(
-            `Failed to fetch details for ${item.link} ${JSON.stringify(e)}`,
+          // ❗ Chỉ lấy video thường, không lấy Shorts
+          const normalVideo = entries.find((entry) =>
+            entry.link?.['$']?.href?.includes('/watch?v='),
           );
-          return item;
+
+          if (normalVideo) {
+            videoId = normalVideo['yt:videoId'];
+            published = normalVideo.published;
+            videoUrl = normalVideo.link?.['$']?.href;
+            videoTitle = normalVideo['media:group']?.['media:title'];
+            videoDescription =
+              normalVideo['media:group']?.['media:description'];
+          }
+        } catch (e) {
+          console.warn(`XML fetch failed for ${item.link}:`, e.message || e);
         }
-      }),
-    );
+
+        enrichedLists.push({
+          ...item,
+          ...extra,
+          latestVideoId: videoId,
+          latestPublished: published,
+          latestVideoUrl: videoUrl,
+          latestVideoTitle: videoTitle,
+          latestVideoDescription: videoDescription,
+        });
+      } catch (e) {
+        console.warn(
+          `Failed to fetch details for ${item.link}:`,
+          e.message || e,
+        );
+        enrichedLists.push(item);
+      }
+    }
 
     // Sử dụng formatting đẹp mới
     await this.appendStyledKeyword(keyword, enrichedLists);
@@ -307,7 +306,6 @@ export class YoutubesService {
           return result;
         })
         .catch((error) => {
-          console.log(error);
           return undefined;
         });
       return this.extractResult(res, continuation);
