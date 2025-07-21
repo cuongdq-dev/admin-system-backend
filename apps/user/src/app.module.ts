@@ -8,8 +8,9 @@ import { TypeORMConfigFactory } from '@app/modules/database/typeorm.factory';
 import { MailerConfigClass } from '@app/modules/mail/mailerConfig.service';
 import { BooksModule } from './books/books.module';
 import { NewsModule } from './news/news.module';
+import { YoutubesModule } from './youtubes/youtube.module';
 
-const modules = [NewsModule, BooksModule];
+const modules = [NewsModule, BooksModule, YoutubesModule];
 
 export const global_modules = [
   ConfigModule.forRoot({
