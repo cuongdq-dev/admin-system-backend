@@ -18,6 +18,7 @@ export const CustomCron = {
   CRON_20_HOUR_10_MINUTE: '10 20 * * *', // 20:10 hằng ngày
   CRON_23_HOUR_10_MINUTE: '10 23 * * *', // 23:10 hằng ngày
   CRON_7_HOUR_5_MINUTE: '5 7 * * *', // 07:05 hằng ngày
+  CRON_EVERY_3_HOUR: '0 */3 * * *',
 };
 
 @Injectable()
@@ -31,6 +32,7 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
+    await this.handleUpdateBatchLogs();
   }
 
   @Cron(CustomCron.CRON_6_HOUR)
@@ -179,6 +181,13 @@ export class TaskService {
     await this.taskQueue.add(TaskJobName.CRAWL_ARTICLES, {
       time: new Date().toISOString(),
       log_id: log.id,
+    });
+  }
+
+  @Cron(CustomCron.CRON_EVERY_3_HOUR)
+  async handleUpdateBatchLogs() {
+    await this.taskQueue.add(TaskJobName.UPDATE_BATCH_LOGS, {
+      time: new Date().toISOString(),
     });
   }
 }

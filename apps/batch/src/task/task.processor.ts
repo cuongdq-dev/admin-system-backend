@@ -24,6 +24,7 @@ import { SiteType } from '@app/entities/site.entity';
 import { IndexStatus } from '@app/entities/site_posts.entity';
 import { CrawlService } from '@app/modules/crawl-data/crawl.service';
 // import { TelegramService } from '@app/modules/telegram/telegram.service';
+import { BatchLogsService } from '@app/modules/batch-logs/batch-log.service';
 import {
   fetchTrendings,
   generatePostFromHtml,
@@ -34,6 +35,7 @@ import {
 import { Process, Processor } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Job } from 'bull';
 import {
   DataSource,
   In,
@@ -44,8 +46,6 @@ import {
   Repository,
 } from 'typeorm';
 import { TaskJobName } from './task.dto';
-import { Job } from 'bull';
-import { BatchLogsService } from '@app/modules/batch-logs/batch-log.service';
 
 @Processor('task-queue') // Tên queue
 export class TaskProcessor {
@@ -88,6 +88,9 @@ export class TaskProcessor {
     @InjectRepository(SiteBook)
     private readonly siteBookRepository: Repository<SiteBook>,
 
+    @InjectRepository(BatchLogs)
+    private readonly batchLogsRepository: Repository<BatchLogs>,
+
     @InjectRepository(GoogleIndexRequest)
     private readonly googleIndexRequestRepository: Repository<GoogleIndexRequest>,
 
@@ -100,6 +103,34 @@ export class TaskProcessor {
 
     private readonly dataSource: DataSource,
   ) {}
+
+  @Process(TaskJobName.UPDATE_BATCH_LOGS)
+  async handleUpdateBatchLogs() {
+    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+
+    const longRunningJobs = await this.batchLogsRepository.find({
+      where: {
+        status: 'running',
+        started_at: LessThan(threeHoursAgo),
+      },
+    });
+
+    if (longRunningJobs.length > 0) {
+      this.logger.warn(
+        `Có ${longRunningJobs.length} batch chạy quá 3 tiếng. Đánh dấu failed...`,
+      );
+    }
+
+    for (const job of longRunningJobs) {
+      job.status = 'died';
+      job.finished_at = new Date();
+      job.message = [
+        ...(job.message || []),
+        'Batch marked as failed due to running for more than 3 hours.',
+      ];
+      await this.batchLogsRepository.save(job);
+    }
+  }
 
   @Process(TaskJobName.CRAWL_DAO_TRUYEN)
   async handleCrawlerDaotruyen(job: Job<{ time: string; log_id: string }>) {

@@ -1,6 +1,12 @@
 import { Column, Entity } from 'typeorm';
 import { BaseEntity } from './base';
 
+export type BatchLogStatus =
+  | 'pending'
+  | 'running'
+  | 'success'
+  | 'failed'
+  | 'died';
 @Entity({ name: 'batch_logs' })
 export class BatchLogs extends BaseEntity {
   @Column()
@@ -19,7 +25,7 @@ export class BatchLogs extends BaseEntity {
   finished_at: Date;
 
   @Column({ default: 'pending' })
-  status: 'pending' | 'running' | 'success' | 'failed';
+  status: BatchLogStatus;
 
   @Column({ type: 'text', array: true, nullable: true })
   message: string[];

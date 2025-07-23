@@ -16,7 +16,8 @@ export enum TaskJobName {
 
   // Cleanup jobs
   CLEANUP_OLD_POSTS = 'handle-clean-old-posts',
-
+  //
+  UPDATE_BATCH_LOGS = 'update-logs-status',
   // TEST:
   CLEAN_TEMP_FILES = 'test',
 }
