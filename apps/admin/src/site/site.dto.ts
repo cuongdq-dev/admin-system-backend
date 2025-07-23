@@ -1,22 +1,19 @@
+import { ValidationGroup } from '@app/crud/validation-group';
+import { SiteType } from '@app/entities/site.entity';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ValidationGroup } from '@app/crud/validation-group';
 
 class CategoryIdDto {
-  @IsUUID()
-  id: string;
-}
-
-class PostIdDto {
   @IsUUID()
   id: string;
 }
@@ -35,6 +32,10 @@ export class SiteBodyDto {
   domain: string;
 
   @IsOptional()
+  @IsObject()
+  type?: { id?: SiteType; title?: SiteType };
+
+  @IsOptional()
   @IsString()
   description?: string;
 
@@ -47,10 +48,4 @@ export class SiteBodyDto {
   @IsOptional()
   @Type(() => CategoryIdDto)
   categories: CategoryIdDto[];
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @IsOptional()
-  @Type(() => PostIdDto)
-  posts: PostIdDto[];
 }

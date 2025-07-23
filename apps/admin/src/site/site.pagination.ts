@@ -14,6 +14,7 @@ export const sitePaginateConfig: PaginateConfig<Site> = {
     'domain',
     'autoPost',
     'token',
+    'type',
     'created_at',
     'sitePosts.post.id',
     'sitePosts.post.slug',

@@ -1,12 +1,12 @@
 import { Category, Post, Site, SitePost, User } from '@app/entities';
 // import { TelegramService } from '@app/modules/telegram/telegram.service';
+import { workspaceEnum } from '@app/utils/enum';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, DeepPartial, In, Repository } from 'typeorm';
 import { SiteBodyDto } from './site.dto';
 import { sitePaginateConfig } from './site.pagination';
-import { workspaceEnum } from '@app/utils/enum';
 
 @Injectable()
 export class SiteService {
@@ -30,7 +30,10 @@ export class SiteService {
       where: {
         ...sitePaginateConfig.where,
         created_by: user.id,
-        type: workspaceEnum[workspaces],
+        type:
+          workspaceEnum[workspaces] == workspaceEnum.wp_system
+            ? In([workspaceEnum.wp_books, workspaceEnum.wp_news])
+            : workspaceEnum[workspaces],
       },
     });
   }
@@ -132,14 +135,22 @@ export class SiteService {
   /**
    * Tạo site mới
    */
-  async create(user: User, createDto: SiteBodyDto, workspaces: string) {
+  async create(user: User, body: SiteBodyDto, workspaces: string) {
+    const { type, ...createDto } = body;
+    const data: DeepPartial<Site> = {
+      ...createDto,
+      created_by: user.id,
+    };
+
+    data.type =
+      workspaceEnum[workspaces] != workspaceEnum.wp_system
+        ? workspaceEnum[workspaces]
+        : type?.id;
+
     const result = await this.siteRepository
-      .create({
-        ...createDto,
-        created_by: user.id,
-        type: workspaceEnum[workspaces],
-      })
+      .create({ ...createDto, ...data })
       .save();
+
     return this.siteRepository.findOne({
       where: { id: result.id },
       relations: ['categories'],
@@ -190,8 +201,13 @@ export class SiteService {
   /**
    * Cập nhật thông tin site
    */
-  async update(site: Site, dto: SiteBodyDto, workspaces: string) {
+  async update(site: Site, body: SiteBodyDto, workspaces: string) {
     if (!site) throw new NotFoundException('Site not found.');
+    const { type, ...dto } = body;
+    const update: DeepPartial<Site> = {
+      id: site.id,
+      ...dto,
+    };
 
     if (dto?.categories) {
       const categoryIds = dto.categories.map((c) => c.id);
@@ -199,16 +215,22 @@ export class SiteService {
         id: In(categoryIds),
       });
 
-      dto.categories = newCategories;
+      update.categories = newCategories;
     }
 
-    if (dto?.posts) {
-      const postIds = dto.posts.map((p) => p.id);
-      const newPosts = await this.postRepository.findBy({ id: In(postIds) });
-      dto.posts = newPosts;
+    if (type) {
+      update.type =
+        workspaceEnum[workspaces] == workspaceEnum.wp_system
+          ? type?.id
+          : workspaceEnum[workspaces];
     }
 
-    const resultSite = await this.siteRepository.save({ id: site.id, ...dto });
+    await this.siteRepository.save(update);
+
+    const resultSite = await this.siteRepository.findOne({
+      where: { id: site?.id },
+    });
+
     const resultCategory = await this.getCategoriesBySiteId(site.id);
     return { ...resultSite, categories: resultCategory };
   }
