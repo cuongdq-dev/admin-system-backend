@@ -31,11 +31,9 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    this.handleCrawlerDaotruyen();
-    this.handleCrawlerArticles();
   }
 
-  // @Cron(CustomCron.CRON_6_HOUR)
+  @Cron(CustomCron.CRON_6_HOUR)
   async handleCrawlerDaotruyen() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
@@ -49,7 +47,7 @@ export class TaskService {
     });
   }
 
-  // @Cron(CustomCron.CRON_8_HOUR)
+  @Cron(CustomCron.CRON_8_HOUR)
   async fetchChapterMissing() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
@@ -62,7 +60,7 @@ export class TaskService {
     });
   }
 
-  // @Cron(CustomCron.CRON_1_HOUR_10_MINUTE)
+  @Cron(CustomCron.CRON_1_HOUR_10_MINUTE)
   async fetchSEOBook() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
@@ -76,7 +74,7 @@ export class TaskService {
   }
 
   // TODO UPDATE WITH BOOK
-  // @Cron(CustomCron.CRON_23_HOUR_10_MINUTE)
+  @Cron(CustomCron.CRON_23_HOUR_10_MINUTE)
   async googleIndexBooks() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
@@ -89,7 +87,7 @@ export class TaskService {
     });
   }
 
-  // @Cron(CustomCron.CRON_20_HOUR_10_MINUTE)
+  @Cron(CustomCron.CRON_20_HOUR_10_MINUTE)
   async googleMetaDataBooks() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
@@ -102,7 +100,7 @@ export class TaskService {
     });
   }
 
-  // @Cron(CustomCron.CRON_7_HOUR_5_MINUTE)
+  @Cron(CustomCron.CRON_7_HOUR_5_MINUTE)
   async googleMetaDataPassedBooks() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
@@ -116,7 +114,7 @@ export class TaskService {
   }
   //
 
-  // @Cron(CustomCron.CRON_EVERY_4_HOUR_30_MINUTE)
+  @Cron(CustomCron.CRON_EVERY_4_HOUR_30_MINUTE)
   async googleIndexNews() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
@@ -130,7 +128,7 @@ export class TaskService {
     });
   }
 
-  // @Cron(CustomCron.CRON_EVERY_5_HOUR_45_MINUTE)
+  @Cron(CustomCron.CRON_EVERY_5_HOUR_45_MINUTE)
   async googleMetaDataNews() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
@@ -144,7 +142,7 @@ export class TaskService {
     });
   }
 
-  // @Cron(CustomCron.CRON_EVERY_12_HOUR_30_MINUTE)
+  @Cron(CustomCron.CRON_EVERY_12_HOUR_30_MINUTE)
   async googleMetaDataPassedNews() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
@@ -158,7 +156,7 @@ export class TaskService {
     });
   }
 
-  // @Cron(CustomCron.CRON_4_HOUR_10_MINUTE)
+  @Cron(CustomCron.CRON_4_HOUR_10_MINUTE)
   async handleCleanupOldPosts() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(
@@ -171,7 +169,7 @@ export class TaskService {
     });
   }
 
-  // @Cron(CustomCron.CRON_EVERY_3_HOUR_45_MINUTE)
+  @Cron(CustomCron.CRON_EVERY_3_HOUR_45_MINUTE)
   async handleCrawlerArticles() {
     const scheduledAt = new Date();
     const log = await this.batchLogsService.create(

@@ -46,8 +46,11 @@ export class CrawlService {
   async handleCrawlerDaoTruyen() {
     let page = 0;
     const pageSize = 40;
+    const maxToCrawl = 10;
 
-    while (true) {
+    const storiesToCrawl: any[] = [];
+
+    while (storiesToCrawl.length < maxToCrawl) {
       const response = await fetchWithRetry(
         `https://daotruyen.me/api/public/stories?pageNo=${page}&pageSize=${pageSize}`,
       );
@@ -55,39 +58,39 @@ export class CrawlService {
       if (!response?.ok) break;
 
       const data = await response.json();
+
       if (Array.isArray(data.content)) {
         const stories = this.transformStories(data.content);
+
         for (const story of stories) {
+          const slug = generateSlug(story.title);
           const findData = await this.bookRepository.findOne({
-            where: { title: story.title, slug: generateSlug(story.title) },
-            select: ['total_chapter', 'chapters', 'id'],
+            where: { title: story.title, slug },
+            select: ['total_chapter', 'id'],
             relations: ['chapters'],
           });
 
-          if (
-            !findData ||
-            Number(findData?.chapters?.length) < Number(story?.total_chapter)
-          ) {
-            console.log('Crawl data.....');
-            await this.processBook(story);
-          } else {
-            console.log(
-              'exist!!',
-              findData.id,
-              findData.title,
-              findData.total_chapter,
-              story.total_chapter,
-            );
-            break;
+          const isMissing =
+            !findData || findData.chapters.length < story.total_chapter;
+
+          if (isMissing) {
+            storiesToCrawl.push(story);
+            if (storiesToCrawl.length >= maxToCrawl) break;
           }
-          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
 
-      if (data.last) break;
+      if (data.last || storiesToCrawl.length >= maxToCrawl) break;
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
       page++;
+    }
+
+    // Tiến hành crawl 10 truyện đã tìm được
+    for (const story of storiesToCrawl) {
+      console.log('Crawling:', story.title);
+      await this.processBook(story);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 

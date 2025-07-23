@@ -12,7 +12,8 @@ import { BookStatus } from '@app/entities/book.entity';
 import * as cheerio from 'cheerio';
 
 import { IndexStatus } from '@app/entities/site_books.entity';
-import { callGeminiApi, generateSlug, uploadImageCdn } from '@app/utils';
+import { CrawlService } from '@app/modules/crawl-data/crawl.service';
+import { generateSlug, uploadImageCdn } from '@app/utils';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isUUID } from 'class-validator';
@@ -20,7 +21,6 @@ import { paginate, PaginateQuery } from 'nestjs-paginate';
 import * as path from 'path';
 import { DataSource, In, Repository } from 'typeorm';
 import { CreateBookDto } from './book.dto';
-import { CrawlService } from '@app/modules/crawl-data/crawl.service';
 
 @Injectable()
 export class BookService {
