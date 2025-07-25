@@ -72,8 +72,12 @@ jobs:
         VPS_PORT=${{ secrets.VPS_PORT }}
         EOF
 
-    - name: Docker Compose Build & Up
-      run: docker-compose up --build -d
+    - name: Build with Docker Compose
+      run: docker-compose build
 
+      # 4. (Tuỳ chọn) Run service để test
+    - name: Run docker-compose
+      run: docker-compose up -d
+      
     - name: Check running containers
       run: docker ps
