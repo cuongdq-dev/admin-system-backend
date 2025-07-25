@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Compose CI
 
 on:
   push:
@@ -7,14 +7,14 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout source
       uses: actions/checkout@v4
 
-    - name: Create .env from secrets
+    - name: Create .env from GitHub Secrets
       run: |
         cat <<EOF > .env
         ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
@@ -72,6 +72,8 @@ jobs:
         VPS_PORT=${{ secrets.VPS_PORT }}
         EOF
 
-    - name: Build the Docker image
-      run: |
-        docker build --file Dockerfile --tag my-image-name:$(date +%s) --build-arg ENV_FILE=.env .
+    - name: Docker Compose Build & Up
+      run: docker-compose up --build -d
+
+    - name: Check running containers
+      run: docker ps
