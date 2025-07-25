@@ -6,6 +6,8 @@ services:
             context: .
         environment:
             - APP_NAME=admin
+        args:
+            - APP_NAME=admin
         ports:
             - "3003:3003"
         env_file:
@@ -19,6 +21,8 @@ services:
         build:
             context: .
         environment:
+            - APP_NAME=user
+        args:
             - APP_NAME=user
         env_file:
             - .env
@@ -34,6 +38,8 @@ services:
             context: .
         environment:
             - APP_NAME=socket
+        args:
+            - APP_NAME=socket
         env_file:
             - .env
         ports:
@@ -48,6 +54,8 @@ services:
             context: .
         environment:
             - APP_NAME=vps
+        args:
+            - APP_NAME=vps
         env_file:
             - .env
         ports:
@@ -61,6 +69,8 @@ services:
         build:
             context: .
         environment:
+            - APP_NAME=batch
+        args:
             - APP_NAME=batch
         env_file:
             - .env
