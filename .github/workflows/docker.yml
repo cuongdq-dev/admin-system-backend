@@ -71,8 +71,8 @@ jobs:
         USER_PORT=${{ secrets.USER_PORT }}
         VPS_PORT=${{ secrets.VPS_PORT }}
         EOF
-    - name: Build with Docker Compose
-      run: docker-compose build
+    # - name: Build with Docker Compose
+      # run: docker-compose build
 
       # 4. (Tuỳ chọn) Run service để test
     - name: Run docker-compose
