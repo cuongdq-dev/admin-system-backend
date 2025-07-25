@@ -33,50 +33,50 @@ services:
             interval: 10s
             retries: 5
 
-    socket:
-        build:
-            context: .
-        environment:
-            - APP_NAME=socket
-        args:
-            - APP_NAME=socket
-        env_file:
-            - .env
-        ports:
-            - "3004:3004"
-        healthcheck:
-            test: [ "CMD", "curl", "-f", "http://localhost:3004" ]
-            interval: 10s
-            retries: 5
+    # socket:
+    #     build:
+    #         context: .
+    #     environment:
+    #         - APP_NAME=socket
+    #     args:
+    #         - APP_NAME=socket
+    #     env_file:
+    #         - .env
+    #     ports:
+    #         - "3004:3004"
+    #     healthcheck:
+    #         test: [ "CMD", "curl", "-f", "http://localhost:3004" ]
+    #         interval: 10s
+    #         retries: 5
 
-    vps:
-        build:
-            context: .
-        environment:
-            - APP_NAME=vps
-        args:
-            - APP_NAME=vps
-        env_file:
-            - .env
-        ports:
-            - "3005:3005"
-        healthcheck:
-            test: [ "CMD", "curl", "-f", "http://localhost:3005" ]
-            interval: 10s
-            retries: 5
+    # vps:
+    #     build:
+    #         context: .
+    #     environment:
+    #         - APP_NAME=vps
+    #     args:
+    #         - APP_NAME=vps
+    #     env_file:
+    #         - .env
+    #     ports:
+    #         - "3005:3005"
+    #     healthcheck:
+    #         test: [ "CMD", "curl", "-f", "http://localhost:3005" ]
+    #         interval: 10s
+    #         retries: 5
 
-    batch:
-        build:
-            context: .
-        environment:
-            - APP_NAME=batch
-        args:
-            - APP_NAME=batch
-        env_file:
-            - .env
-        ports:
-            - "3006:3006"
-        healthcheck:
-            test: [ "CMD", "curl", "-f", "http://localhost:3006" ]
-            interval: 10s
-            retries: 5
+    # batch:
+    #     build:
+    #         context: .
+    #     environment:
+    #         - APP_NAME=batch
+    #     args:
+    #         - APP_NAME=batch
+    #     env_file:
+    #         - .env
+    #     ports:
+    #         - "3006:3006"
+    #     healthcheck:
+    #         test: [ "CMD", "curl", "-f", "http://localhost:3006" ]
+    #         interval: 10s
+    #         retries: 5
