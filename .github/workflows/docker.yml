@@ -76,7 +76,7 @@ jobs:
 
       # 4. (Tuỳ chọn) Run service để test
     - name: Run docker-compose
-      run: docker-compose up -d
+      run:  docker-compose up --build -d
       
     - name: Check running containers
       run: docker ps
