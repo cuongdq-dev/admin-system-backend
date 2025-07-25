@@ -4,9 +4,9 @@ services:
     admin:
         build:
             context: .
+            args:
+                - APP_NAME=admin
         environment:
-            - APP_NAME=admin
-        args:
             - APP_NAME=admin
         ports:
             - "3003:3003"
@@ -20,9 +20,9 @@ services:
     user:
         build:
             context: .
+            args:
+                - APP_NAME=user
         environment:
-            - APP_NAME=user
-        args:
             - APP_NAME=user
         env_file:
             - .env
