@@ -7,12 +7,71 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create .env from secrets
+      run: |
+        cat <<EOF > .env
+        ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+        ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+        ADMIN_PORT=${{ secrets.ADMIN_PORT }}
+        APP_NAME=${{ secrets.APP_NAME }}
+        APP_PORT=${{ secrets.APP_PORT }}
+        AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_REGION=${{ secrets.AWS_REGION }}
+        BATCH_PORT=${{ secrets.BATCH_PORT }}
+        CDN_API=${{ secrets.CDN_API }}
+        CDN_DOMAIN=${{ secrets.CDN_DOMAIN }}
+        DATABASE_URL=${{ secrets.DATABASE_URL }}
+        FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+        FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
+        FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+        FRONTEND_DOMAIN=${{ secrets.FRONTEND_DOMAIN }}
+        GEMINI_API_KEY_1=${{ secrets.GEMINI_API_KEY_1 }}
+        GEMINI_API_KEY_2=${{ secrets.GEMINI_API_KEY_2 }}
+        GEMINI_API_KEY_3=${{ secrets.GEMINI_API_KEY_3 }}
+        GEMINI_API_KEY_4=${{ secrets.GEMINI_API_KEY_4 }}
+        GOOGLE_CLIENT_EMAIL=${{ secrets.GOOGLE_CLIENT_EMAIL }}
+        GOOGLE_CREDENTIALS_BASE64=${{ secrets.GOOGLE_CREDENTIALS_BASE64 }}
+        GOOGLE_PRIVATE_KEY=${{ secrets.GOOGLE_PRIVATE_KEY }}
+        GOOGLE_SERVICE_ACCOUNT_JSON=${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        GOOGLE_SPREADSHEET_ID=${{ secrets.GOOGLE_SPREADSHEET_ID }}
+        JWT_ACCESS_TOKEN_EXPIRES_IN=${{ secrets.JWT_ACCESS_TOKEN_EXPIRES_IN }}
+        JWT_REFRESH_TOKEN_EXPIRES_IN=${{ secrets.JWT_REFRESH_TOKEN_EXPIRES_IN }}
+        JWT_SECRET=${{ secrets.JWT_SECRET }}
+        MAIL_ACCESS_TOKEN=${{ secrets.MAIL_ACCESS_TOKEN }}
+        MAIL_CLIENT_ID=${{ secrets.MAIL_CLIENT_ID }}
+        MAIL_CLIENT_SECRET=${{ secrets.MAIL_CLIENT_SECRET }}
+        MAIL_DEFAULT_EMAIL=${{ secrets.MAIL_DEFAULT_EMAIL }}
+        MAIL_DEFAULT_NAME=${{ secrets.MAIL_DEFAULT_NAME }}
+        MAIL_HOST=${{ secrets.MAIL_HOST }}
+        MAIL_IGNORE_TLS=${{ secrets.MAIL_IGNORE_TLS }}
+        MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+        MAIL_PORT=${{ secrets.MAIL_PORT }}
+        MAIL_REFRESH_TOKEN=${{ secrets.MAIL_REFRESH_TOKEN }}
+        MAIL_REQUIRE_TLS=${{ secrets.MAIL_REQUIRE_TLS }}
+        MAIL_SECURE=${{ secrets.MAIL_SECURE }}
+        MAIL_USER=${{ secrets.MAIL_USER }}
+        NODE_ENV=${{ secrets.NODE_ENV }}
+        REDIS_HOST=${{ secrets.REDIS_HOST }}
+        REDIS_PORT=${{ secrets.REDIS_PORT }}
+        SERVER_API=${{ secrets.SERVER_API }}
+        SOCKET_PORT=${{ secrets.SOCKET_PORT }}
+        SOCKET_SERVER_URL=${{ secrets.SOCKET_SERVER_URL }}
+        STORAGE_TYPE=${{ secrets.STORAGE_TYPE }}
+        TELE_BOT_CHAT_ID=${{ secrets.TELE_BOT_CHAT_ID }}
+        TELE_BOT_NAME=${{ secrets.TELE_BOT_NAME }}
+        TELE_BOT_TOKEN=${{ secrets.TELE_BOT_TOKEN }}
+        TELE_BOT_USERNAME=${{ secrets.TELE_BOT_USERNAME }}
+        USER_PORT=${{ secrets.USER_PORT }}
+        VPS_PORT=${{ secrets.VPS_PORT }}
+        EOF
+
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      run: |
+        docker build --file Dockerfile --tag my-image-name:$(date +%s) --build-arg ENV_FILE=.env .
