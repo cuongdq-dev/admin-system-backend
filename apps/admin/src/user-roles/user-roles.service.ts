@@ -2,12 +2,17 @@
 
 import { Role, User, Permission, RolePermission } from '@app/entities';
 
-import { Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { DataSource, In, Repository } from 'typeorm';
 import { RoleBodyDto } from './user-roles.dto';
 import { rolesPaginateConfig } from './user-roles.pagination';
+import { CodeConstants } from '@app/entities/role.entity';
 
 @Injectable()
 export class UserRolesService {
@@ -66,6 +71,10 @@ export class UserRolesService {
   async update(role: Role, input: RoleBodyDto) {
     return this.dataSource.transaction(async (manager) => {
       // Cập nhật name & description
+
+      if (role.code == CodeConstants.SUPER_ADMIN_CODE) {
+        throw new BadGatewayException("Super admin can't be edited.");
+      }
       await manager.update(Role, role.id, {
         name: input.name,
         description: input.description,
@@ -100,6 +109,9 @@ export class UserRolesService {
    */
   async delete(role: Role) {
     return this.dataSource.transaction(async (manager) => {
+      if (role.code == CodeConstants.SUPER_ADMIN_CODE) {
+        throw new BadGatewayException("Super admin can't be deleted.");
+      }
       await manager.softDelete(Role, { id: role.id });
       await manager.softDelete(RolePermission, { role: { id: role.id } });
 

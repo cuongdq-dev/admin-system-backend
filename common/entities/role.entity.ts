@@ -1,8 +1,13 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { BaseEntity } from './base';
 import { RolePermission } from './role_permission.entity';
 import { UserRole } from './user_roles.entity';
-import { BaseEntity } from './base';
 
+export enum CodeConstants {
+  SUPER_ADMIN_CODE = 'api-super-admin',
+  EDITOR_CODE = 'api-editor',
+  AUTHOR_CODE = 'api-author',
+}
 @Entity('roles')
 export class Role extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -10,6 +15,9 @@ export class Role extends BaseEntity {
 
   @Column({ nullable: true })
   name: string;
+
+  @Column({ type: 'enum', enum: CodeConstants, nullable: true })
+  code: CodeConstants;
 
   @Column({ type: 'text', nullable: true })
   description: string;

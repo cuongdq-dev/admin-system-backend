@@ -175,7 +175,11 @@ export class UserController {
     @Param(
       'id',
       ParseUUIDPipe,
-      PermissionDetailPipe({ action: 'delete', entity: User }),
+      PermissionDetailPipe({
+        action: 'delete',
+        entity: User,
+        relations: ['user_roles', 'user_roles.role'],
+      }),
     )
     user: User,
   ) {

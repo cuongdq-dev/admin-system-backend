@@ -158,10 +158,6 @@ export class UserService {
         detail.password = await bcrypt.hash(input.password, salt);
       }
 
-      // 3. Cập nhật roles
-      // 3.1 Xoá roles cũ
-      await manager.delete(UserRole, { user: detail });
-      // 3.2 Thêm roles mới
       const roles = await manager.find(Role, {
         where: { id: In(input.roles.map((r) => r.id)) },
       });
@@ -173,6 +169,8 @@ export class UserService {
           created_by: user.id,
         }),
       );
+
+      await manager.delete(UserRole, { user: detail });
 
       await manager.save(UserRole, userRoles);
 
