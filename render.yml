@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: admin
+    env: docker
+    repo: https://github.com/cuongdq-dev/admin-system-backend
+    branch: main
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: APP_NAME
+        value: 'admin'
+    startCommand: 'yarn start:admin'
+    healthCheckPath: '/health'
+
+  - type: web
+    name: user
+    env: docker
+    repo: https://github.com/cuongdq-dev/admin-system-backend
+    branch: main
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: APP_NAME
+        value: 'user'
+    startCommand: 'yarn start:user'
+    healthCheckPath: '/health'
