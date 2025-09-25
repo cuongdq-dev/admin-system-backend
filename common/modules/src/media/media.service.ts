@@ -6,7 +6,6 @@ import { Response } from 'express';
 import { Repository } from 'typeorm';
 import { LocalService } from './local.service';
 import { MediaServiceContract } from './media.interface';
-import { S3Service } from './s3.service';
 
 @Injectable()
 export class MediaService {
@@ -17,11 +16,7 @@ export class MediaService {
     private mediaRepository: Repository<Media>,
     private configService: ConfigService,
   ) {
-    if (this.configService.get('storage.type') === 'S3') {
-      this.serviceHandler = new S3Service(mediaRepository, configService);
-    } else {
-      this.serviceHandler = new LocalService(mediaRepository);
-    }
+    this.serviceHandler = new LocalService(mediaRepository);
   }
 
   async get(id: string, res: Response, range: string) {

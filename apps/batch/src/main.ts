@@ -10,9 +10,11 @@ async function bootstrap() {
   // Admin Module Setup
   const app = await NestFactory.create(BatchModule);
   createApplication(app);
-  const adminConfigService = app.get(ConfigService);
-  documentationBuilder(app, adminConfigService, 'Batch');
+  const batchConfigService = app.get(ConfigService);
+  documentationBuilder(app, batchConfigService, 'Batch');
 
-  await app.listen(adminConfigService.get('BATCH_PORT') || 3006);
+  const port = batchConfigService.get('BATCH_PORT') || 3006;
+  await app.listen(port);
+  console.log('===== Application run:' + port + '=====');
 }
 bootstrap();

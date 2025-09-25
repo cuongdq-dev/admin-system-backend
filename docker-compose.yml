@@ -65,18 +65,18 @@ services:
     #         interval: 10s
     #         retries: 5
 
-    # batch:
-    #     build:
-    #         context: .
-    #     environment:
-    #         - APP_NAME=batch
-    #     args:
-    #         - APP_NAME=batch
-    #     env_file:
-    #         - .env
-    #     ports:
-    #         - "3006:3006"
-    #     healthcheck:
-    #         test: [ "CMD", "curl", "-f", "http://localhost:3006" ]
-    #         interval: 10s
-    #         retries: 5
+    batch:
+        build:
+            context: .
+            args:
+                - APP_NAME=batch
+        environment:
+            - APP_NAME=batch
+        env_file:
+            - .env
+        ports:
+            - "3006:3006"
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:3006" ]
+            interval: 10s
+            retries: 5

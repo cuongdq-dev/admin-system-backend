@@ -32,162 +32,162 @@ export class TaskService {
 
   async onModuleInit() {
     this.logger.log('✅ Module initialized, starting crawler...');
-    await this.handleUpdateBatchLogs();
+    // await this.handleUpdateBatchLogs();
   }
 
-  @Cron(CustomCron.CRON_6_HOUR)
-  async handleCrawlerDaotruyen() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.CRAWL_DAO_TRUYEN,
-      scheduledAt,
-    );
+  // @Cron(CustomCron.CRON_6_HOUR)
+  // async handleCrawlerDaotruyen() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.CRAWL_DAO_TRUYEN,
+  //     scheduledAt,
+  //   );
 
-    await this.taskQueue.add(TaskJobName.CRAWL_DAO_TRUYEN, {
-      time: new Date().toISOString(),
-      log_id: log.id,
-    });
-  }
+  //   await this.taskQueue.add(TaskJobName.CRAWL_DAO_TRUYEN, {
+  //     time: new Date().toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
 
-  @Cron(CustomCron.CRON_8_HOUR)
-  async fetchChapterMissing() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.FETCH_MISSING_CHAPTERS,
-      scheduledAt,
-    );
-    await this.taskQueue.add(TaskJobName.FETCH_MISSING_CHAPTERS, {
-      time: new Date().toISOString(),
-      log_id: log.id,
-    });
-  }
+  // @Cron(CustomCron.CRON_8_HOUR)
+  // async fetchChapterMissing() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.FETCH_MISSING_CHAPTERS,
+  //     scheduledAt,
+  //   );
+  //   await this.taskQueue.add(TaskJobName.FETCH_MISSING_CHAPTERS, {
+  //     time: new Date().toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
 
-  @Cron(CustomCron.CRON_1_HOUR_10_MINUTE)
-  async fetchSEOBook() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.FETCH_SEO_BOOK,
-      scheduledAt,
-    );
-    await this.taskQueue.add(TaskJobName.FETCH_SEO_BOOK, {
-      time: new Date().toISOString(),
-      log_id: log.id,
-    });
-  }
+  // @Cron(CustomCron.CRON_1_HOUR_10_MINUTE)
+  // async fetchSEOBook() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.FETCH_SEO_BOOK,
+  //     scheduledAt,
+  //   );
+  //   await this.taskQueue.add(TaskJobName.FETCH_SEO_BOOK, {
+  //     time: new Date().toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
 
-  // TODO UPDATE WITH BOOK
-  @Cron(CustomCron.CRON_23_HOUR_10_MINUTE)
-  async googleIndexBooks() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.BOOKS_FETCH_GOOGLE_INDEX,
-      scheduledAt,
-    );
-    await this.taskQueue.add(TaskJobName.BOOKS_FETCH_GOOGLE_INDEX, {
-      time: new Date().toISOString(),
-      log_id: log.id,
-    });
-  }
+  // // TODO UPDATE WITH BOOK
+  // @Cron(CustomCron.CRON_23_HOUR_10_MINUTE)
+  // async googleIndexBooks() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.BOOKS_FETCH_GOOGLE_INDEX,
+  //     scheduledAt,
+  //   );
+  //   await this.taskQueue.add(TaskJobName.BOOKS_FETCH_GOOGLE_INDEX, {
+  //     time: new Date().toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
 
-  @Cron(CustomCron.CRON_20_HOUR_10_MINUTE)
-  async googleMetaDataBooks() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.BOOKS_FETCH_GOOGLE_META,
-      scheduledAt,
-    );
-    await this.taskQueue.add(TaskJobName.BOOKS_FETCH_GOOGLE_META, {
-      time: new Date().toISOString(),
-      log_id: log.id,
-    });
-  }
+  // @Cron(CustomCron.CRON_20_HOUR_10_MINUTE)
+  // async googleMetaDataBooks() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.BOOKS_FETCH_GOOGLE_META,
+  //     scheduledAt,
+  //   );
+  //   await this.taskQueue.add(TaskJobName.BOOKS_FETCH_GOOGLE_META, {
+  //     time: new Date().toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
 
-  @Cron(CustomCron.CRON_7_HOUR_5_MINUTE)
-  async googleMetaDataPassedBooks() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.BOOKS_FETCH_GOOGLE_META_PASSED,
-      scheduledAt,
-    );
-    await this.taskQueue.add(TaskJobName.BOOKS_FETCH_GOOGLE_META_PASSED, {
-      time: new Date().toISOString(),
-      log_id: log.id,
-    });
-  }
-  //
+  // @Cron(CustomCron.CRON_7_HOUR_5_MINUTE)
+  // async googleMetaDataPassedBooks() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.BOOKS_FETCH_GOOGLE_META_PASSED,
+  //     scheduledAt,
+  //   );
+  //   await this.taskQueue.add(TaskJobName.BOOKS_FETCH_GOOGLE_META_PASSED, {
+  //     time: new Date().toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
+  // //
 
-  @Cron(CustomCron.CRON_EVERY_4_HOUR_30_MINUTE)
-  async googleIndexNews() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.NEWS_FETCH_GOOGLE_INDEX,
-      scheduledAt,
-    );
+  // @Cron(CustomCron.CRON_EVERY_4_HOUR_30_MINUTE)
+  // async googleIndexNews() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.NEWS_FETCH_GOOGLE_INDEX,
+  //     scheduledAt,
+  //   );
 
-    await this.taskQueue.add(TaskJobName.NEWS_FETCH_GOOGLE_INDEX, {
-      time: scheduledAt.toISOString(),
-      log_id: log.id,
-    });
-  }
+  //   await this.taskQueue.add(TaskJobName.NEWS_FETCH_GOOGLE_INDEX, {
+  //     time: scheduledAt.toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
 
-  @Cron(CustomCron.CRON_EVERY_5_HOUR_45_MINUTE)
-  async googleMetaDataNews() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.NEWS_FETCH_GOOGLE_META,
-      scheduledAt,
-    );
+  // @Cron(CustomCron.CRON_EVERY_5_HOUR_45_MINUTE)
+  // async googleMetaDataNews() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.NEWS_FETCH_GOOGLE_META,
+  //     scheduledAt,
+  //   );
 
-    await this.taskQueue.add(TaskJobName.NEWS_FETCH_GOOGLE_META, {
-      time: new Date().toISOString(),
-      log_id: log.id,
-    });
-  }
+  //   await this.taskQueue.add(TaskJobName.NEWS_FETCH_GOOGLE_META, {
+  //     time: new Date().toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
 
-  @Cron(CustomCron.CRON_EVERY_12_HOUR_30_MINUTE)
-  async googleMetaDataPassedNews() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.NEWS_FETCH_GOOGLE_META_PASSED,
-      scheduledAt,
-    );
+  // @Cron(CustomCron.CRON_EVERY_12_HOUR_30_MINUTE)
+  // async googleMetaDataPassedNews() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.NEWS_FETCH_GOOGLE_META_PASSED,
+  //     scheduledAt,
+  //   );
 
-    await this.taskQueue.add(TaskJobName.NEWS_FETCH_GOOGLE_META_PASSED, {
-      time: new Date().toISOString(),
-      log_id: log.id,
-    });
-  }
+  //   await this.taskQueue.add(TaskJobName.NEWS_FETCH_GOOGLE_META_PASSED, {
+  //     time: new Date().toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
 
-  @Cron(CustomCron.CRON_4_HOUR_10_MINUTE)
-  async handleCleanupOldPosts() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.CLEANUP_OLD_POSTS,
-      scheduledAt,
-    );
-    await this.taskQueue.add(TaskJobName.CLEANUP_OLD_POSTS, {
-      time: new Date().toISOString(),
-      log_id: log.id,
-    });
-  }
+  // @Cron(CustomCron.CRON_4_HOUR_10_MINUTE)
+  // async handleCleanupOldPosts() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.CLEANUP_OLD_POSTS,
+  //     scheduledAt,
+  //   );
+  //   await this.taskQueue.add(TaskJobName.CLEANUP_OLD_POSTS, {
+  //     time: new Date().toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
 
-  @Cron(CustomCron.CRON_EVERY_3_HOUR_45_MINUTE)
-  async handleCrawlerArticles() {
-    const scheduledAt = new Date();
-    const log = await this.batchLogsService.create(
-      TaskJobName.CRAWL_ARTICLES,
-      scheduledAt,
-    );
-    await this.taskQueue.add(TaskJobName.CRAWL_ARTICLES, {
-      time: new Date().toISOString(),
-      log_id: log.id,
-    });
-  }
+  // @Cron(CustomCron.CRON_EVERY_3_HOUR_45_MINUTE)
+  // async handleCrawlerArticles() {
+  //   const scheduledAt = new Date();
+  //   const log = await this.batchLogsService.create(
+  //     TaskJobName.CRAWL_ARTICLES,
+  //     scheduledAt,
+  //   );
+  //   await this.taskQueue.add(TaskJobName.CRAWL_ARTICLES, {
+  //     time: new Date().toISOString(),
+  //     log_id: log.id,
+  //   });
+  // }
 
-  @Cron(CustomCron.CRON_EVERY_3_HOUR)
-  async handleUpdateBatchLogs() {
-    await this.taskQueue.add(TaskJobName.UPDATE_BATCH_LOGS, {
-      time: new Date().toISOString(),
-    });
-  }
+  // @Cron(CustomCron.CRON_EVERY_3_HOUR)
+  // async handleUpdateBatchLogs() {
+  //   await this.taskQueue.add(TaskJobName.UPDATE_BATCH_LOGS, {
+  //     time: new Date().toISOString(),
+  //   });
+  // }
 }

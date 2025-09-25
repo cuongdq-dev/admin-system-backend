@@ -12,7 +12,8 @@ async function bootstrap() {
   createApplication(app);
   const userConfigService = app.get(ConfigService);
   documentationBuilder(app, userConfigService, 'User');
-
-  await app.listen(userConfigService.get('USER_PORT') || 8001);
+  const port = userConfigService.get('USER_PORT') || 3002;
+  await app.listen(port);
+  console.log('===== Application run:' + port + '=====');
 }
 bootstrap();
