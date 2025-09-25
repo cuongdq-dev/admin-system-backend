@@ -1,17 +1,86 @@
-# Ignore node_modules
-node_modules/
-# Ignore build files (if they exist outside of the Docker build process)
-dist/
-# Ignore IDE and editor specific files
-.vscode/
-.idea/
-# Ignore local environment files
-.env.local
-# Ignore log files
-*.log
-# Ignore tests and temporary files
-test/
-tests/
-*.tmp
-*.bak
+# Node deps + logs
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist
+build
+*.tsbuildinfo
+
+# Tests / coverage
+**/test/**
+**/*.spec.ts
+**/*.test.ts
+coverage
+.nyc_output
+
+# Dev config (leave tsconfig.app.json if you rely on it during build)
+.eslintrc.*
+.prettierrc*
+.prettierignore
+jest.config.*
+
+
+# IDE/editor
+.vscode
+.idea
 *.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git
+.gitattributes
+
+# Docs
+*.md
+docs/
+documentation/
+
+# Env (don't include real .env; allow example)
+.env*
+!.env.example
+
+# Logs & tmp
+logs
+*.log
+tmp/
+temp/
+*.tmp
+
+# Caches
+.npm
+.yarn
+.cache
+.pnpm-store
+.pnpm
+
+# Optional: tool-specific caches
+.next
+.parcel-cache
+.svelte-kit
+.cache-loader
+.turbo
+
+# CI (exclude if not needed in build context)
+# .github/
+# .gitlab-ci.yml
+# .travis.yml
+# .circleci/
+
+# Lint & format caches
+.eslintcache
+.stylelintcache
+
+# Keep Dockerfile & .dockerignore in context (do NOT ignore them)
+# Dockerfile*
+# .dockerignore
