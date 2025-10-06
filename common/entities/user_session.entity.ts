@@ -18,4 +18,10 @@ export class Session extends BaseEntity {
   @Column({ type: 'uuid' })
   @Index()
   user_id: string;
+
+  @Column({ nullable: true })
+  device_token: string;
+
+  @Column({ nullable: true })
+  device_type: string; // web / ios / android
 }

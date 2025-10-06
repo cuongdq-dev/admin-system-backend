@@ -289,6 +289,7 @@ export async function fetchWithRetry(
       return await fetch(url, {
         method: 'GET',
         headers: {
+          Referer: new URL(url).origin || '',
           'Content-Type': 'application/json',
           cookie: `_ga=GA1.1.2134139623.1736400412; __RC=31; _uidcms=1736400497073820858; D1N=2fdb8fb7d30915d3291860e3fa04a7da; SESSION-ID=58e504c9-e61c-4ba8-9894-ef206c0cab4d; _ga_GL8EXWQD77=GS1.1.1737032619.2.1.1737032794.60.0.0; qc-pc-float-left=0; qc-pc-right-2=0; qc-pc-top=0; qc-pc-right-4=0; qc-pc-right-1=0; qc-pc-float-right=0; _ga_9XPGNV7HPY=GS1.1.1737041094.11.1.1737041107.47.0.0; _ga_RQZZ2QCVHK=GS1.1.1737041094.10.1.1737041107.0.0.0`,
         },

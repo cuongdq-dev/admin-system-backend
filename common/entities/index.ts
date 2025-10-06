@@ -1,5 +1,7 @@
 import { Address } from './address.entity';
 import { BatchLogs } from './batch_logs.entity';
+import { BillItem } from './bill-item.entity';
+import { Bill } from './bill.entity';
 import { Book } from './book.entity';
 import { Chapter } from './book_chapter.entity';
 import { Cart } from './cart.entity';
@@ -11,11 +13,15 @@ import {
   CustomerToken,
   TokenType as CustomerTokenType,
 } from './customer_token.entity';
+import { Device } from './device.entity';
 import { GoogleIndexBookRequest } from './google_index_book_requests.entity';
 import { GoogleIndexRequest } from './google_index_request.entity';
+import { GroupMember } from './group-member.entity';
+import { Group } from './group.entity';
 import { Lang } from './lang.entity';
 import { LangContent } from './lang_content.entity';
 import { Media, StorageType } from './media.entity';
+import { Message } from './message.entity';
 import { Notification } from './notification.entity';
 import { Order, OrderStatus } from './order.entity';
 import { Payment, PaymentProvider, PaymentStatus } from './payment.entity';
@@ -43,50 +49,57 @@ import { Token, TokenType as UserTokenType } from './user_token.entity';
 export {
   Address,
   AuthProvider,
+  BatchLogs,
+  Bill,
+  BillItem,
+  Book,
   Cart,
   CartItem,
+  Category,
+  Chapter,
   Customer,
   CustomerSession,
   CustomerToken,
   CustomerTokenType,
-  Lang,
+  // BUDDY
+  Device,
   GoogleIndexBookRequest,
+  GoogleIndexRequest,
+  Group,
+  GroupMember,
+  Lang,
   LangContent,
   Media,
+  Message,
   Notification,
   Order,
   OrderStatus,
-  SitePost,
   Payment,
   PaymentProvider,
   PaymentStatus,
+  Permission,
   Post,
-  Category,
   Product,
   ProductVariant,
   ProductVariantMedia,
   Repository,
+  // role
+  Role,
+  RolePermission,
   Server,
   ServerService,
   Service,
   Session,
   Site,
   SiteBook,
-  Book,
+  SitePost,
   StorageType,
-  BatchLogs,
   Token,
   Trending,
   TrendingArticle,
-  GoogleIndexRequest,
-  Chapter,
   User as User,
-  UserTokenType,
-  // role
-  Role,
-  Permission,
   UserRole,
-  RolePermission,
+  UserTokenType,
 };
 export const loadEntities = [
   CustomerSession,
@@ -128,4 +141,11 @@ export const loadEntities = [
   Permission,
   UserRole,
   RolePermission,
+  // BUDDY
+  Device,
+  Bill,
+  BillItem,
+  Group,
+  GroupMember,
+  Message,
 ];

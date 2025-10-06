@@ -26,6 +26,17 @@
         "tsConfigPath": "apps/admin/tsconfig.app.json"
       }
     },
+
+    "buddy": {
+      "type": "application",
+      "root": "apps/buddy",
+      "entryFile": "main",
+      "sourceRoot": "apps/buddy/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/buddy/tsconfig.app.json"
+      }
+    },
+
     "socket": {
       "type": "application",
       "root": "apps/socket",

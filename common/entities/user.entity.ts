@@ -18,7 +18,10 @@ import {
 } from 'typeorm';
 import { BaseEntity } from './base';
 import { Book } from './book.entity';
+import { Device } from './device.entity';
+import { GroupMember } from './group-member.entity';
 import type { Media } from './media.entity';
+import { Message } from './message.entity';
 import { Notification } from './notification.entity';
 import type { Post } from './post.entity';
 import { Server } from './server.entity';
@@ -117,6 +120,18 @@ export class User extends BaseEntity {
 
   @OneToMany(() => UserRole, (ur) => ur.user)
   user_roles: UserRole[];
+
+  @Column({ nullable: true })
+  firebase_uid: string;
+
+  @OneToMany(() => GroupMember, (member) => member.user)
+  memberships: GroupMember[];
+
+  @OneToMany(() => Message, (message) => message.sender)
+  messages: Message[];
+
+  @OneToMany(() => Device, (device) => device.user)
+  devices: Device[];
 
   @AfterLoad()
   storePasswordInCache() {
