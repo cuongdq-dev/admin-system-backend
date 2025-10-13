@@ -3,25 +3,28 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   CreateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Group } from './group.entity';
+import { MessageRead } from './message-read.entity';
+import { BaseEntity } from './base';
 
 @Entity('messages')
-export class Message {
+export class Message extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Group, (group) => group.messages, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Group, (g) => g.messages, { onDelete: 'CASCADE' })
   group: Group;
 
-  @ManyToOne(() => User, (user) => user.messages, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (u) => u.messages, { onDelete: 'CASCADE' })
   sender: User;
 
   @Column('text')
   content: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @OneToMany(() => MessageRead, (mr) => mr.message, { onDelete: 'CASCADE' })
+  reads: MessageRead[];
 }

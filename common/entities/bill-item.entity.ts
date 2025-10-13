@@ -1,24 +1,24 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { BaseEntity } from './base';
 import { Bill } from './bill.entity';
-import { User } from './user.entity';
 
 @Entity('bill_items')
-export class BillItem {
+export class BillItem extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  description: string;
-
-  @Column('decimal', { precision: 10, scale: 2 })
-  amount: number;
-
-  @ManyToOne(() => Bill, (bill) => bill.items, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Bill, (b) => b.items, { onDelete: 'CASCADE' })
   bill: Bill;
 
-  @ManyToOne(() => User, (user) => user.id, {
-    onDelete: 'SET NULL',
-    nullable: true,
-  })
-  paid_by: User;
+  @Column()
+  name: string; // Tên món, vd "Cà phê sữa"
+
+  @Column('int')
+  quantity: number;
+
+  @Column('decimal', { precision: 10, scale: 2 })
+  price: number; // Giá 1 đơn vị
+
+  @Column('decimal', { precision: 10, scale: 2 })
+  total: number; // = quantity * price
 }

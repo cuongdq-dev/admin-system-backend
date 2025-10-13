@@ -18,13 +18,14 @@ export class MailerConfigClass implements MailerOptionsFactory {
         requireTLS: this.configService.get('mail.requireTLS'),
         service: 'gmail',
         auth: {
-          type: 'OAuth2',
+          // type: this.configService.get('mail.type'),
+
           user: this.configService.get('mail.user'),
           pass: this.configService.get('mail.password'),
-          accessToken: this.configService.get('mail.accessToken'),
-          clientId: this.configService.get('mail.passwclientIdord'),
-          clientSecret: this.configService.get('mail.clientSecret'),
-          refreshToken: this.configService.get('mail.refreshToken'),
+          // accessToken: this.configService.get('mail.accessToken'),
+          // clientId: this.configService.get('mail.passwclientIdord'),
+          // clientSecret: this.configService.get('mail.clientSecret'),
+          // refreshToken: this.configService.get('mail.refreshToken'),
         },
       },
       defaults: {
@@ -37,6 +38,7 @@ export class MailerConfigClass implements MailerOptionsFactory {
           this.configService.get('app.workingDirectory'),
           'common',
           'modules',
+          'src',
           'mail',
           'templates',
         ),

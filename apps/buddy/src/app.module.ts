@@ -11,12 +11,14 @@ import { EmailAuthModule } from './auth-email/email.module';
 import { AuthModule } from './auth/auth.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { UserModule } from './user/user.module';
+import { GroupModule } from './groups/group.module';
 
 const modules = [
   AuthModule,
   UserModule,
   EmailAuthModule,
   MediaModule,
+  GroupModule,
   FirebaseModule,
 ];
 

@@ -1,18 +1,19 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
+  Entity,
   ManyToOne,
   OneToMany,
-  CreateDateColumn,
-  UpdateDateColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
+import { BaseEntity } from './base';
+import { BillItem } from './bill-item.entity';
+import { BillShare } from './bill-share.entity';
 import { Group } from './group.entity';
 import { User } from './user.entity';
-import { BillItem } from './bill-item.entity';
 
 @Entity('bills')
-export class Bill {
+export class Bill extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -20,20 +21,20 @@ export class Bill {
   title: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
-  total_amount: number;
+  totalAmount: number;
 
-  @ManyToOne(() => Group, (group) => group.bills, { onDelete: 'CASCADE' })
+  @Column({ nullable: true })
+  note?: string;
+
+  @ManyToOne(() => Group, (g) => g.bills, { onDelete: 'CASCADE' })
   group: Group;
 
-  @ManyToOne(() => User, (user) => user.id)
-  created_by: User;
-
-  @OneToMany(() => BillItem, (item) => item.bill)
+  @OneToMany(() => BillItem, (bi) => bi.bill, { cascade: true })
   items: BillItem[];
 
-  @CreateDateColumn()
-  created_at: Date;
+  @OneToMany(() => BillShare, (bs) => bs.bill, { cascade: true })
+  shares: BillShare[];
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @ManyToOne(() => User, (user) => user.paidBills, { onDelete: 'SET NULL' })
+  payer: User; // người trả tiền trước
 }

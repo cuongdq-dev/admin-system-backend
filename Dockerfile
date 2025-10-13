@@ -1,10 +1,10 @@
-FROM node:18-alpine AS deps  
+FROM node:20-alpine AS deps  
 WORKDIR /app  
 COPY package.json yarn.lock* ./  
 RUN yarn install --frozen-lockfile --production=false && yarn cache clean  
   
 # Stage 2: Build  
-FROM node:18-alpine AS builder  
+FROM node:20-alpine AS builder  
 WORKDIR /app  
 COPY --from=deps /app/node_modules ./node_modules  
 COPY . .  
@@ -12,7 +12,7 @@ ARG APP_NAME
 RUN yarn build:${APP_NAME}  
   
 # Stage 3: Production dependencies only  
-FROM node:18-alpine AS prod-deps  
+FROM node:20-alpine AS prod-deps  
 WORKDIR /app  
 COPY package.json yarn.lock* ./  
 COPY .yarnclean ./  
@@ -21,7 +21,7 @@ RUN yarn install --frozen-lockfile --production=true --ignore-scripts && \
     yarn cache clean  
   
 # Stage 4: Runtime  
-FROM node:18-alpine AS runtime  
+FROM node:20-alpine AS runtime  
 RUN apk add --no-cache dumb-init  
 WORKDIR /app  
 RUN addgroup -g 1001 -S nodejs && \  

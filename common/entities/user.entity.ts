@@ -17,10 +17,11 @@ import {
   Unique,
 } from 'typeorm';
 import { BaseEntity } from './base';
+import { BillShare } from './bill-share.entity';
 import { Book } from './book.entity';
-import { Device } from './device.entity';
 import { GroupMember } from './group-member.entity';
 import type { Media } from './media.entity';
+import { MessageRead } from './message-read.entity';
 import { Message } from './message.entity';
 import { Notification } from './notification.entity';
 import type { Post } from './post.entity';
@@ -29,6 +30,7 @@ import { Site } from './site.entity';
 import { UserRole } from './user_roles.entity';
 import type { Session } from './user_session.entity';
 import { Token } from './user_token.entity';
+import { Bill } from './bill.entity';
 
 export enum UserType {
   ADMIN = 'ADMIN',
@@ -124,14 +126,23 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   firebase_uid: string;
 
-  @OneToMany(() => GroupMember, (member) => member.user)
-  memberships: GroupMember[];
+  @OneToMany(() => GroupMember, (gm) => gm.user)
+  groupMembers: GroupMember[];
 
-  @OneToMany(() => Message, (message) => message.sender)
+  @OneToMany(() => Message, (m) => m.sender)
   messages: Message[];
 
-  @OneToMany(() => Device, (device) => device.user)
-  devices: Device[];
+  @OneToMany(() => MessageRead, (mr) => mr.user)
+  messageReads: MessageRead[];
+
+  @OneToMany(() => BillShare, (bs) => bs.user)
+  billShares: BillShare[];
+
+  @OneToMany(() => Bill, (bill) => bill.payer)
+  paidBills: Bill[];
+
+  @OneToMany(() => Bill, (bill) => bill.created_by)
+  createdBills: Bill[];
 
   @AfterLoad()
   storePasswordInCache() {

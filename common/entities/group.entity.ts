@@ -2,37 +2,56 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   OneToMany,
+  CreateDateColumn,
+  BeforeUpdate,
+  BeforeInsert,
 } from 'typeorm';
 import { GroupMember } from './group-member.entity';
-import { Bill } from './bill.entity';
 import { Message } from './message.entity';
+import { Bill } from './bill.entity';
+import { BaseEntity } from './base';
+
+import slugify from 'slugify';
 
 @Entity('groups')
-export class Group {
+export class Group extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
   name: string;
 
-  @Column({ nullable: true })
-  description: string;
+  @Column({ unique: true })
+  slug: string;
 
-  @OneToMany(() => GroupMember, (member) => member.group)
+  @Column({ nullable: true })
+  description?: string;
+
+  @Column({ nullable: true })
+  avatar?: string;
+
+  @OneToMany(() => GroupMember, (gm) => gm.group)
   members: GroupMember[];
 
-  @OneToMany(() => Bill, (bill) => bill.group)
-  bills: Bill[];
-
-  @OneToMany(() => Message, (message) => message.group)
+  @OneToMany(() => Message, (m) => m.group)
   messages: Message[];
 
-  @CreateDateColumn()
-  created_at: Date;
+  @OneToMany(() => Bill, (b) => b.group)
+  bills: Bill[];
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  /**
+   * Generate slug automatically before insert or update
+   */
+  @BeforeInsert()
+  @BeforeUpdate()
+  generateSlug() {
+    if (this.name) {
+      this.slug = slugify(this.name, {
+        lower: true,
+        strict: true,
+        locale: 'vi', // hỗ trợ tiếng Việt nếu dùng slugify >= 1.6.6
+      });
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import { Address } from './address.entity';
 import { BatchLogs } from './batch_logs.entity';
 import { BillItem } from './bill-item.entity';
+import { BillShare } from './bill-share.entity';
 import { Bill } from './bill.entity';
 import { Book } from './book.entity';
 import { Chapter } from './book_chapter.entity';
@@ -13,7 +14,6 @@ import {
   CustomerToken,
   TokenType as CustomerTokenType,
 } from './customer_token.entity';
-import { Device } from './device.entity';
 import { GoogleIndexBookRequest } from './google_index_book_requests.entity';
 import { GoogleIndexRequest } from './google_index_request.entity';
 import { GroupMember } from './group-member.entity';
@@ -21,6 +21,7 @@ import { Group } from './group.entity';
 import { Lang } from './lang.entity';
 import { LangContent } from './lang_content.entity';
 import { Media, StorageType } from './media.entity';
+import { MessageRead } from './message-read.entity';
 import { Message } from './message.entity';
 import { Notification } from './notification.entity';
 import { Order, OrderStatus } from './order.entity';
@@ -52,6 +53,7 @@ export {
   BatchLogs,
   Bill,
   BillItem,
+  BillShare,
   Book,
   Cart,
   CartItem,
@@ -62,7 +64,6 @@ export {
   CustomerToken,
   CustomerTokenType,
   // BUDDY
-  Device,
   GoogleIndexBookRequest,
   GoogleIndexRequest,
   Group,
@@ -71,6 +72,7 @@ export {
   LangContent,
   Media,
   Message,
+  MessageRead,
   Notification,
   Order,
   OrderStatus,
@@ -142,10 +144,11 @@ export const loadEntities = [
   UserRole,
   RolePermission,
   // BUDDY
-  Device,
   Bill,
   BillItem,
   Group,
   GroupMember,
   Message,
+  MessageRead,
+  BillShare,
 ];
