@@ -2,11 +2,11 @@ import { Media, User } from '@app/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
-import { FirebaseModule } from '../firebase/firebase.module';
 import { TokenModule } from '../token/token.module';
 import { UserModule } from '../user/user.module';
 import { EmailController } from './email.controller';
 import { EmailService } from './email.service';
+import { FirebaseModule } from '@app/modules/firebase/firebase.module';
 
 @Module({
   imports: [

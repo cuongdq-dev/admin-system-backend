@@ -7,9 +7,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuthService } from '../auth/auth.service';
-import { FirebaseService } from '../firebase/firebase.service';
 import { TokenService } from '../token/token.service';
 import { RegisterDto, ResetPasswordDto, SendVerifyMailDto } from './email.dto';
+import { FirebaseService } from '@app/modules/firebase/firebase.service';
 
 @Injectable()
 export class EmailService {

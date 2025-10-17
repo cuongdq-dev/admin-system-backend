@@ -1,12 +1,5 @@
-import {
-  Bill,
-  Group,
-  GroupMember,
-  Message,
-  Session,
-  User,
-} from '@app/entities';
-import { GroupRole } from '@app/entities/group-member.entity';
+import { Bill, Group, GroupMember, Message, User } from '@app/entities';
+import { FirebaseService } from '@app/modules/firebase/firebase.service';
 import { MailerService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
@@ -16,8 +9,17 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Not, Repository } from 'typeorm';
-import { FirebaseService } from '../firebase/firebase.service';
-import { AddMemberDto, CreateGroupDto, SendMessageDto } from './dto/group.dto';
+import {
+  AddMemberDto,
+  CreateGroupDto,
+  GROUP_MEMBER_RELATIONS,
+  GROUP_RELATIONS,
+  GroupMemberSelect,
+  GroupSelect,
+  MESSAGE_RELATIONS,
+  SendMessageDto,
+  UserSelect,
+} from './dto/group.dto';
 
 @Injectable()
 export class GroupService {
@@ -37,9 +39,6 @@ export class GroupService {
 
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
-
-    @InjectRepository(Session)
-    private readonly sessionRepo: Repository<Session>,
 
     @InjectRepository(Bill)
     private readonly billRepo: Repository<Bill>,
@@ -68,22 +67,15 @@ export class GroupService {
       const owner = manager.create(GroupMember, {
         group: savedGroup,
         user: creator,
-        role: 'owner' as GroupRole,
+        role: 'owner',
+        status: 'active',
         joinedAt: new Date(),
       });
       await manager.save(GroupMember, owner);
 
       return await manager.findOne(GroupMember, {
         where: { group: { id: savedGroup.id } },
-        relations: [
-          'group',
-          'group.members',
-          'group.messages',
-          'group.messages.reads',
-          'group.members.user',
-          'group.bills',
-          'group.bills.items',
-        ],
+        relations: GROUP_MEMBER_RELATIONS,
       });
     });
   }
@@ -92,10 +84,12 @@ export class GroupService {
     const skip = (page - 1) * limit;
     const [memberGroups, total] = await this.memberRepo.findAndCount({
       where: { user: { id: userId }, status: 'active' },
+      select: GroupMemberSelect,
       relations: [
         'group',
         'group.members',
         'group.members.user',
+        'user',
         'group.bills',
         'group.bills.items',
         'group.messages',
@@ -106,16 +100,11 @@ export class GroupService {
       skip,
     });
 
-    console.log(memberGroups);
     const [invitationGroup, totalInvitation] =
       await this.memberRepo.findAndCount({
         where: { user: { id: userId }, status: 'invited' },
-        relations: [
-          'group',
-          'group.members',
-          'group.members.user',
-          'invitedBy',
-        ],
+        select: GroupMemberSelect,
+        relations: GROUP_MEMBER_RELATIONS,
         order: { group: { created_at: 'DESC' } },
         take: limit,
         skip,
@@ -132,16 +121,12 @@ export class GroupService {
     };
   }
 
-  async getMessageByGroupId(
-    userId: string,
-    groupId: string,
-    page = 1,
-    limit = 20,
-  ) {
+  async getMessageByGroupId(page = 1, limit = 20, group: Group) {
     const skip = (page - 1) * limit;
+
     const [messageGroup, total] = await this.messageRepo.findAndCount({
-      where: { group: { id: groupId } },
-      relations: ['group', 'sender', 'reads'],
+      where: { group: { id: group.id } },
+      relations: MESSAGE_RELATIONS,
       order: { created_at: 'DESC' },
       take: limit,
       skip,
@@ -156,23 +141,13 @@ export class GroupService {
       hasMore: Math.ceil(total / limit) > page,
     };
   }
-  async sendMessage(userId: string, groupId: string, body: SendMessageDto) {
-    const [sender, group] = await Promise.all([
-      this.userRepo.findOne({
-        where: { id: userId },
-        select: {
-          id: true,
-          avatar: { url: true, id: true },
-          name: true,
-          email: true,
-        },
-        relations: ['avatar'],
-      }),
-      this.groupRepo.findOne({
-        where: { id: groupId },
-        select: { name: true, avatar: true, id: true, description: true },
-      }),
-    ]);
+
+  async sendMessage(userId: string, group: Group, body: SendMessageDto) {
+    const sender = await this.userRepo.findOne({
+      where: { id: userId },
+      select: UserSelect,
+      relations: ['avatar'],
+    });
 
     const message = this.messageRepo.create({
       content: body.content,
@@ -183,65 +158,38 @@ export class GroupService {
 
     const members = await this.memberRepo.find({
       where: {
-        group: { id: groupId },
+        group: { id: group.id },
         user: { id: Not(sender.id) },
         status: 'active',
       },
-      relations: ['user'],
+      select: GroupMemberSelect,
+      relations: GROUP_MEMBER_RELATIONS,
     });
 
-    const receiverUserIds = members.map((m) => m.user.id);
-
-    if (receiverUserIds.length > 0) {
-      const sessions = await this.sessionRepo.find({
-        where: { user_id: In(receiverUserIds), deleted_at: null },
-      });
-
-      const tokens = sessions.map((s) => s.device_token);
-      if (tokens.length > 0) {
-        await this.firebaseService.sendToMany(tokens, group.name, sender.name, {
-          type: 'message',
-          message: JSON.stringify(message),
-        });
-      }
+    if (members.length > 0) {
+      this.firebaseService.sendToUsers(
+        members.map((m) => m?.user?.id),
+        group.name, //title notify
+        sender.name, //description notify
+        {
+          type: 'message', //screen
+          data: JSON.stringify(message),
+          sender: JSON.stringify(sender),
+        },
+      );
     }
 
     return message;
   }
 
-  async checkUser(email: string) {
-    const result = await this.userRepo.findOne({
-      where: { email: email },
-    });
-    return result;
-  }
-
-  async addMembers(userId: string, groupId: string, body: AddMemberDto) {
+  async addMembers(user: User, group: Group, body: AddMemberDto) {
+    const userId = user.id;
     const { emails } = body;
+    if (!emails?.length) throw new BadRequestException('No emails provided');
+    if (!group) throw new NotFoundException('Group not found');
 
-    if (!emails || !Array.isArray(emails) || emails.length === 0) {
-      throw new BadRequestException('No emails provided');
-    }
-
-    // Tìm group và inviter, validate
-    const group = await this.groupRepo.findOne({
-      where: { id: groupId },
-      relations: ['members'], // nếu entity có quan hệ members
-    });
-    if (!group) {
-      throw new NotFoundException('Group not found');
-    }
-
-    const inviter = await this.userRepo.findOne({ where: { id: userId } });
-    if (!inviter) {
-      throw new NotFoundException('Inviter (user) not found');
-    }
-
-    const appName = this.configService.get('app.name') ?? 'App';
-    const frontendDomain = this.configService.get('app.frontendDomain') ?? '';
-
-    // Chuẩn hoá email: loại bỏ khoảng trắng, filter email rỗng, unique
-    const normalizedEmails = Array.from(
+    // 1️⃣ Chuẩn hóa & validate email
+    const normalized = Array.from(
       new Set(
         emails
           .map((e) => (typeof e === 'string' ? e.trim().toLowerCase() : ''))
@@ -249,146 +197,193 @@ export class GroupService {
       ),
     );
 
-    // Nếu muốn, bạn có thể kiểm tra định dạng email bằng regex tại đây
-    const invalidEmails = normalizedEmails.filter(
+    if (normalized.includes(user.email)) {
+      throw new BadRequestException({ message: 'Not update owner member' });
+    }
+
+    const invalid = normalized.filter(
       (e) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e),
     );
-
-    if (invalidEmails.length > 0) {
-      // Trả về error chi tiết hoặc loại bỏ invalid emails tuỳ yêu cầu
+    if (invalid.length > 0)
       throw new BadRequestException({
         message: 'Invalid email addresses',
-        invalidEmails,
+        invalid,
       });
-    }
 
-    // Chuẩn bị gửi: cho mỗi email, kiểm tra đã là member hay đã được mời...
-    const tasks = normalizedEmails.map(async (email) => {
-      try {
-        // Kiểm tra đã là member (nếu group.members là array user entities)
-        if (
-          group.members &&
-          group.members.some((m: any) => m.email === email)
-        ) {
-          return { email, status: 'skipped', reason: 'already_member' };
-        }
+    // 2️⃣ Tìm user đã tồn tại
+    const users = await this.userRepo.find({
+      where: { email: In(normalized) },
+      select: UserSelect,
+    });
+    const userByEmail = new Map(users.map((u) => [u.email.toLowerCase(), u]));
 
-        // Kiểm tra user đã đăng ký trong hệ thống chưa
-        const existingUser = await this.userRepo.findOne({
-          where: { email },
-        });
+    // 3️⃣ Chuẩn bị các record GroupMember
+    const membersToUpsert = normalized.map((email) => {
+      const existingUser = userByEmail.get(email);
+      return this.memberRepo.create({
+        group: group,
+        user: existingUser || null,
+        invitedBy: { id: user.id, email: user.email, name: user.name },
+        invitedAt: new Date(),
+        created_by: userId,
+        role: 'member',
+        status: 'invited',
+      });
+    });
 
-        // TODO: Nếu bạn có repository invitation để lưu invitation record, tạo nó ở đây
-        await this.memberRepo
-          .create({
-            group: { id: groupId },
-            user: { id: existingUser.id },
-            invitedAt: new Date(),
-            created_by: userId,
-            invitedBy: { id: userId },
-            role: 'member',
-            status: 'invited',
-          })
-          .save();
+    // 4️⃣ Upsert: nếu đã tồn tại (từng left), update lại status -> invited
+    await this.memberRepo.upsert(membersToUpsert, {
+      conflictPaths: ['group.id', 'user.id'], // cần có unique index trên DB
+    });
 
-        // Gửi email (nếu bạn muốn content khác theo trường hợp user tồn tại hay không, xử lý ở đây)
-        await this.mailerService.sendMail({
-          to: existingUser.email,
-          subject: `${inviter.name} invited you to join "${group.name}" on ${appName}`,
+    // 5️⃣ Gửi mail (fire-and-forget)
+    const inviter = await this.userRepo.findOne({
+      where: { id: userId },
+      select: UserSelect,
+    });
+    const appName = this.configService.get('app.name') ?? 'App';
+    const frontendDomain = this.configService.get('app.frontendDomain') ?? '';
+
+    for (const member of membersToUpsert) {
+      const toEmail = member.user?.email;
+      if (!toEmail) continue;
+      this.mailerService
+        .sendMail({
+          to: toEmail,
+          subject: `${inviter?.name ?? 'Someone'} invited you to join "${
+            group.name
+          }" on ${appName}`,
           template: 'group/invitation',
           context: {
-            url: `${frontendDomain}/group/${groupId}`,
-            app_name: appName,
             title: 'Group Invitation',
-            actionTitle: 'Join the Group',
+            actionTitle: 'Join Group',
+            url: `${frontendDomain}/group/${group.id}`,
+            app_name: appName,
             group_name: group.name,
-            inviter_name: inviter.name,
+            inviter_name: inviter?.name,
+            user_exists: !!member.user,
             year: new Date().getFullYear(),
-            user_exists: Boolean(existingUser),
           },
-        });
-
-        return { email, status: 'sent' };
-      } catch (err) {
-        console.error(`Failed to invite ${email} to group ${groupId}`, err);
-        return { email, status: 'failed', reason: err?.message ?? String(err) };
-      }
-    });
-
-    // Thực thi song song và gom kết quả
-    const settled = await Promise.allSettled(tasks);
-    const results = settled.map((s) =>
-      s.status === 'fulfilled'
-        ? s.value
-        : { status: 'failed', reason: 'unknown' },
-    );
-
-    // Tùy: lọc ra số lượng thành công/failed để trả về
-    const summary = {
-      total: normalizedEmails.length,
-      sent: results.filter((r) => r.status === 'sent').length,
-      skipped: results.filter((r) => r.status === 'skipped').length,
-      failed: results.filter((r) => r.status === 'failed').length,
-      details: results,
-    };
-
-    return {
-      message: 'Invitation process completed',
-      summary,
-    };
-  }
-
-  async acceptInvitation(userId: string, invitationId: string) {
-    const member = await this.memberRepo.findOne({
-      where: { user: { id: userId }, id: invitationId, status: 'invited' },
-      relations: ['group', 'group.members', 'group.members.user'],
-    });
-
-    if (!member) {
-      throw new NotFoundException('Invitation not found or already handled');
+        })
+        .catch((err) =>
+          console.error(`Failed to send invite to ${toEmail}`, err.message),
+        );
+      this.firebaseService.sendToUser(
+        member?.user?.id,
+        'New invitation group',
+        `${inviter?.name ?? 'Someone'} invited you to join "${
+          group.name
+        }" on ${appName}`,
+        {
+          type: 'invitation', //screen
+          data: JSON.stringify(member),
+          sender: JSON.stringify(user),
+        },
+      );
     }
 
-    member.status = 'active';
-    member.joinedAt = new Date();
-    member.updated_by = userId;
-    await this.memberRepo.save(member);
-
-    // Optional: gửi thông báo, hoặc email xác nhận
-
-    // Trả về bản ghi đầy đủ sau khi update
-    return await this.memberRepo.findOne({
-      where: { id: member.id },
-      relations: [
-        'group',
-        'group.members',
-        'group.members.user',
-        'group.bills',
-        'group.bills.items',
-        'group.messages',
-        'group.messages.reads',
-      ],
+    // 6️⃣ Trả về group mới nhất (bao gồm members)
+    return this.groupRepo.findOne({
+      where: { id: group.id },
+      select: GroupSelect,
+      relations: GROUP_RELATIONS,
     });
+  }
+
+  async removeMember(member: User, group: Group, user: User) {
+    const memberGroup = await this.memberRepo.findOne({
+      where: {
+        role: In(['member', 'admin']),
+        status: In(['active', 'invited']),
+        user: { id: member.id },
+        group: { id: group.id },
+      },
+      select: GroupMemberSelect,
+      relations: GROUP_MEMBER_RELATIONS,
+    });
+    if (!memberGroup || memberGroup.role === 'owner')
+      throw new NotFoundException('Cannot remove the group owner');
+
+    await this.memberRepo.update(
+      { id: memberGroup.id },
+      { status: 'left', leftAt: new Date(), leftBy: user },
+    );
+
+    return await this.groupRepo.findOne({
+      where: { id: group.id },
+      relations: GROUP_RELATIONS,
+      select: GroupSelect,
+    });
+  }
+
+  async acceptInvitation(user: User, invitation: GroupMember) {
+    if (!invitation || invitation.status != 'invited')
+      throw new NotFoundException('Invitation not found or already handled');
+
+    await this.memberRepo.save({
+      ...invitation,
+      status: 'active',
+      leftAt: undefined,
+      leftBy: undefined,
+      joinedAt: new Date(),
+      updated_by: user.id,
+    });
+
+    const result = await this.memberRepo.findOne({
+      where: { id: invitation.id },
+      select: GroupMemberSelect,
+      relations: GROUP_MEMBER_RELATIONS,
+    });
+
+    if (result?.invitedBy) {
+      this.firebaseService.sendToUser(
+        result?.invitedBy.id,
+        `${result?.user?.name} accepted your invitation`, // title
+        ``,
+        {
+          type: 'group',
+          data: JSON.stringify(result),
+          sender: JSON.stringify(user),
+        },
+      );
+    }
+    return result;
   }
 
   /**
    * ❌ Reject group invitation
    */
-  async rejectInvitation(userId: string, invitationId: string) {
-    const member = await this.memberRepo.findOne({
-      where: { user: { id: userId }, id: invitationId, status: 'invited' },
-      relations: ['group', 'invitedBy'],
+  async rejectInvitation(user: User, invitation: GroupMember) {
+    if (!invitation || invitation.status != 'invited')
+      throw new NotFoundException('Invitation not found or already handled');
+
+    await this.memberRepo.save({
+      ...invitation,
+      status: 'reject',
+      leftAt: new Date(),
+      leftBy: undefined,
+      joinedAt: undefined,
+      updated_by: user.id,
     });
 
-    if (!member) {
-      throw new NotFoundException('Invitation not found or already handled');
+    const result = await this.memberRepo.findOne({
+      where: { id: invitation.id },
+      select: GroupMemberSelect,
+      relations: GROUP_MEMBER_RELATIONS,
+    });
+
+    if (result?.invitedBy) {
+      this.firebaseService.sendToUser(
+        result?.invitedBy.id,
+        `${result.user.name} rejected your invitation`, // title
+        `They won't join the group "${result?.group?.name}"`,
+        {
+          type: 'group', //screen
+          data: JSON.stringify(result),
+          sender: JSON.stringify(user),
+        }, // data in response notify
+      );
     }
-
-    member.status = 'reject';
-    member.leftAt = new Date();
-    member.updated_by = userId;
-
-    await this.memberRepo.save(member);
-
-    return member;
+    return result;
   }
 }

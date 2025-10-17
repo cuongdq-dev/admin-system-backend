@@ -9,9 +9,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import * as multer from 'multer';
 import { EmailAuthModule } from './auth-email/email.module';
 import { AuthModule } from './auth/auth.module';
-import { FirebaseModule } from './firebase/firebase.module';
 import { UserModule } from './user/user.module';
 import { GroupModule } from './groups/group.module';
+import { FirebaseModule } from '@app/modules/firebase/firebase.module';
 
 const modules = [
   AuthModule,
