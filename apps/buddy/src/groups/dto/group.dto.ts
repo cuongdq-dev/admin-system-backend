@@ -39,6 +39,12 @@ export class CreateGroupDto {
   memberIds?: string[];
 }
 
+export class GenerateInvoiceDto {
+  @IsString()
+  @ApiProperty({ example: '' })
+  text?: string;
+}
+
 export class UpdateGroupDto {
   @IsOptional()
   @IsString()
@@ -68,7 +74,8 @@ export const GROUP_MEMBER_RELATIONS = [
 export const MESSAGE_RELATIONS = [
   'group',
   'sender',
-  'reads',
+  'group.members',
+  'group.members.user',
 ] as FindOptionsRelations<Message>;
 
 export const GROUP_RELATIONS = [
@@ -99,6 +106,9 @@ export const GroupSelect = {
     role: true,
     status: true,
     invitedBy: UserSelect,
+    last_read_at: true,
+    last_read_message_id: true,
+    last_read_message_number: true,
   },
 } as FindOptionsSelect<Group>;
 
@@ -112,4 +122,7 @@ export const GroupMemberSelect = {
   group: GroupSelect,
   user: UserSelect,
   created_at: true,
+  last_read_at: true,
+  last_read_message_id: true,
+  last_read_message_number: true,
 } as FindOptionsSelect<GroupMember>;

@@ -15,6 +15,10 @@ import { generateSlug } from '@app/utils';
 import * as bcrypt from 'bcryptjs';
 import dataSource from 'ormconfig';
 import { languages } from './lang';
+import {
+  NotificationStatus,
+  NotificationType,
+} from '@app/entities/notification.entity';
 
 async function create() {
   dataSource.setOptions({
@@ -456,8 +460,8 @@ async function createRoleDefault() {
 
 //   const userRepository = dataSource.getRepository(User);
 //   const roleRepository = dataSource.getRepository(Role);
-//   const rpcRepository = dataSource.getRepository(RolePermissionCondition);
-//   const permissionRepository = dataSource.getRepository(UserPermissions);
+//   const rpRepository = dataSource.getRepository(RolePermission);
+//   const permissionRepository = dataSource.getRepository(Permission);
 //   try {
 //     const roleAdmin = await roleRepository.findOne({
 //       where: {},
@@ -465,29 +469,28 @@ async function createRoleDefault() {
 //     });
 
 //     dataSource.transaction(async (manager) => {
-//       const permissions = await manager.find(UserPermissions, {});
+//       const permissions = await manager.find(Permission, {});
 
 //       const updatedRole = await manager.save(Role, {
 //         ...roleAdmin,
 //         permissions,
 //       });
-//       await manager.delete(RolePermissionCondition, {
-//         role_id: updatedRole.id,
-//       });
-//       const conditions = permissions.map((p) => ({
-//         role_id: updatedRole.id,
-//         permission_id: p.id,
-//         conditions: { ownerOnly: true, asOwner: true },
-//       }));
+//       await manager.delete(RolePermission, { role_id: updatedRole.id });
 
-//       if (conditions.length > 0) {
-//         await manager.save(RolePermissionCondition, conditions);
-//       }
+//       // const conditions = permissions.map((p) => ({
+//       //   role_id: updatedRole.id,
+//       //   permission_id: p.id,
+//       //   conditions: { ownerOnly: true, asOwner: true },
+//       // }));
+
+//       // if (conditions.length > 0) {
+//       //   await manager.save(RolePermissionCondition, conditions);
+//       // }
 //     });
 
 //     // const roleUpdate = await roleRepository.update(
 //     //   { id: roleAdmin.id },
-//     //   { permissions: permissionArr },
+//     //   { permi },
 //     // );
 //     // console.log(roleUpdate);
 //     // console.log(roleAdmin.permissions.length, permissionArr.length);
@@ -512,45 +515,45 @@ async function createRoleDefault() {
 //   }
 // }
 
-async function createServer() {
-  dataSource.setOptions({
-    entities: loadEntities,
-  });
-  await dataSource.initialize();
+// async function createServer() {
+//   dataSource.setOptions({
+//     entities: loadEntities,
+//   });
+//   await dataSource.initialize();
 
-  const queryRunner = dataSource.createQueryRunner();
-  await queryRunner.connect();
-  await queryRunner.startTransaction();
+//   const queryRunner = dataSource.createQueryRunner();
+//   await queryRunner.connect();
+//   await queryRunner.startTransaction();
 
-  const serverRepository = dataSource.getRepository(Server);
-  const adminRepository = dataSource.getRepository(User);
-  try {
-    const admin = await adminRepository.findOne({
-      where: { email: process.env.ADMIN_EMAIL },
-    });
-    const serverArr = [
-      {
-        name: 'Contabo Singapore',
-        host: '194.238.31.149',
-        port: '22',
-        user: 'root',
-        password: '!g6hXE,./gL4~',
-        owner_id: admin.id,
-      },
-    ];
+//   const serverRepository = dataSource.getRepository(Server);
+//   const adminRepository = dataSource.getRepository(User);
+//   try {
+//     const admin = await adminRepository.findOne({
+//       where: { email: process.env.ADMIN_EMAIL },
+//     });
+//     const serverArr = [
+//       {
+//         name: 'Contabo Singapore',
+//         host: '194.238.31.149',
+//         port: '22',
+//         user: 'root',
+//         password: '!g6hXE,./gL4~',
+//         owner_id: admin.id,
+//       },
+//     ];
 
-    await serverRepository.upsert(serverArr, {
-      conflictPaths: ['name', 'host'],
-      skipUpdateIfNoValuesChanged: true,
-    });
-    console.log('Server created successfully.');
-  } catch (error) {
-    await queryRunner.rollbackTransaction();
-    console.error('Error seeding server:', error.message);
-  } finally {
-    await queryRunner.release();
-  }
-}
+//     await serverRepository.upsert(serverArr, {
+//       conflictPaths: ['name', 'host'],
+//       skipUpdateIfNoValuesChanged: true,
+//     });
+//     console.log('Server created successfully.');
+//   } catch (error) {
+//     await queryRunner.rollbackTransaction();
+//     console.error('Error seeding server:', error.message);
+//   } finally {
+//     await queryRunner.release();
+//   }
+// }
 
 // async function createNotification() {
 //   dataSource.setOptions({

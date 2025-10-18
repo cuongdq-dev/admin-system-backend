@@ -1,4 +1,5 @@
 import {
+  Column,
   CreateDateColumn,
   Entity,
   ManyToOne,
@@ -15,12 +16,15 @@ export class MessageRead extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ default: false })
+  is_read: boolean;
+
+  @CreateDateColumn()
+  readAt: Date;
+
   @ManyToOne(() => Message, (m) => m.reads, { onDelete: 'CASCADE' })
   message: Message;
 
   @ManyToOne(() => User, (u) => u.messageReads, { onDelete: 'CASCADE' })
   user: User;
-
-  @CreateDateColumn()
-  readAt: Date;
 }

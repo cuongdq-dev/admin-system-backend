@@ -12,6 +12,7 @@ import { DataSource, In, Not, Repository } from 'typeorm';
 import {
   AddMemberDto,
   CreateGroupDto,
+  GenerateInvoiceDto,
   GROUP_MEMBER_RELATIONS,
   GROUP_RELATIONS,
   GroupMemberSelect,
@@ -20,6 +21,7 @@ import {
   SendMessageDto,
   UserSelect,
 } from './dto/group.dto';
+import { callGeminiApi } from '@app/utils';
 
 @Injectable()
 export class GroupService {
@@ -121,16 +123,47 @@ export class GroupService {
     };
   }
 
-  async getMessageByGroupId(page = 1, limit = 20, group: Group) {
+  async getMessageByGroupId(page = 1, limit = 20, group: Group, user: User) {
     const skip = (page - 1) * limit;
 
     const [messageGroup, total] = await this.messageRepo.findAndCount({
       where: { group: { id: group.id } },
+      select: {
+        id: true,
+        content: true,
+        created_at: true,
+        sender: UserSelect,
+        group: {
+          id: true,
+          name: true,
+          members: {
+            id: true,
+            last_read_at: true,
+            last_read_message_id: true,
+            user: {
+              id: true,
+              name: true,
+              avatar: { url: true, id: true, slug: true },
+            },
+          },
+        },
+      },
       relations: MESSAGE_RELATIONS,
       order: { created_at: 'DESC' },
       take: limit,
       skip,
     });
+
+    if (messageGroup[0]) {
+      await this.memberRepo.update(
+        { group: { id: group.id }, user: { id: user.id } },
+        {
+          last_read_at: new Date(),
+          last_read_message_id: messageGroup[0].id,
+          last_read_message_number: 0,
+        },
+      );
+    }
 
     return {
       data: messageGroup,
@@ -156,6 +189,17 @@ export class GroupService {
     });
     await message.save();
 
+    const newMesageMG = group.members.map((m) => ({
+      ...m,
+      last_read_at: m.user.id == userId ? message.created_at : m.last_read_at,
+      last_read_message_id:
+        m.user.id == userId ? message.id : m.last_read_message_id,
+      last_read_message_number:
+        m.user.id == userId ? 0 : (m.last_read_message_number || 0) + 1,
+    }));
+
+    await this.memberRepo.save(newMesageMG);
+
     const members = await this.memberRepo.find({
       where: {
         group: { id: group.id },
@@ -169,10 +213,10 @@ export class GroupService {
     if (members.length > 0) {
       this.firebaseService.sendToUsers(
         members.map((m) => m?.user?.id),
-        group.name, //title notify
-        sender.name, //description notify
+        `${sender.name} sent a new message to group ${group?.name}`,
+        '',
         {
-          type: 'message', //screen
+          type: 'message',
           data: JSON.stringify(message),
           sender: JSON.stringify(sender),
         },
@@ -385,5 +429,37 @@ export class GroupService {
       );
     }
     return result;
+  }
+
+  async generateInvoice(user: User, dto: GenerateInvoiceDto) {
+    const geminiResponse = await callGeminiApi(`
+      Sử dụng **${dto.text}** được cung cấp dưới đây. Nhiệm vụ của bạn là **trích xuất** tất cả các thông tin liên quan và **chuyển đổi** chúng thành một đối tượng JSON.
+
+      **Yêu cầu Cấu trúc JSON:**
+      Tuân thủ chính xác các giao diện sau cho dữ liệu đầu ra:
+      declare interface Bill extends Base {
+        title: string;
+        note?: string;
+        totalAmount: number;
+        groupId: string;
+        items: BillItem[];
+        shares: BillShare[];
+        payer: User;
+      }
+
+      declare interface BillItem extends Base {
+        name: string; // Tên món
+        quantity: number; // Số lượng
+        price: number; // Giá mỗi món
+        total: number; // = quantity * price
+      }
+
+      
+      `);
+    const contentData =
+      geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+    const data = JSON.parse(contentData.replace(/```json|```/g, ''));
+    console.log(data);
+    return data;
   }
 }

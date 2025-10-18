@@ -23,6 +23,7 @@ import {
 import {
   AddMemberDto,
   CreateGroupDto,
+  GenerateInvoiceDto,
   GROUP_MEMBER_RELATIONS,
   GROUP_RELATIONS,
   SendMessageDto,
@@ -43,6 +44,15 @@ export class GroupController {
   })
   async create(@UserParam() user: User, @Body() dto: CreateGroupDto) {
     return this.groupService.createGroup(user.id, dto);
+  }
+
+  @Post('invoice/generate')
+  @ApiBody({ type: PickType(GenerateInvoiceDto, ['text']) })
+  async generateInvoice(
+    @UserParam() user: User,
+    @Body() dto: GenerateInvoiceDto,
+  ) {
+    return this.groupService.generateInvoice(user, dto);
   }
 
   @Get()
@@ -66,13 +76,15 @@ export class GroupController {
   @Get('/:groupId/messages')
   @ApiParam({ name: 'groupId', type: 'string', format: 'uuid' })
   async getMessageByGroupsId(
+    @UserParam() user: User,
+
     @Param('groupId', ParseUUIDPipe, IsIDExistPipe({ entity: Group }))
     group: Group,
 
     @Query('pageSize') pageSize = 20,
     @Query('page') page = 1,
   ) {
-    return this.groupService.getMessageByGroupId(page, pageSize, group);
+    return this.groupService.getMessageByGroupId(page, pageSize, group, user);
   }
 
   @Post('/:groupId/messages')
@@ -80,7 +92,11 @@ export class GroupController {
   @ApiParam({ name: 'groupId', type: 'string', format: 'uuid' })
   async sendMessage(
     @UserParam() user: User,
-    @Param('groupId', ParseUUIDPipe, IsIDExistPipe({ entity: Group }))
+    @Param(
+      'groupId',
+      ParseUUIDPipe,
+      IsIDExistPipe({ entity: Group, relations: ['members', 'members.user'] }),
+    )
     group: Group,
     @Body() body: SendMessageDto,
   ) {

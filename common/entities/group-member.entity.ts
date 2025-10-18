@@ -33,7 +33,6 @@ export class GroupMember extends BaseEntity {
   })
   role: GroupRole;
 
-  // new: status to track invited / active / left
   @Column({
     type: 'enum',
     default: 'invited',
@@ -41,7 +40,6 @@ export class GroupMember extends BaseEntity {
   })
   status: GroupMemberStatus;
 
-  // who invited this member (nullable for direct joins / owner seeds)
   @ManyToOne(() => User, { nullable: true })
   invitedBy?: User;
 
@@ -55,5 +53,14 @@ export class GroupMember extends BaseEntity {
   leftBy?: User;
 
   @UpdateDateColumn()
-  joinedAt: Date;
+  joinedAt?: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  last_read_message_id: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  last_read_at: Date | null;
+
+  @Column({ type: 'int', default: 0 })
+  last_read_message_number: number;
 }
