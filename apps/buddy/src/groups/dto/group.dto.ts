@@ -109,6 +109,7 @@ export const GroupSelect = {
     last_read_at: true,
     last_read_message_id: true,
     last_read_message_number: true,
+    user: UserSelect,
   },
 } as FindOptionsSelect<Group>;
 

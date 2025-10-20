@@ -59,9 +59,11 @@ export class EmailService {
       const result = await this.userRepository.save(createdUser);
       return this.authService.createJwtToken(result, deviceToken);
     }
+
     await this.userRepository.update(
       { id: user.id },
       {
+        name: user?.name || name,
         firebase_uid: firebaseUid,
         is_active: isActive,
       },

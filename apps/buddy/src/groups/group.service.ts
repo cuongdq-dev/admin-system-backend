@@ -1,5 +1,6 @@
-import { Bill, Group, GroupMember, Message, User } from '@app/entities';
+import { Group, GroupMember, Message, User } from '@app/entities';
 import { FirebaseService } from '@app/modules/firebase/firebase.service';
+import { callGeminiApi } from '@app/utils';
 import { MailerService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
@@ -14,14 +15,10 @@ import {
   CreateGroupDto,
   GenerateInvoiceDto,
   GROUP_MEMBER_RELATIONS,
-  GROUP_RELATIONS,
   GroupMemberSelect,
-  GroupSelect,
-  MESSAGE_RELATIONS,
   SendMessageDto,
   UserSelect,
 } from './dto/group.dto';
-import { callGeminiApi } from '@app/utils';
 
 @Injectable()
 export class GroupService {
@@ -42,18 +39,14 @@ export class GroupService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
 
-    @InjectRepository(Bill)
-    private readonly billRepo: Repository<Bill>,
-
-    private readonly dataSource: DataSource, // ✅ thay thế getManager()
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
    * Create group + add members (transaction)
    */
-  async createGroup(creatorId: string, dto: CreateGroupDto) {
+  async createGroup(creator: User, dto: CreateGroupDto) {
     return await this.dataSource.transaction(async (manager) => {
-      const creator = await manager.findOne(User, { where: { id: creatorId } });
       if (!creator) throw new NotFoundException('Creator not found');
 
       // Create group
@@ -66,14 +59,14 @@ export class GroupService {
       const savedGroup = await manager.save(Group, group);
 
       // Add owner membership
-      const owner = manager.create(GroupMember, {
+      const groupMember = manager.create(GroupMember, {
         group: savedGroup,
         user: creator,
         role: 'owner',
         status: 'active',
         joinedAt: new Date(),
       });
-      await manager.save(GroupMember, owner);
+      await manager.save(GroupMember, groupMember);
 
       return await manager.findOne(GroupMember, {
         where: { group: { id: savedGroup.id } },
@@ -82,35 +75,31 @@ export class GroupService {
     });
   }
 
-  async getGroupsOverview(userId: string, page = 1, limit = 10) {
+  async getGroupsOverview(user: User, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     const [memberGroups, total] = await this.memberRepo.findAndCount({
-      where: { user: { id: userId }, status: 'active' },
+      where: { user: { id: user.id }, status: 'active' },
       select: GroupMemberSelect,
-      relations: [
-        'group',
-        'group.members',
-        'group.members.user',
-        'user',
-        'group.bills',
-        'group.bills.items',
-        'group.messages',
-        'group.messages.reads',
-      ],
+      relations: ['group', 'group.members', 'group.members.user', 'user'],
       order: { group: { created_at: 'DESC' } },
       take: limit,
       skip,
     });
 
-    const [invitationGroup, totalInvitation] =
-      await this.memberRepo.findAndCount({
-        where: { user: { id: userId }, status: 'invited' },
-        select: GroupMemberSelect,
-        relations: GROUP_MEMBER_RELATIONS,
-        order: { group: { created_at: 'DESC' } },
-        take: limit,
-        skip,
-      });
+    const invitationGroup = await this.memberRepo.find({
+      where: { user: { id: user.id }, status: 'invited' },
+      select: GroupMemberSelect,
+      relations: [
+        'group',
+        'group.members',
+        'group.members.user',
+        'invitedBy',
+        'user',
+      ],
+      order: { group: { created_at: 'DESC' } },
+      take: limit,
+      skip,
+    });
 
     return {
       data: memberGroups,
@@ -119,12 +108,16 @@ export class GroupService {
       totalPages: Math.ceil(total / limit),
       totalRecords: total,
       hasMore: Math.ceil(total / limit) > page,
-      invitations: { data: invitationGroup, totalRecords: totalInvitation },
+      invitations: invitationGroup,
     };
   }
 
   async getMessageByGroupId(page = 1, limit = 20, group: Group, user: User) {
     const skip = (page - 1) * limit;
+
+    const groupMember = await this.memberRepo.findOne({
+      where: { user: { id: user.id }, group: { id: group.id } },
+    });
 
     const [messageGroup, total] = await this.messageRepo.findAndCount({
       where: { group: { id: group.id } },
@@ -136,33 +129,31 @@ export class GroupService {
         group: {
           id: true,
           name: true,
+          slug: true,
           members: {
             id: true,
+            status: true,
+            joinedAt: true,
             last_read_at: true,
             last_read_message_id: true,
-            user: {
-              id: true,
-              name: true,
-              avatar: { url: true, id: true, slug: true },
-            },
+            last_read_message_number: true,
+            user: UserSelect,
           },
         },
       },
-      relations: MESSAGE_RELATIONS,
+      relations: ['sender', 'group', 'group.members', 'group.members.user'],
       order: { created_at: 'DESC' },
       take: limit,
       skip,
     });
 
-    if (messageGroup[0]) {
-      await this.memberRepo.update(
-        { group: { id: group.id }, user: { id: user.id } },
-        {
-          last_read_at: new Date(),
-          last_read_message_id: messageGroup[0].id,
-          last_read_message_number: 0,
-        },
-      );
+    if (!!messageGroup[0]) {
+      await this.memberRepo.save({
+        ...groupMember,
+        last_read_at: messageGroup[0].created_at,
+        last_read_message_id: messageGroup[0].id,
+        last_read_message_number: 0,
+      });
     }
 
     return {
@@ -175,13 +166,7 @@ export class GroupService {
     };
   }
 
-  async sendMessage(userId: string, group: Group, body: SendMessageDto) {
-    const sender = await this.userRepo.findOne({
-      where: { id: userId },
-      select: UserSelect,
-      relations: ['avatar'],
-    });
-
+  async sendMessage(sender: User, group: Group, body: SendMessageDto) {
     const message = this.messageRepo.create({
       content: body.content,
       group: group,
@@ -189,18 +174,7 @@ export class GroupService {
     });
     await message.save();
 
-    const newMesageMG = group.members.map((m) => ({
-      ...m,
-      last_read_at: m.user.id == userId ? message.created_at : m.last_read_at,
-      last_read_message_id:
-        m.user.id == userId ? message.id : m.last_read_message_id,
-      last_read_message_number:
-        m.user.id == userId ? 0 : (m.last_read_message_number || 0) + 1,
-    }));
-
-    await this.memberRepo.save(newMesageMG);
-
-    const members = await this.memberRepo.find({
+    const groupMembers = await this.memberRepo.find({
       where: {
         group: { id: group.id },
         user: { id: Not(sender.id) },
@@ -210,9 +184,26 @@ export class GroupService {
       relations: GROUP_MEMBER_RELATIONS,
     });
 
-    if (members.length > 0) {
+    await this.memberRepo.save(
+      groupMembers.map((m) => {
+        if (m.user.id == sender.id)
+          return {
+            ...m,
+            last_read_at: message.created_at,
+            last_read_message_id: message.id,
+            last_read_message_number: 0,
+          };
+
+        return {
+          ...m,
+          last_read_message_number: (m.last_read_message_number || 0) + 1,
+        };
+      }),
+    );
+
+    if (groupMembers.length > 0) {
       this.firebaseService.sendToUsers(
-        members.map((m) => m?.user?.id),
+        groupMembers.map((m) => m?.user?.id),
         `${sender.name} sent a new message to group ${group?.name}`,
         '',
         {
@@ -232,6 +223,11 @@ export class GroupService {
     if (!emails?.length) throw new BadRequestException('No emails provided');
     if (!group) throw new NotFoundException('Group not found');
 
+    const emailActived = group.members
+      .filter((m) => m.status === 'active')
+      .map((m) => m.user?.email?.toLowerCase())
+      .filter(Boolean);
+
     // 1️⃣ Chuẩn hóa & validate email
     const normalized = Array.from(
       new Set(
@@ -239,7 +235,9 @@ export class GroupService {
           .map((e) => (typeof e === 'string' ? e.trim().toLowerCase() : ''))
           .filter(Boolean),
       ),
-    );
+    )
+      .map((e) => e.toLowerCase())
+      .filter((email) => !emailActived.includes(email));
 
     if (normalized.includes(user.email)) {
       throw new BadRequestException({ message: 'Not update owner member' });
@@ -248,6 +246,7 @@ export class GroupService {
     const invalid = normalized.filter(
       (e) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e),
     );
+
     if (invalid.length > 0)
       throw new BadRequestException({
         message: 'Invalid email addresses',
@@ -255,11 +254,34 @@ export class GroupService {
       });
 
     // 2️⃣ Tìm user đã tồn tại
+
     const users = await this.userRepo.find({
       where: { email: In(normalized) },
       select: UserSelect,
     });
+
     const userByEmail = new Map(users.map((u) => [u.email.toLowerCase(), u]));
+
+    const missingEmails = normalized.filter((email) => !userByEmail.has(email));
+
+    if (missingEmails.length > 0) {
+      const newUsers = missingEmails.map((email) =>
+        this.userRepo.create({
+          email,
+          name: email.split('@')[0],
+          is_active: false,
+          created_at: new Date(),
+          updated_at: new Date(),
+          created_by: user.id,
+        }),
+      );
+      const inserted = await this.userRepo.save(newUsers);
+
+      // merge lại để đảm bảo tất cả email đều có user
+      for (const u of inserted) {
+        userByEmail.set(u.email.toLowerCase(), u);
+      }
+    }
 
     // 3️⃣ Chuẩn bị các record GroupMember
     const membersToUpsert = normalized.map((email) => {
@@ -315,11 +337,9 @@ export class GroupService {
       this.firebaseService.sendToUser(
         member?.user?.id,
         'New invitation group',
-        `${inviter?.name ?? 'Someone'} invited you to join "${
-          group.name
-        }" on ${appName}`,
+        `${inviter?.name ?? 'Someone'} invited you to join "${group.name}"`,
         {
-          type: 'invitation', //screen
+          type: 'add-member', //screen
           data: JSON.stringify(member),
           sender: JSON.stringify(user),
         },
@@ -327,10 +347,10 @@ export class GroupService {
     }
 
     // 6️⃣ Trả về group mới nhất (bao gồm members)
-    return this.groupRepo.findOne({
-      where: { id: group.id },
-      select: GroupSelect,
-      relations: GROUP_RELATIONS,
+    return this.memberRepo.findOne({
+      where: { group: { id: group.id } },
+      select: GroupMemberSelect,
+      relations: GROUP_MEMBER_RELATIONS,
     });
   }
 
@@ -348,16 +368,25 @@ export class GroupService {
     if (!memberGroup || memberGroup.role === 'owner')
       throw new NotFoundException('Cannot remove the group owner');
 
-    await this.memberRepo.update(
-      { id: memberGroup.id },
-      { status: 'left', leftAt: new Date(), leftBy: user },
+    const result = await this.memberRepo.save({
+      ...memberGroup,
+      status: 'left',
+      leftAt: new Date(),
+      leftBy: user,
+    });
+
+    this.firebaseService.sendToUser(
+      member?.id,
+      '',
+      `${user?.name ?? 'Someone'} removed you from group "${group.name}" `,
+      {
+        type: 'remove-member', //screen
+        data: JSON.stringify(result),
+        sender: JSON.stringify(user),
+      },
     );
 
-    return await this.groupRepo.findOne({
-      where: { id: group.id },
-      relations: GROUP_RELATIONS,
-      select: GroupSelect,
-    });
+    return result;
   }
 
   async acceptInvitation(user: User, invitation: GroupMember) {
@@ -385,7 +414,7 @@ export class GroupService {
         `${result?.user?.name} accepted your invitation`, // title
         ``,
         {
-          type: 'group',
+          type: 'member-accept-invitation',
           data: JSON.stringify(result),
           sender: JSON.stringify(user),
         },
@@ -422,7 +451,7 @@ export class GroupService {
         `${result.user.name} rejected your invitation`, // title
         `They won't join the group "${result?.group?.name}"`,
         {
-          type: 'group', //screen
+          type: 'member-reject-invitation', //screen
           data: JSON.stringify(result),
           sender: JSON.stringify(user),
         }, // data in response notify
@@ -459,7 +488,6 @@ export class GroupService {
     const contentData =
       geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
     const data = JSON.parse(contentData.replace(/```json|```/g, ''));
-    console.log(data);
     return data;
   }
 }

@@ -43,7 +43,7 @@ export class GroupController {
     type: PickType(CreateGroupDto, ['name', 'avatar', 'description']),
   })
   async create(@UserParam() user: User, @Body() dto: CreateGroupDto) {
-    return this.groupService.createGroup(user.id, dto);
+    return this.groupService.createGroup(user, dto);
   }
 
   @Post('invoice/generate')
@@ -61,16 +61,16 @@ export class GroupController {
     @Query('pageSize') pageSize = 10,
     @Query('page') page = 1,
   ) {
-    return this.groupService.getGroupsOverview(user.id, page, pageSize);
+    return this.groupService.getGroupsOverview(user, page, pageSize);
   }
 
   @Post('/check-email/:email')
   @ApiParam({ name: 'email', type: 'string' })
-  async checkUser(
-    @Param('email', IsIDExistPipe({ entity: User, filterField: 'email' }))
-    user,
-  ) {
-    return user;
+  async checkUser() // @Param('email', IsIDExistPipe({ entity: User, filterField: 'email' }))
+  // user,
+  {
+    // return user;
+    return true;
   }
 
   @Get('/:groupId/messages')
@@ -100,7 +100,7 @@ export class GroupController {
     group: Group,
     @Body() body: SendMessageDto,
   ) {
-    return this.groupService.sendMessage(user.id, group, body);
+    return this.groupService.sendMessage(user, group, body);
   }
 
   @Post('/:groupId/members')

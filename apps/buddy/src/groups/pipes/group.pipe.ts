@@ -54,7 +54,6 @@ export const IsIDExistPipe: IsIDExistPipeType = ({
           } with ${filterField} = "${value}" not found or access denied.`,
         );
       }
-      console.log(instance);
       return instance;
     }
   }
