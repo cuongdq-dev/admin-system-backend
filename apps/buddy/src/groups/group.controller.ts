@@ -46,6 +46,32 @@ export class GroupController {
     return this.groupService.createGroup(user, dto);
   }
 
+  @Delete('left/:groupId')
+  async leftGroup(
+    @UserParam() user: User,
+    @Param(
+      'groupId',
+      ParseUUIDPipe,
+      IsIDExistPipe({ entity: Group, relations: GROUP_RELATIONS }),
+    )
+    group: Group,
+  ) {
+    return this.groupService.leftGroup(user, group);
+  }
+
+  @Delete('delete/:groupId')
+  async deleteGroup(
+    @UserParam() user: User,
+    @Param(
+      'groupId',
+      ParseUUIDPipe,
+      IsIDExistPipe({ entity: Group, relations: GROUP_RELATIONS }),
+    )
+    group: Group,
+  ) {
+    return this.groupService.deleteGroup(user, group);
+  }
+
   @Post('invoice/generate')
   @ApiBody({ type: PickType(GenerateInvoiceDto, ['text']) })
   async generateInvoice(
@@ -66,9 +92,8 @@ export class GroupController {
 
   @Post('/check-email/:email')
   @ApiParam({ name: 'email', type: 'string' })
-  async checkUser() // @Param('email', IsIDExistPipe({ entity: User, filterField: 'email' }))
-  // user,
-  {
+  async checkUser() {
+    // user, // @Param('email', IsIDExistPipe({ entity: User, filterField: 'email' }))
     // return user;
     return true;
   }

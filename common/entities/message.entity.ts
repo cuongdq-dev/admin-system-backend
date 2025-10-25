@@ -11,6 +11,12 @@ import { Group } from './group.entity';
 import { MessageRead } from './message-read.entity';
 import { BaseEntity } from './base';
 
+export enum MessageType {
+  TEXT = 'text',
+  IMAGE = 'image',
+  SYSTEM = 'system',
+}
+
 @Entity('messages')
 export class Message extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -27,4 +33,11 @@ export class Message extends BaseEntity {
 
   @OneToMany(() => MessageRead, (mr) => mr.message, { onDelete: 'CASCADE' })
   reads: MessageRead[];
+
+  @Column({
+    type: 'enum',
+    enum: MessageType,
+    default: MessageType.TEXT,
+  })
+  type: MessageType;
 }

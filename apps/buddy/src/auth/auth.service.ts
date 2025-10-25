@@ -31,6 +31,7 @@ export class AuthService {
     const refreshTokenExpiresIn = this.configService.get(
       'auth.refreshTokenExpiresIn',
     );
+
     const session = await this.sessionService.create(user, deviceToken);
 
     const accessToken = await this.createAccessToken(session.id);
@@ -55,10 +56,7 @@ export class AuthService {
       'auth.accessTokenExpiresIn',
     );
 
-    const payload = {
-      id: sessionId,
-      type: 'ACCESS',
-    };
+    const payload = { id: sessionId, type: 'ACCESS' };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: accessTokenExpiresIn,
     });

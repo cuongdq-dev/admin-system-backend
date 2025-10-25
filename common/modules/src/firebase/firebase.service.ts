@@ -4,6 +4,30 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as admin from 'firebase-admin';
 import { In, Repository } from 'typeorm';
 
+type DataType =
+  | 'message'
+  | 'add-member'
+  | 'delete-group'
+  | 'left-group'
+  | 'remove-member'
+  | 'member-accept-invitation'
+  | 'member-reject-invitation'
+  | 'system-change';
+
+interface PayloadSingleUser {
+  title: string;
+  userId: string;
+  body?: string;
+  link?: string;
+  data?: { type: DataType } & Record<string, any>;
+}
+interface PayloadMultipleUser {
+  title: string;
+  userIds: string[];
+  body?: string;
+  link?: string;
+  data?: { type: DataType } & Record<string, any>;
+}
 @Injectable()
 export class FirebaseService {
   private readonly logger = new Logger(FirebaseService.name);
@@ -27,46 +51,8 @@ export class FirebaseService {
     return admin.auth().verifyIdToken(idToken);
   }
 
-  async sendNotification(
-    token: string,
-    title: string,
-    body: string,
-    data?: any,
-  ) {
-    try {
-      const message = {
-        token,
-        notification: { title, body },
-        data: data ?? {},
-      };
-      await admin.messaging().send(message);
-      this.logger.log(`✅ Notification sent to ${token}`);
-    } catch (err) {
-      this.logger.error(`❌ Failed to send notification`, err.message);
-    }
-  }
-
-  async sendToMany(tokens: string[], title: string, body: string, data?: any) {
-    if (!tokens.length) return;
-    try {
-      await admin.messaging().sendEachForMulticast({
-        tokens,
-        notification: { title, body },
-        data: data ?? {},
-      });
-
-      this.logger.log(`✅ Notification sent to ${tokens.length} devices`);
-    } catch (err) {
-      this.logger.error(`❌ Failed to send multicast`, err.message);
-    }
-  }
-
-  async sendToUser(
-    userId: string,
-    title: string,
-    body: string,
-    data?: Record<string, any>,
-  ) {
+  async sendToUser(payload: PayloadSingleUser) {
+    const { body, title, userId, data, link } = payload;
     const sessions = await this.sessionRepo.find({
       where: { user_id: userId, deleted_at: null },
     });
@@ -74,13 +60,13 @@ export class FirebaseService {
     if (tokens.length === 0) return;
 
     try {
-      const result = await admin.messaging().sendEachForMulticast({
+      const notifyResult = await admin.messaging().sendEachForMulticast({
         tokens,
+        data,
         notification: { title, body },
-        data: data,
+        webpush: link && { fcmOptions: { link } },
       });
-      console.log('--->', result);
-      console.log(tokens, { title, body }, data ?? {});
+      console.log(notifyResult);
     } catch (error) {
       this.logger.warn(
         `Failed to send notification to user ${userId}: ${error}`,
@@ -91,26 +77,22 @@ export class FirebaseService {
   /**
    * Gửi notify cho nhiều user
    */
-  async sendToUsers(
-    userIds: string[],
-    title: string,
-    body: string,
-    data?: Record<string, any>,
-  ) {
+  async sendToUsers(payload: PayloadMultipleUser) {
+    const { body, title, userIds, data, link } = payload;
     if (!userIds.length) return;
     const sessions = await this.sessionRepo.find({
       where: { user_id: In(userIds), deleted_at: null },
     });
-
     const tokens = sessions.map((s) => s.device_token).filter(Boolean);
     if (tokens.length === 0) return;
-
     try {
-      await admin.messaging().sendEachForMulticast({
+      const notifyResult = await admin.messaging().sendEachForMulticast({
         tokens,
         notification: { title, body },
-        data: data,
+        data,
+        webpush: link && { fcmOptions: { link } },
       });
+      console.log(notifyResult);
     } catch (error) {
       this.logger.warn(`Failed to send notifications: ${error}`);
     }

@@ -84,11 +84,11 @@ export const GROUP_RELATIONS = [
 ] as FindOptionsRelations<Group>;
 
 export const UserSelect = {
-  created_at: true,
   id: true,
   name: true,
   email: true,
-  avatar: { slug: true, url: true },
+  avatar: { slug: true, filname: true, url: true },
+  created_at: true,
 } as FindOptionsSelect<User>;
 
 export const GroupSelect = {
@@ -101,7 +101,6 @@ export const GroupSelect = {
 
   members: {
     id: true,
-    created_at: true,
     joinedAt: true,
     role: true,
     status: true,
@@ -110,6 +109,7 @@ export const GroupSelect = {
     last_read_message_id: true,
     last_read_message_number: true,
     user: UserSelect,
+    created_at: true,
   },
 } as FindOptionsSelect<Group>;
 
@@ -122,8 +122,8 @@ export const GroupMemberSelect = {
   invitedAt: true,
   group: GroupSelect,
   user: UserSelect,
-  created_at: true,
   last_read_at: true,
   last_read_message_id: true,
   last_read_message_number: true,
+  created_at: true,
 } as FindOptionsSelect<GroupMember>;

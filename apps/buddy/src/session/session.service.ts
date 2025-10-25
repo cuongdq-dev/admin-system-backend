@@ -10,7 +10,12 @@ export class SessionService {
     private sessionRepository: Repository<Session>,
   ) {}
 
-  create(user: User, deviceToken?: string) {
+  async create(user: User, deviceToken?: string) {
+    await this.sessionRepository.softDelete({
+      user_id: user.id,
+      device_token: deviceToken,
+    });
+
     return this.sessionRepository
       .create({ user, device_token: deviceToken })
       .save();

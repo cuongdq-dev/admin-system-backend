@@ -1,4 +1,4 @@
-import { GoogleIndexRequest, Post, Site, SitePost } from '@app/entities';
+import { GoogleIndexRequest, Site, SitePost } from '@app/entities';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GoogleAuth } from 'google-auth-library';
@@ -24,14 +24,12 @@ export class GoogleService {
       throw new Error('Missing GOOGLE_CREDENTIALS_BASE64');
     }
 
-    // 🔹 Decode Base64 về JSON
     const serviceAccountJson = Buffer.from(
       serviceAccountBase64,
       'base64',
     ).toString('utf-8');
     const credentials = JSON.parse(serviceAccountJson);
 
-    // 🔹 Khởi tạo Google Auth Client
     const auth = new GoogleAuth({
       credentials,
       scopes: [scope],
@@ -40,7 +38,6 @@ export class GoogleService {
     return await auth.getClient();
   }
 
-  // ✅ Gửi URL lên Google Indexing API
   async submitToGoogleIndex(url: string) {
     try {
       const client = await this.getAuthClient(
@@ -61,7 +58,6 @@ export class GoogleService {
     }
   }
 
-  // ✅ Lấy Metadata từ Google Search Console
   async getMetaDataGoogleConsole(url: string, domain: string) {
     try {
       const client = await this.getAuthClient(
@@ -82,7 +78,6 @@ export class GoogleService {
     }
   }
 
-  // ✅ Lấy danh sách tất cả các trang web trong Search Console
   async listWebsites() {
     try {
       const client = await this.getAuthClient(
@@ -102,7 +97,6 @@ export class GoogleService {
     }
   }
 
-  // ✅ Lấy danh sách các sitemap đã gửi
   async listSitemaps(site_id: string) {
     if (!site_id) return undefined;
     const site = await this.siteRepository.findOne({ where: { id: site_id } });
@@ -115,7 +109,9 @@ export class GoogleService {
       );
 
       const response: any = await client.request({
-        url: `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/sitemaps`,
+        url: `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(
+          siteUrl,
+        )}/sitemaps`,
         method: 'GET',
       });
 
@@ -135,7 +131,6 @@ export class GoogleService {
     }
   }
 
-  // ✅ Gửi một Sitemap lên Google Search Console
   async submitSitemap(siteUrl: string, sitemapUrl: string) {
     try {
       const client = await this.getAuthClient(
@@ -143,7 +138,9 @@ export class GoogleService {
       );
 
       const response = await client.request({
-        url: `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/sitemaps/${encodeURIComponent(sitemapUrl)}`,
+        url: `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(
+          siteUrl,
+        )}/sitemaps/${encodeURIComponent(sitemapUrl)}`,
         method: 'PUT',
       });
 
@@ -156,7 +153,6 @@ export class GoogleService {
     }
   }
 
-  // ✅ Xóa một Sitemap khỏi Google Search Console
   async deleteSitemap(siteUrl: string, sitemapUrl: string) {
     try {
       const client = await this.getAuthClient(
@@ -164,7 +160,9 @@ export class GoogleService {
       );
 
       const response = await client.request({
-        url: `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/sitemaps/${encodeURIComponent(sitemapUrl)}`,
+        url: `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(
+          siteUrl,
+        )}/sitemaps/${encodeURIComponent(sitemapUrl)}`,
         method: 'DELETE',
       });
 
@@ -184,7 +182,6 @@ export class GoogleService {
       deleted_at: IsNull(),
     };
 
-    // Chỉ thêm `indexStatus` vào `where` nếu có giá trị hợp lệ
     if (query?.indexStatus) {
       const indexStatuses = Array.isArray(query.indexStatus)
         ? query.indexStatus
@@ -192,7 +189,6 @@ export class GoogleService {
       where.indexStatus = In(indexStatuses);
     }
 
-    // Chỉ thêm `site_id` nếu có giá trị hợp lệ
     if (query?.site_id) where.site_id = query.site_id;
 
     const data = await paginate(paginateQuery, this.sitePostRepository, {

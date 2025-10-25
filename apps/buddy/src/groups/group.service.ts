@@ -1,4 +1,5 @@
 import { Group, GroupMember, Message, User } from '@app/entities';
+import { MessageType } from '@app/entities/message.entity';
 import { FirebaseService } from '@app/modules/firebase/firebase.service';
 import { callGeminiApi } from '@app/utils';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -27,11 +28,11 @@ export class GroupService {
     private configService: ConfigService,
     private firebaseService: FirebaseService,
 
-    @InjectRepository(Group)
-    private readonly groupRepo: Repository<Group>,
-
     @InjectRepository(GroupMember)
     private readonly memberRepo: Repository<GroupMember>,
+
+    @InjectRepository(Group)
+    private readonly groupRepo: Repository<Group>,
 
     @InjectRepository(Message)
     private readonly messageRepo: Repository<Message>,
@@ -75,31 +76,164 @@ export class GroupService {
     });
   }
 
-  async getGroupsOverview(user: User, page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
-    const [memberGroups, total] = await this.memberRepo.findAndCount({
-      where: { user: { id: user.id }, status: 'active' },
+  async leftGroup(user: User, group: Group) {
+    const memberGroup = await this.memberRepo.findOne({
+      where: {
+        group: { id: group.id },
+        user: { id: user.id },
+        status: 'active',
+        role: 'member',
+      },
+    });
+    if (!memberGroup)
+      throw new BadRequestException('Member not found or cannot leave group.');
+
+    await this.memberRepo.save({
+      ...memberGroup,
+      status: 'left',
+      updated_by: user.id,
+      leftAt: new Date(),
+      leftBy: user,
+    });
+    const message = this.messageRepo.create({
+      content: `${user.name} left the group.`,
+      group: group,
+      sender: user,
+      type: MessageType.SYSTEM,
+    });
+    await message.save();
+
+    const updated = await this.memberRepo.findOne({
+      where: { id: memberGroup.id },
+      relations: GROUP_MEMBER_RELATIONS,
       select: GroupMemberSelect,
-      relations: ['group', 'group.members', 'group.members.user', 'user'],
-      order: { group: { created_at: 'DESC' } },
-      take: limit,
-      skip,
     });
 
-    const invitationGroup = await this.memberRepo.find({
-      where: { user: { id: user.id }, status: 'invited' },
+    const memberOther = updated.group.members.filter(
+      (m) => m?.user?.id !== user?.id && m.status == 'active',
+    );
+
+    if (memberOther?.length > 0) {
+      await this.firebaseService.sendToUsers({
+        userIds: memberOther.map((m) => m.user.id),
+        title: `Member left group`,
+        body: `${user.name} has left the group "${group.name}".`,
+        link: process.env.BUDDY_DOMAIN,
+        data: { type: 'left-group', data: JSON.stringify(updated) },
+      });
+    }
+
+    return updated;
+  }
+
+  async deleteGroup(user: User, group: Group) {
+    const ownerGroup = await this.memberRepo.findOne({
+      where: {
+        group: { id: group.id },
+        user: { id: user.id },
+        status: 'active',
+        role: 'owner',
+      },
       select: GroupMemberSelect,
-      relations: [
-        'group',
-        'group.members',
-        'group.members.user',
-        'invitedBy',
-        'user',
-      ],
-      order: { group: { created_at: 'DESC' } },
-      take: limit,
-      skip,
+      relations: ['group', 'user'],
     });
+
+    if (!ownerGroup)
+      throw new BadRequestException('Owner not found or cannot delete group.');
+
+    await this.dataSource.transaction(async (manager) => {
+      const memberRepo = manager.getRepository(GroupMember);
+      const groupRepo = manager.getRepository(Group);
+      const messageRepo = manager.getRepository(this.messageRepo.target);
+
+      // set fields on ownerMember (entity instance from earlier)
+      ownerGroup.deleted_by = user.id;
+      ownerGroup.updated_by = user.id;
+      ownerGroup.status = 'left';
+      ownerGroup.leftAt = new Date();
+      ownerGroup.leftBy = user;
+
+      // set deleted_by on group entity
+      group.updated_by = user.id;
+      group.deleted_by = user.id;
+
+      // persist deleted_by/status first, then softRemove on the managed entities
+      const savedOwner = await memberRepo.save(ownerGroup);
+      const savedGroup = await groupRepo.save(group);
+
+      // Soft remove (will set deleted_at). Use saved instances (managed by manager).
+      await memberRepo.softRemove(savedOwner);
+      await groupRepo.softRemove(savedGroup);
+
+      // save system message
+
+      const message = this.messageRepo.create({
+        content: `${user.name} deleted group!`,
+        group: group,
+        sender: user,
+        type: MessageType.SYSTEM,
+      });
+      await messageRepo.save(message);
+    });
+
+    const updated = await this.memberRepo.findOne({
+      where: { id: ownerGroup.id },
+      relations: GROUP_MEMBER_RELATIONS,
+      select: GroupMemberSelect,
+      withDeleted: true,
+    });
+
+    const memberOther = updated?.group?.members?.filter(
+      (m) => m?.user?.id !== user?.id && m.status == 'active',
+    );
+
+    if (memberOther?.length > 0) {
+      await this.firebaseService.sendToUsers({
+        userIds: memberOther.map((m) => m.user.id),
+        title: `Group deleted`,
+        body: `${user.name} has deleted the group "${group.name}".`,
+        link: `${process.env.BUDDY_DOMAIN}`,
+        data: { type: 'delete-group', data: JSON.stringify(updated) },
+      });
+    }
+    return updated;
+  }
+
+  async getGroupsOverview(user: User, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+
+    const groupByUser = await this.groupRepo.find({
+      where: { members: { user: { id: user.id } } },
+      relations: ['members.user'],
+    });
+
+    const [[memberGroups, total], invitations] = await Promise.all([
+      this.memberRepo.findAndCount({
+        where: {
+          user: { id: user.id },
+          status: 'active',
+          group: { id: In(groupByUser.map((g) => g.id)) },
+        },
+        select: GroupMemberSelect,
+        relations: ['group', 'group.members', 'group.members.user', 'user'],
+        order: { group: { created_at: 'DESC' } },
+        take: limit,
+        skip,
+      }),
+
+      this.memberRepo.find({
+        where: {
+          user: { id: user.id },
+          status: 'invited',
+          group: { id: In(groupByUser.map((g) => g.id)) },
+        },
+        select: GroupMemberSelect,
+        relations: ['group', 'group.members', 'group.members.user', 'user'],
+        order: { group: { created_at: 'DESC' } },
+        take: limit,
+        skip,
+      }),
+    ]);
 
     return {
       data: memberGroups,
@@ -108,7 +242,7 @@ export class GroupService {
       totalPages: Math.ceil(total / limit),
       totalRecords: total,
       hasMore: Math.ceil(total / limit) > page,
-      invitations: invitationGroup,
+      invitations: invitations,
     };
   }
 
@@ -124,6 +258,7 @@ export class GroupService {
       select: {
         id: true,
         content: true,
+        type: true,
         created_at: true,
         sender: UserSelect,
         group: {
@@ -201,17 +336,43 @@ export class GroupService {
       }),
     );
 
-    if (groupMembers.length > 0) {
-      this.firebaseService.sendToUsers(
-        groupMembers.map((m) => m?.user?.id),
-        `${sender.name} sent a new message to group ${group?.name}`,
-        '',
-        {
-          type: 'message',
-          data: JSON.stringify(message),
-          sender: JSON.stringify(sender),
+    const resultSend = await this.messageRepo.findOne({
+      where: { id: message.id, group: { id: group.id } },
+      select: {
+        id: true,
+        content: true,
+        type: true,
+        created_at: true,
+        sender: UserSelect,
+        group: {
+          id: true,
+          name: true,
+          slug: true,
+          members: {
+            id: true,
+            status: true,
+            joinedAt: true,
+            last_read_at: true,
+            last_read_message_id: true,
+            last_read_message_number: true,
+            user: UserSelect,
+          },
         },
-      );
+      },
+      relations: ['sender', 'group', 'group.members', 'group.members.user'],
+    });
+    if (groupMembers.length > 0) {
+      this.firebaseService.sendToUsers({
+        userIds: groupMembers.map((m) => m?.user?.id),
+        title: `New chat in ${group.name}`,
+        body: `${sender.name} sent a new message to group`,
+        link: `${process.env.BUDDY_DOMAIN}/${group.slug}?tab=chat`,
+        data: {
+          type: 'message',
+          data: JSON.stringify(resultSend),
+          sender: JSON.stringify(resultSend.sender),
+        },
+      });
     }
 
     return message;
@@ -313,12 +474,14 @@ export class GroupService {
     for (const member of membersToUpsert) {
       const toEmail = member.user?.email;
       if (!toEmail) continue;
+      const title = 'New invitation group';
+      const body = `${inviter?.name ?? 'Someone'} invited you to join "${
+        group.name
+      }"`;
       this.mailerService
         .sendMail({
           to: toEmail,
-          subject: `${inviter?.name ?? 'Someone'} invited you to join "${
-            group.name
-          }" on ${appName}`,
+          subject: body,
           template: 'group/invitation',
           context: {
             title: 'Group Invitation',
@@ -334,19 +497,19 @@ export class GroupService {
         .catch((err) =>
           console.error(`Failed to send invite to ${toEmail}`, err.message),
         );
-      this.firebaseService.sendToUser(
-        member?.user?.id,
-        'New invitation group',
-        `${inviter?.name ?? 'Someone'} invited you to join "${group.name}"`,
-        {
-          type: 'add-member', //screen
+      this.firebaseService.sendToUser({
+        userId: member?.user.id,
+        title: title,
+        body: body,
+        data: {
+          type: 'add-member',
           data: JSON.stringify(member),
           sender: JSON.stringify(user),
         },
-      );
+      });
     }
 
-    // 6️⃣ Trả về group mới nhất (bao gồm members)
+    // 6️⃣ Trả về group mới  nhất (bao gồm members)
     return this.memberRepo.findOne({
       where: { group: { id: group.id } },
       select: GroupMemberSelect,
@@ -375,16 +538,30 @@ export class GroupService {
       leftBy: user,
     });
 
-    this.firebaseService.sendToUser(
-      member?.id,
-      '',
-      `${user?.name ?? 'Someone'} removed you from group "${group.name}" `,
-      {
-        type: 'remove-member', //screen
+    if (memberGroup.status == 'active') {
+      const message = this.messageRepo.create({
+        content:
+          user.id == member.id
+            ? `${result.user.name} left the group.`
+            : `${user.name} removed ${member.name} from the group`,
+        group: group,
+        sender: user.id == member.id ? member : user,
+        type: MessageType.SYSTEM,
+      });
+      await message.save();
+    }
+
+    this.firebaseService.sendToUser({
+      userId: member?.id,
+      title: `${user?.name ?? 'Someone'} removed you from group "${
+        group.name
+      }" `,
+      data: {
+        type: 'remove-member',
         data: JSON.stringify(result),
         sender: JSON.stringify(user),
       },
-    );
+    });
 
     return result;
   }
@@ -408,17 +585,24 @@ export class GroupService {
       relations: GROUP_MEMBER_RELATIONS,
     });
 
+    const message = this.messageRepo.create({
+      content: `${result.user.name} joined the group`,
+      group: invitation.group,
+      sender: user,
+      type: MessageType.SYSTEM,
+    });
+    await message.save();
+
     if (result?.invitedBy) {
-      this.firebaseService.sendToUser(
-        result?.invitedBy.id,
-        `${result?.user?.name} accepted your invitation`, // title
-        ``,
-        {
+      this.firebaseService.sendToUser({
+        userId: result?.invitedBy.id,
+        title: `${result?.user?.name} accepted your invitation`,
+        data: {
           type: 'member-accept-invitation',
           data: JSON.stringify(result),
           sender: JSON.stringify(user),
         },
-      );
+      });
     }
     return result;
   }
@@ -446,16 +630,16 @@ export class GroupService {
     });
 
     if (result?.invitedBy) {
-      this.firebaseService.sendToUser(
-        result?.invitedBy.id,
-        `${result.user.name} rejected your invitation`, // title
-        `They won't join the group "${result?.group?.name}"`,
-        {
-          type: 'member-reject-invitation', //screen
+      this.firebaseService.sendToUser({
+        userId: result?.invitedBy.id,
+        title: `${result.user.name} rejected your invitation`,
+        body: `They won't join the group "${result?.group?.name}"`,
+        data: {
+          type: 'member-reject-invitation',
           data: JSON.stringify(result),
           sender: JSON.stringify(user),
-        }, // data in response notify
-      );
+        },
+      });
     }
     return result;
   }
